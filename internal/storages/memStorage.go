@@ -2,7 +2,6 @@ package storages
 
 import (
 	"errors"
-	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"log"
 )
 
@@ -18,17 +17,20 @@ func NewMemStorage() *MemStorage {
 	storage := &MemStorage{
 		metrics: make(map[string]EntityMetric),
 	}
-	storage.metrics["gauge"] = metrics.NewGauge()
-	storage.metrics["counter"] = metrics.NewCounter()
 	return storage
 }
 
+func (m *MemStorage) AddMetric(metricType string, metric EntityMetric) {
+	m.metrics[metricType] = metric
+}
+
 func (m *MemStorage) GetMetricType(metricType string) (EntityMetric, error) {
-	if m.metrics[metricType] == nil {
+	mt, ok := m.metrics[metricType]
+	if !ok {
 		return nil, errors.New("metric type not found")
 	}
 
-	return m.metrics[metricType], nil
+	return mt, nil
 }
 
 func (m *MemStorage) Log() {

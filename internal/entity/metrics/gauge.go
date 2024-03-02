@@ -20,8 +20,7 @@ func (g *Gauge) Process(name string, data string) error {
 }
 
 func NewGauge() *Gauge {
-	g := &Gauge{
+	return &Gauge{
 		list: make(map[string]float64),
 	}
-	return g
 }

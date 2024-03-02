@@ -9,6 +9,7 @@ import (
 
 type Storage interface {
 	GetMetricType(metricType string) (storages.EntityMetric, error)
+	AddMetric(metricType string, metric storages.EntityMetric)
 	Log()
 }
 

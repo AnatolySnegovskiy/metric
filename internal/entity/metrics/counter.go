@@ -6,11 +6,11 @@ import (
 )
 
 type Counter struct {
-	list map[string]int
+	list map[string]int64
 }
 
 func (c *Counter) Process(name string, data string) error {
-	intValue, err := strconv.Atoi(data)
+	intValue, err := strconv.ParseInt(data, 10, 64)
 	if err != nil {
 		return errors.New("metric value is not int")
 	}
@@ -20,8 +20,7 @@ func (c *Counter) Process(name string, data string) error {
 }
 
 func NewCounter() *Counter {
-	c := &Counter{
-		list: make(map[string]int),
+	return &Counter{
+		list: make(map[string]int64),
 	}
-	return c
 }
