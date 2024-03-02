@@ -1,40 +1,66 @@
-package storages
+package memStorage
 
-type MetricStorage struct {
-	Metrics map[string]storageInterface
+import (
+	"errors"
+	"log"
+	"strconv"
+)
+
+type MemStorage struct {
+	metrics map[string]StorageInterface
 }
 
-func NewMetricStorage() *MetricStorage {
-	storage := &MetricStorage{}
-	storage.Metrics["gauge"] = NewMetricGauge()
-	storage.Metrics["counter"] = NewMetricCounter()
+func New() *MemStorage {
+	storage := &MemStorage{
+		metrics: make(map[string]StorageInterface),
+	}
+	storage.metrics["gauge"] = &gauge{list: make(map[string]float64)}
+	storage.metrics["counter"] = &counter{list: make(map[string]int)}
 	return storage
 }
 
-type storageInterface interface {
-	Process(data ...interface{})
+func (m *MemStorage) GetMetricType(metricType string) (StorageInterface, error) {
+	if m.metrics[metricType] == nil {
+		return nil, errors.New("Metric type not found")
+	}
+
+	return m.metrics[metricType], nil
 }
 
-type MetricGauge struct {
-	value float64
+func (m *MemStorage) Log() {
+	for _, v := range m.metrics {
+		log.Println(v)
+	}
 }
 
-func NewMetricGauge() *MetricGauge {
-	return &MetricGauge{}
+type StorageInterface interface {
+	Process(name string, data string) error
 }
 
-func (fip MetricGauge) Process(data ...interface{}) {
-	fip.value = data[0].(float64)
+type gauge struct {
+	list map[string]float64
 }
 
-type MetricCounter struct {
-	value int
+func (g gauge) Process(name string, data string) error {
+	floatValue, err := strconv.ParseFloat(data, 64)
+	if err != nil {
+		return errors.New("Metric value is not float64")
+	}
+
+	g.list[name] = floatValue
+	return nil
 }
 
-func NewMetricCounter() *MetricCounter {
-	return &MetricCounter{}
+type counter struct {
+	list map[string]int
 }
 
-func (fip MetricCounter) Process(data ...interface{}) {
-	fip.value += data[0].(int)
+func (c *counter) Process(name string, data string) error {
+	intValue, err := strconv.Atoi(data)
+	if err != nil {
+		return errors.New("Metric value is not int")
+	}
+
+	c.list[name] += intValue
+	return nil
 }
