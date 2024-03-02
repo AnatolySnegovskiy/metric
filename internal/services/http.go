@@ -25,7 +25,8 @@ func sendMetric(storageType string, name string, metric any) error {
 	defer func(Body io.ReadCloser) {
 		err := Body.Close()
 		if err != nil {
-
+			fmt.Println(err)
+			return
 		}
 	}(resp.Body)
 	return nil
