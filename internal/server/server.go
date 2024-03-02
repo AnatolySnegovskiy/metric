@@ -13,10 +13,10 @@ type Storage interface {
 }
 
 type Server struct {
-	storage *storages.MemStorage
+	storage Storage
 }
 
-func New(s *storages.MemStorage) *Server {
+func New(s Storage) *Server {
 	return &Server{
 		storage: s,
 	}
