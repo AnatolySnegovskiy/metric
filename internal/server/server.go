@@ -45,7 +45,7 @@ func (s *Server) HandleMetrics(rw http.ResponseWriter, req *http.Request) {
 	metric, err := storage.GetMetricType(metricType)
 
 	if err != nil {
-		http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusNotFound)
+		http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusBadRequest)
 		return
 	}
 
