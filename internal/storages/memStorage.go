@@ -1,4 +1,4 @@
-package memStorage
+package memstorage
 
 import (
 	"errors"
@@ -21,7 +21,7 @@ func New() *MemStorage {
 
 func (m *MemStorage) GetMetricType(metricType string) (StorageInterface, error) {
 	if m.metrics[metricType] == nil {
-		return nil, errors.New("Metric type not found")
+		return nil, errors.New("metric type not found")
 	}
 
 	return m.metrics[metricType], nil
@@ -44,7 +44,7 @@ type gauge struct {
 func (g *gauge) Process(name string, data string) error {
 	floatValue, err := strconv.ParseFloat(data, 64)
 	if err != nil {
-		return errors.New("Metric value is not float64")
+		return errors.New("metric value is not float64")
 	}
 
 	g.list[name] = floatValue
@@ -58,7 +58,7 @@ type counter struct {
 func (c *counter) Process(name string, data string) error {
 	intValue, err := strconv.Atoi(data)
 	if err != nil {
-		return errors.New("Metric value is not int")
+		return errors.New("metric value is not int")
 	}
 
 	c.list[name] += intValue

@@ -8,12 +8,12 @@ import (
 )
 
 type App struct {
-	storage *memStorage.MemStorage
+	storage *memstorage.MemStorage
 }
 
 func New() *App {
 	return &App{
-		storage: memStorage.New(),
+		storage: memstorage.New(),
 	}
 }
 
