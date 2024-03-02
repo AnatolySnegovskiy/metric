@@ -26,7 +26,7 @@ func (app *App) Metric(res http.ResponseWriter, req *http.Request) {
 	elements := strings.Split(req.URL.Path, "/")
 
 	if len(elements) < 5 || len(elements) > 5 {
-		http.Error(res, "Invalid request", http.StatusBadRequest)
+		http.Error(res, "Invalid request", http.StatusNotFound)
 		return
 	}
 

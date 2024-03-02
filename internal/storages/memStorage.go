@@ -41,7 +41,7 @@ type gauge struct {
 	list map[string]float64
 }
 
-func (g gauge) Process(name string, data string) error {
+func (g *gauge) Process(name string, data string) error {
 	floatValue, err := strconv.ParseFloat(data, 64)
 	if err != nil {
 		return errors.New("Metric value is not float64")
