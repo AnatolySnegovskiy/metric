@@ -1,4 +1,4 @@
-package memstorage
+package storages
 
 import (
 	"errors"
@@ -10,7 +10,7 @@ type MemStorage struct {
 	metrics map[string]StorageInterface
 }
 
-func New() *MemStorage {
+func NewMemStorage() *MemStorage {
 	storage := &MemStorage{
 		metrics: make(map[string]StorageInterface),
 	}
