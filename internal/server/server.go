@@ -10,7 +10,7 @@ import (
 type Storage interface {
 	GetMetricType(metricType string) (storages.EntityMetric, error)
 	AddMetric(metricType string, metric storages.EntityMetric)
-	Log()
+	GetList() map[string]storages.EntityMetric
 }
 
 type Server struct {
@@ -25,37 +25,9 @@ func New(s Storage) *Server {
 
 func (s *Server) Run(addr string) error {
 	mux := http.NewServeMux()
-	mux.HandleFunc(`/update/`, s.HandleMetrics)
+	mux.Handle(`/update/`, postMiddleware(http.HandlerFunc(s.writeMetricHandlers)))
+	mux.Handle(`/show/`, getMiddleware(http.HandlerFunc(s.showMetricHandlers)))
 	return http.ListenAndServe(addr, mux)
-}
-
-func (s *Server) HandleMetrics(rw http.ResponseWriter, req *http.Request) {
-	if req.Method != http.MethodPost {
-		http.Error(rw, "method not allowed", http.StatusBadRequest)
-		return
-	}
-
-	metricType, metricName, metricValue, err := parseURL(req.URL.Path)
-
-	if err != nil || metricType == "" || metricName == "" || metricValue == "" {
-		http.Error(rw, "metric name is required", http.StatusNotFound)
-		return
-	}
-
-	storage := s.storage
-	metric, err := storage.GetMetricType(metricType)
-
-	if err != nil {
-		http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusBadRequest)
-		return
-	}
-
-	if err := metric.Process(metricName, metricValue); err != nil {
-		http.Error(rw, fmt.Sprintf("failed to process metric: %s", err.Error()), http.StatusBadRequest)
-		return
-	}
-
-	storage.Log()
 }
 
 func parseURL(url string) (string, string, string, error) {
@@ -66,4 +38,26 @@ func parseURL(url string) (string, string, string, error) {
 	}
 
 	return elements[2], elements[3], elements[4], nil
+}
+
+func postMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodPost {
+			http.Error(w, "method not allowed", http.StatusBadRequest)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func getMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method != http.MethodGet {
+			http.Error(w, "method not allowed", http.StatusBadRequest)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
 }

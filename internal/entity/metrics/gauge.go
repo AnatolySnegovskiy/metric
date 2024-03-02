@@ -19,6 +19,8 @@ func (g *Gauge) Process(name string, data string) error {
 	return nil
 }
 
+func (g *Gauge) GetList() map[string]float64 { return g.list }
+
 func NewGauge() *Gauge {
 	return &Gauge{
 		list: make(map[string]float64),

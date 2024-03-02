@@ -13,6 +13,10 @@ func (m *MockMetric) Process(name, data string) error {
 	return nil
 }
 
+func (m *MockMetric) GetList() map[string]float64 {
+	// Implement mock behavior for GetList
+	return nil
+}
 func TestMemStorage_GetMetricType(t *testing.T) {
 	storage := storages.NewMemStorage()
 	mockMetric := &MockMetric{}

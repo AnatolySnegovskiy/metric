@@ -2,11 +2,11 @@ package storages
 
 import (
 	"errors"
-	"log"
 )
 
 type EntityMetric interface {
 	Process(name string, data string) error
+	GetList() map[string]float64
 }
 
 type MemStorage struct {
@@ -33,8 +33,6 @@ func (m *MemStorage) GetMetricType(metricType string) (EntityMetric, error) {
 	return mt, nil
 }
 
-func (m *MemStorage) Log() {
-	for _, v := range m.metrics {
-		log.Println(v)
-	}
+func (m *MemStorage) GetList() map[string]EntityMetric {
+	return m.metrics
 }
