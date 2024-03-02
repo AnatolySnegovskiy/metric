@@ -10,71 +10,35 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 )
 
-func TestServer_HandleMetricsOK(t *testing.T) {
+func TestServer_HandleMetrics(t *testing.T) {
 	mockStorage := storages.NewMemStorage()
 	mockStorage.AddMetric("gauge", metrics.NewGauge())
 	s := server.New(mockStorage)
-	req := httptest.NewRequest("POST", "/update/gauge/testName/10", nil)
-	rr := httptest.NewRecorder()
-	s.HandleMetrics(rr, req)
+	var req *http.Request
+	var rr *httptest.ResponseRecorder
 
-	if status := rr.Code; status != http.StatusOK {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
+	tests := []struct {
+		name   string
+		method string
+		value  string
+		want   int
+	}{
+		{name: "ok", method: http.MethodPost, value: "/update/gauge/testName/10", want: http.StatusOK},
+		{name: "not found", method: http.MethodPost, value: "/update/", want: http.StatusNotFound},
+		{name: "not found", method: http.MethodPost, value: "/update/test", want: http.StatusNotFound},
+		{name: "not found", method: http.MethodPost, value: "/update/gauge2/testName/10/test", want: http.StatusNotFound},
+		{name: "bad", method: http.MethodPost, value: "/update/gauge2/testName/10", want: http.StatusBadRequest},
+		{name: "bad", method: http.MethodGet, value: "/update/gauge2/testName/10", want: http.StatusBadRequest},
 	}
-}
-
-func TestServer_HandleMetricsNotFound(t *testing.T) {
-	mockStorage := storages.NewMemStorage()
-
-	s := server.New(mockStorage)
-	req := httptest.NewRequest("POST", "/update/", nil)
-	rr := httptest.NewRecorder()
-	s.HandleMetrics(rr, req)
-
-	if status := rr.Code; status != http.StatusNotFound {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
-
-	req = httptest.NewRequest("POST", "/update/test", nil)
-	rr = httptest.NewRecorder()
-	s.HandleMetrics(rr, req)
-
-	if status := rr.Code; status != http.StatusNotFound {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
-}
-
-func TestServer_HandleMetricsBadRequest(t *testing.T) {
-	mockStorage := storages.NewMemStorage()
-
-	s := server.New(mockStorage)
-	req := httptest.NewRequest("POST", "/update/gauge2/testName/10", nil)
-	rr := httptest.NewRecorder()
-	s.HandleMetrics(rr, req)
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
-
-	req = httptest.NewRequest("GET", "/update/gauge2/testName/10", nil)
-	rr = httptest.NewRecorder()
-	s.HandleMetrics(rr, req)
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
-	}
-
-	req = httptest.NewRequest("GET", "/update/gauge2/testName/10/TEST", nil)
-	rr = httptest.NewRecorder()
-	s.HandleMetrics(rr, req)
-
-	if status := rr.Code; status != http.StatusBadRequest {
-		t.Errorf("handler returned wrong status code: got %v want %v",
-			status, http.StatusOK)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			req = httptest.NewRequest("POST", tt.value, nil)
+			rr = httptest.NewRecorder()
+			s.HandleMetrics(rr, req)
+			if status := rr.Code; status != tt.want {
+				t.Errorf("handler returned wrong status code: got %v want %v",
+					status, http.StatusOK)
+			}
+		})
 	}
 }
