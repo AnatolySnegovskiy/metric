@@ -2,7 +2,6 @@ package services
 
 import (
 	"fmt"
-	"io"
 	"net/http"
 )
 
@@ -22,12 +21,15 @@ func sendMetric(storageType string, name string, metric any) error {
 		return err
 	}
 
-	defer func(Body io.ReadCloser) {
-		err := Body.Close()
-		if err != nil {
+	defer func() {
+		if err := resp.Body.Close(); err != nil {
 			fmt.Println(err)
-			return
 		}
-	}(resp.Body)
+	}()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+	}
+
 	return nil
 }
