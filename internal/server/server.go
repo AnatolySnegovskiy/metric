@@ -34,9 +34,9 @@ func (s *Server) HandleMetrics(rw http.ResponseWriter, req *http.Request) {
 		return
 	}
 
-	metricType, metricName, metricValue := parseURL(req.URL.Path)
+	metricType, metricName, metricValue, err := parseURL(req.URL.Path)
 
-	if metricName == "" {
+	if err != nil || metricType == "" || metricName == "" || metricValue == "" {
 		http.Error(rw, "metric name is required", http.StatusNotFound)
 		return
 	}
@@ -57,7 +57,12 @@ func (s *Server) HandleMetrics(rw http.ResponseWriter, req *http.Request) {
 	storage.Log()
 }
 
-func parseURL(url string) (string, string, string) {
+func parseURL(url string) (string, string, string, error) {
 	elements := strings.Split(url, "/")
-	return elements[2], elements[3], elements[4]
+
+	if len(elements) < 5 || len(elements) > 5 {
+		return "", "", "", fmt.Errorf("invalid url")
+	}
+
+	return elements[2], elements[3], elements[4], nil
 }
