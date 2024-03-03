@@ -9,7 +9,7 @@ import (
 var flagRunAddr string
 
 func parseFlags() {
-	flagRunAddr := flag.String("a", ":8080", "address and port to run server")
+	flag.StringVar(&flagRunAddr, "a", ":8080", "address and port to run server")
 	flag.Parse()
 
 	if flag.NArg() > 0 {
@@ -18,5 +18,5 @@ func parseFlags() {
 		os.Exit(1)
 	}
 
-	fmt.Println("flagSendAddr:", *flagRunAddr)
+	fmt.Println("flagSendAddr:", flagRunAddr)
 }

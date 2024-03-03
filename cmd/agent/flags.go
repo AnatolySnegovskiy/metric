@@ -11,10 +11,9 @@ var reportInterval int
 var pollInterval int
 
 func parseFlags() {
-	flagSendAddr := flag.String("a", ":8080", "address and port to run server")
-	pollInterval := flag.Int("p", 2, "pollInterval description")
-	reportInterval := flag.Int("r", 3, "reportInterval description")
-
+	flag.StringVar(&flagSendAddr, "a", ":8080", "address and port to run server")
+	flag.IntVar(&reportInterval, "r", 10, "reportInterval description")
+	flag.IntVar(&pollInterval, "p", 2, "pollInterval description")
 	flag.Parse()
 
 	if flag.NArg() > 0 {
@@ -23,7 +22,7 @@ func parseFlags() {
 		os.Exit(1)
 	}
 
-	fmt.Println("flagSendAddr:", *flagSendAddr)
-	fmt.Println("pollInterval:", *pollInterval)
-	fmt.Println("reportInterval:", *reportInterval)
+	fmt.Println("flagSendAddr:", flagSendAddr)
+	fmt.Println("pollInterval:", pollInterval)
+	fmt.Println("reportInterval:", reportInterval)
 }
