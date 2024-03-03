@@ -11,7 +11,7 @@ var reportInterval int
 var pollInterval int
 
 func parseFlags() {
-	flag.StringVar(&flagSendAddr, "a", ":8080", "address and port to run server")
+	flag.StringVar(&flagSendAddr, "a", "localhost:8080", "address and port to run server")
 	flag.IntVar(&reportInterval, "r", 10, "reportInterval description")
 	flag.IntVar(&pollInterval, "p", 2, "pollInterval description")
 	flag.Parse()
