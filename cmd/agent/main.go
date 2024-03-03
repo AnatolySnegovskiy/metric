@@ -8,16 +8,14 @@ import (
 	"time"
 )
 
-const pollInterval = 2
-const reportInterval = 10
-
 func main() {
 	storage := storages.NewMemStorage()
 	storage.AddMetric("gauge", metrics.NewGauge())
 	storage.AddMetric("counter", metrics.NewCounter())
+	parseFlags()
 
-	updateTicker := time.Tick(pollInterval * time.Second)
-	sendTicker := time.Tick(reportInterval * time.Second)
+	updateTicker := time.Tick(time.Duration(pollInterval) * time.Second)
+	sendTicker := time.Tick(time.Duration(reportInterval) * time.Second)
 
 	go services.UpdateStoragePeriodically(updateTicker, storage)
 	go services.SendMetricsPeriodically(sendTicker, storage)

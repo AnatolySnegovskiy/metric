@@ -12,10 +12,11 @@ func main() {
 	storage.AddMetric("gauge", metrics.NewGauge())
 	storage.AddMetric("counter", metrics.NewCounter())
 
+	parseFlags()
+	log.Println("server started on " + flagRunAddr)
 	s := server.New(storage)
-	err := s.Run(`:8080`)
 
-	if err != nil {
+	if err := s.Run(flagRunAddr); err != nil {
 		log.Fatalf("start server: %v", err)
 	}
 }
