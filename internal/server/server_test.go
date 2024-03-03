@@ -33,8 +33,8 @@ func TestServerHandlers(t *testing.T) {
 	r.NotFound(s.notFoundHandler) // H
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandlers)
 	r.Get("/", s.showAllMetricHandlers)
-	r.Get("/{metricType}", s.showMetricTypeHandlers)
-	r.Get("/{metricType}/{metricName}", s.showMetricNameHandlers)
+	r.Get("/value/{metricType}", s.showMetricTypeHandlers)
+	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
 
 	tests := []struct {
 		name       string
@@ -45,10 +45,10 @@ func TestServerHandlers(t *testing.T) {
 	}{
 		{"writeMetricHandlers", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK},
 		{"showAllMetricHandlers", r, http.MethodGet, "/", http.StatusOK},
-		{"showMetricTypeHandlers", r, http.MethodGet, "/type1", http.StatusOK},
-		{"showMetricNameHandlers", r, http.MethodGet, "/type1/name1", http.StatusOK},
-		{"showMetricTypeHandlersNotFound", r, http.MethodGet, "/type2", http.StatusNotFound},
-		{"showMetricNameHandlersNotFound", r, http.MethodGet, "/type1/name2", http.StatusNotFound},
+		{"showMetricTypeHandlers", r, http.MethodGet, "/value/type1", http.StatusOK},
+		{"showMetricNameHandlers", r, http.MethodGet, "/value/type1/name1", http.StatusOK},
+		{"showMetricTypeHandlersNotFound", r, http.MethodGet, "/value/type2", http.StatusNotFound},
+		{"showMetricNameHandlersNotFound", r, http.MethodGet, "/value/type1/name2", http.StatusNotFound},
 		{"writeMetricHandlers", r, http.MethodPost, "/update/type23/name1/10", http.StatusBadRequest},
 		{"writeMetricHandlers", r, http.MethodPost, "/update/type23/name1/10/10", http.StatusNotFound},
 	}

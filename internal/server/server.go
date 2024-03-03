@@ -27,8 +27,8 @@ func (s *Server) Run(addr string) error {
 	r.NotFound(s.notFoundHandler) // H
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandlers)
 	r.Get("/", s.showAllMetricHandlers)
-	r.Get("/{metricType}", s.showMetricTypeHandlers)
-	r.Get("/{metricType}/{metricName}", s.showMetricNameHandlers)
+	r.Get("/value/{metricType}", s.showMetricTypeHandlers)
+	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
 
 	return http.ListenAndServe(addr, r)
 }
