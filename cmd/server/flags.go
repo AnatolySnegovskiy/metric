@@ -18,5 +18,7 @@ func parseFlags() {
 		os.Exit(1)
 	}
 
-	fmt.Println("flagSendAddr:", flagRunAddr)
+	if val, ok := os.LookupEnv("ADDRESS"); ok {
+		flagRunAddr = val
+	}
 }

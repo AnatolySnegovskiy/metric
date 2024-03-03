@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 var flagSendAddr string
@@ -22,7 +23,13 @@ func parseFlags() {
 		os.Exit(1)
 	}
 
-	fmt.Println("flagSendAddr:", flagSendAddr)
-	fmt.Println("pollInterval:", pollInterval)
-	fmt.Println("reportInterval:", reportInterval)
+	if val, ok := os.LookupEnv("ADDRESS"); ok {
+		flagSendAddr = val
+	}
+	if val, ok := os.LookupEnv("REPORT_INTERVAL"); ok {
+		reportInterval, _ = strconv.Atoi(val)
+	}
+	if val, ok := os.LookupEnv("POLL_INTERVAL"); ok {
+		pollInterval, _ = strconv.Atoi(val)
+	}
 }
