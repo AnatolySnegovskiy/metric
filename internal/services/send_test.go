@@ -16,7 +16,7 @@ func TestSendMetricsPeriodically(t *testing.T) {
 	updateTicker := time.NewTicker(100 * time.Millisecond)
 	defer updateTicker.Stop()
 
-	go SendMetricsPeriodically(updateTicker.C, memStorage)
+	go SendMetricsPeriodically(":8080", updateTicker.C, memStorage)
 	time.Sleep(150 * time.Millisecond)
 
 	assert.True(t, true)

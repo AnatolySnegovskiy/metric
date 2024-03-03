@@ -6,11 +6,11 @@ import (
 	"time"
 )
 
-func SendMetricsPeriodically(ticker <-chan time.Time, s *storages.MemStorage) {
+func SendMetricsPeriodically(addr string, ticker <-chan time.Time, s *storages.MemStorage) {
 	for range ticker {
 		for storageType, storage := range s.GetList() {
 			for metricName, metric := range storage.GetList() {
-				err := sendMetric(storageType, metricName, metric)
+				err := sendMetric(addr, storageType, metricName, metric)
 				if err != nil {
 					fmt.Println("Ошибка отправки метрик:", err)
 				}

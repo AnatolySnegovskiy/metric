@@ -18,7 +18,7 @@ func main() {
 	sendTicker := time.Tick(time.Duration(reportInterval) * time.Second)
 
 	go services.UpdateStoragePeriodically(updateTicker, storage)
-	go services.SendMetricsPeriodically(sendTicker, storage)
+	go services.SendMetricsPeriodically(flagSendAddr, sendTicker, storage)
 	fmt.Println("Agent started")
 	// Ждем завершения работы программы (например, через сигнал ОС)
 	select {}

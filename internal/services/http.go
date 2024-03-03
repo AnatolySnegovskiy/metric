@@ -5,15 +5,12 @@ import (
 	"net/http"
 )
 
-const serverAddress = "http://localhost:8080"
-
-func sendMetric(storageType string, name string, metric any) error {
-	url := fmt.Sprintf("%s/update/%s/%s/%v", serverAddress, storageType, name, metric)
-	req, err := http.NewRequest("POST", url, nil)
+func sendMetric(addr string, storageType string, name string, metric any) error {
+	url := fmt.Sprintf("%s/update/%s/%s/%v", addr, storageType, name, metric)
+	req, err := http.NewRequest(http.MethodPost, url, nil)
 	if err != nil {
 		return err
 	}
-	req.Header.Set("Content-Type", "text/plain")
 
 	client := &http.Client{}
 	resp, err := client.Do(req)
