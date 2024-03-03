@@ -1,10 +1,9 @@
 package server
 
 import (
-	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
+	"github.com/go-chi/chi/v5"
 	"net/http"
-	"strings"
 )
 
 type Storage interface {
@@ -24,40 +23,12 @@ func New(s Storage) *Server {
 }
 
 func (s *Server) Run(addr string) error {
-	mux := http.NewServeMux()
-	mux.Handle(`/update/`, postMiddleware(http.HandlerFunc(s.writeMetricHandlers)))
-	mux.Handle(`/show/`, getMiddleware(http.HandlerFunc(s.showMetricHandlers)))
-	return http.ListenAndServe(addr, mux)
-}
+	r := chi.NewRouter()
+	r.NotFound(s.notFoundHandler) // H
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandlers)
+	r.Get("/", s.showAllMetricHandlers)
+	r.Get("/{metricType}", s.showMetricTypeHandlers)
+	r.Get("/{metricType}/{metricName}", s.showMetricNameHandlers)
 
-func parseURL(url string) (string, string, string, error) {
-	elements := strings.Split(url, "/")
-
-	if len(elements) < 5 || len(elements) > 5 {
-		return "", "", "", fmt.Errorf("invalid url")
-	}
-
-	return elements[2], elements[3], elements[4], nil
-}
-
-func postMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodPost {
-			http.Error(w, "method not allowed", http.StatusBadRequest)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
-}
-
-func getMiddleware(next http.Handler) http.Handler {
-	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method != http.MethodGet {
-			http.Error(w, "method not allowed", http.StatusBadRequest)
-			return
-		}
-
-		next.ServeHTTP(w, r)
-	})
+	return http.ListenAndServe(addr, r)
 }
