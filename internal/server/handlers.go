@@ -87,8 +87,7 @@ func (s *Server) showMetricNameHandlers(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	fmt.Fprintf(rw, "%s:\n", metricType)
-	fmt.Fprintf(rw, "\t%s: %v\n", metricName, storage.GetList()[metricName])
+	fmt.Fprintf(rw, "%v", storage.GetList()[metricName])
 }
 
 func (s *Server) notFoundHandler(w http.ResponseWriter, _ *http.Request) {
