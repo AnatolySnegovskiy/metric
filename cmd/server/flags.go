@@ -8,17 +8,18 @@ import (
 
 var flagRunAddr string
 
-func parseFlags() {
+func parseFlags() error {
 	flag.StringVar(&flagRunAddr, "a", "localhost:8080", "address and port to run server")
 	flag.Parse()
 
 	if flag.NArg() > 0 {
-		fmt.Println("Unknown flag:", flag.Arg(0))
 		flag.PrintDefaults()
-		os.Exit(1)
+		return fmt.Errorf("%s", flag.Arg(0))
 	}
 
 	if val, ok := os.LookupEnv("ADDRESS"); ok {
 		flagRunAddr = val
 	}
+
+	return nil
 }

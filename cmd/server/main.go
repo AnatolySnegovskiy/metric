@@ -5,18 +5,28 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/server"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"log"
+	"os"
 )
 
-func main() {
-	storage := storages.NewMemStorage()
-	storage.AddMetric("gauge", metrics.NewGauge())
-	storage.AddMetric("counter", metrics.NewCounter())
-
-	parseFlags()
-	log.Println("server started on " + flagRunAddr)
-	s := server.New(storage)
-
-	if err := s.Run(flagRunAddr); err != nil {
-		log.Fatalf("start server: %v", err)
+func handleError(err error, message string) {
+	if err != nil {
+		log.Println(message + err.Error())
+		os.Exit(1)
 	}
+}
+
+func main() {
+	s := storages.NewMemStorage()
+	s.AddMetric("gauge", metrics.NewGauge())
+	s.AddMetric("counter", metrics.NewCounter())
+
+	if err := parseFlags(); err != nil {
+		handleError(err, "error occurred while parsing flags: ")
+	}
+	if err := server.New(s).Run(flagRunAddr); err != nil {
+		handleError(err, "error occurred while running http server: ")
+	}
+
+	log.Println("server started on " + flagRunAddr)
+	os.Exit(0)
 }

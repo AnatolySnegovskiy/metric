@@ -1,22 +1,18 @@
 package services
 
 import (
-	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
-	"time"
 )
 
-func SendMetricsPeriodically(addr string, ticker <-chan time.Time, s *storages.MemStorage) {
-	for range ticker {
-		for storageType, storage := range s.GetList() {
-			for metricName, metric := range storage.GetList() {
-				err := sendMetric(addr, storageType, metricName, metric)
-				if err != nil {
-					fmt.Println("Ошибка отправки метрик:", err)
-				}
+func SendMetricsPeriodically(addr string, s *storages.MemStorage) error {
+	for storageType, storage := range s.GetList() {
+		for metricName, metric := range storage.GetList() {
+			err := sendMetric(addr, storageType, metricName, metric)
+			if err != nil {
+				return err
 			}
 		}
-
-		fmt.Println("Метрика отправлена")
 	}
+
+	return nil
 }
