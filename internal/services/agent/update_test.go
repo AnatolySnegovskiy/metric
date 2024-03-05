@@ -1,7 +1,7 @@
-package services
+package agent
 
 import (
-	mocks2 "github.com/AnatolySnegovskiy/metric/internal/services/mocks"
+	mocks2 "github.com/AnatolySnegovskiy/metric/internal/services/agent/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/mocks"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
