@@ -5,7 +5,6 @@ import (
 )
 
 //go:generate mockgen -source=mem_storage.go -destination=mocks/mem_storage_mock.go -package=mocks
-
 type EntityMetric interface {
 	Process(name string, data string) error
 	GetList() map[string]float64

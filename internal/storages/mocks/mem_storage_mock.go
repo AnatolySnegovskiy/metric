@@ -10,9 +10,8 @@
 package mocks
 
 import (
+	"github.com/golang/mock/gomock"
 	reflect "reflect"
-
-	gomock "go.uber.org/mock/gomock"
 )
 
 // MockEntityMetric is a mock of EntityMetric interface.

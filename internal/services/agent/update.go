@@ -2,19 +2,10 @@ package agent
 
 import (
 	"fmt"
-	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"reflect"
 	"runtime"
 	"time"
 )
-
-//go:generate mockgen -source=update.go -destination=mocks/update_mock.go -package=mocks
-
-type Storage interface {
-	GetMetricType(metricType string) (storages.EntityMetric, error)
-	AddMetric(metricType string, metric storages.EntityMetric)
-	GetList() map[string]storages.EntityMetric
-}
 
 var m runtime.MemStats
 var runtimeEntityArray = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFraction", "GCSys", "HeapAlloc", "HeapIdle", "HeapInuse",
@@ -22,7 +13,7 @@ var runtimeEntityArray = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFractio
 	"MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse",
 	"StackSys", "Sys", "TotalAlloc"}
 
-func UpdateStoragePeriodically(storage Storage) error {
+func updateStoragePeriodically(storage Storage) error {
 	runtime.ReadMemStats(&m)
 
 	gauge, err := storage.GetMetricType("gauge")
