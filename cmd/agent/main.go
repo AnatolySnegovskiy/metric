@@ -7,6 +7,7 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/services/agent"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"log"
+	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
@@ -42,6 +43,7 @@ func main() {
 		agent.New(
 			agent.Options{
 				Storage:        s,
+				Client:         &http.Client{},
 				PollInterval:   c.pollInterval,
 				ReportInterval: c.reportInterval,
 				SendAddr:       c.flagSendAddr,

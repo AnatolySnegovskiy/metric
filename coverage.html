@@ -57,7 +57,7 @@
 				
 				<option value="file0">github.com/AnatolySnegovskiy/metric/cmd/agent/config.go (100.0%)</option>
 				
-				<option value="file1">github.com/AnatolySnegovskiy/metric/cmd/agent/main.go (25.0%)</option>
+				<option value="file1">github.com/AnatolySnegovskiy/metric/cmd/agent/main.go (100.0%)</option>
 				
 				<option value="file2">github.com/AnatolySnegovskiy/metric/internal/entity/metrics/counter.go (100.0%)</option>
 				
@@ -65,15 +65,15 @@
 				
 				<option value="file4">github.com/AnatolySnegovskiy/metric/internal/services/agent/agent.go (100.0%)</option>
 				
-				<option value="file5">github.com/AnatolySnegovskiy/metric/internal/services/agent/metrics.go (0.0%)</option>
+				<option value="file5">github.com/AnatolySnegovskiy/metric/internal/services/agent/metrics.go (100.0%)</option>
 				
-				<option value="file6">github.com/AnatolySnegovskiy/metric/internal/services/agent/run.go (0.0%)</option>
+				<option value="file6">github.com/AnatolySnegovskiy/metric/internal/services/agent/run.go (100.0%)</option>
 				
-				<option value="file7">github.com/AnatolySnegovskiy/metric/internal/services/agent/update.go (0.0%)</option>
+				<option value="file7">github.com/AnatolySnegovskiy/metric/internal/services/agent/update.go (100.0%)</option>
 				
-				<option value="file8">github.com/AnatolySnegovskiy/metric/internal/services/server/handlers.go (79.2%)</option>
+				<option value="file8">github.com/AnatolySnegovskiy/metric/internal/services/server/handlers.go (100.0%)</option>
 				
-				<option value="file9">github.com/AnatolySnegovskiy/metric/internal/services/server/server.go (88.9%)</option>
+				<option value="file9">github.com/AnatolySnegovskiy/metric/internal/services/server/server.go (100.0%)</option>
 				
 				<option value="file10">github.com/AnatolySnegovskiy/metric/internal/storages/mem_storage.go (100.0%)</option>
 				
@@ -158,13 +158,14 @@ import (
         "github.com/AnatolySnegovskiy/metric/internal/services/agent"
         "github.com/AnatolySnegovskiy/metric/internal/storages"
         "log"
+        "net/http"
         "os"
         "os/signal"
         "syscall"
 )
 
 func handleError(err error) <span class="cov8" title="1">{
-        if err != nil </span><span class="cov0" title="0">{
+        if err != nil </span><span class="cov8" title="1">{
                 log.Println(err.Error())
                 os.Exit(1)
         }</span>
@@ -176,7 +177,7 @@ func handleShutdownSignal(quit chan os.Signal) <span class="cov8" title="1">{
         os.Exit(0)
 }</span>
 
-func main() <span class="cov0" title="0">{
+func main() <span class="cov8" title="1">{
         s := storages.NewMemStorage()
         s.AddMetric("gauge", metrics.NewGauge())
         s.AddMetric("counter", metrics.NewCounter())
@@ -193,6 +194,7 @@ func main() <span class="cov0" title="0">{
                 agent.New(
                         agent.Options{
                                 Storage:        s,
+                                Client:         &amp;http.Client{},
                                 PollInterval:   c.pollInterval,
                                 ReportInterval: c.reportInterval,
                                 SendAddr:       c.flagSendAddr,
@@ -266,17 +268,25 @@ func NewGauge() *Gauge <span class="cov8" title="1">{
 		<pre class="file" id="file4" style="display: none">package agent
 
 import (
+        "net/http"
         "time"
 )
 
+//go:generate mockgen -source=agent.go -destination=mocks/agent.go -package=mocks
+type HTTPClient interface {
+        Do(req *http.Request) (*http.Response, error)
+}
+
 type Agent struct {
+        client         HTTPClient
         storage        Storage
         pollInterval   &lt;-chan time.Time
         reportInterval &lt;-chan time.Time
-        flagSendAddr   string
+        sendAddr       string
 }
 
 type Options struct {
+        Client         HTTPClient
         Storage        Storage
         PollInterval   int
         ReportInterval int
@@ -285,10 +295,11 @@ type Options struct {
 
 func New(options Options) *Agent <span class="cov8" title="1">{
         return &amp;Agent{
+                client:         options.Client,
                 storage:        options.Storage,
                 pollInterval:   time.Tick(time.Duration(options.PollInterval) * time.Second),
                 reportInterval: time.Tick(time.Duration(options.ReportInterval) * time.Second),
-                flagSendAddr:   options.SendAddr,
+                sendAddr:       options.SendAddr,
         }
 }</span>
 </pre>
@@ -301,41 +312,28 @@ import (
         "net/http"
 )
 
-func sendMetricsPeriodically(ctx context.Context, addr string, s Storage) error <span class="cov0" title="0">{
-        for storageType, storage := range s.GetList() </span><span class="cov0" title="0">{
-                for metricName, metric := range storage.GetList() </span><span class="cov0" title="0">{
-                        err := sendMetric(ctx, addr, storageType, metricName, metric)
-                        if err != nil </span><span class="cov0" title="0">{
+func (a *Agent) sendMetricsPeriodically(ctx context.Context) error <span class="cov8" title="1">{
+        for storageType, storage := range a.storage.GetList() </span><span class="cov8" title="1">{
+                for metricName, metric := range storage.GetList() </span><span class="cov8" title="1">{
+                        url := fmt.Sprintf("http://%s/update/%s/%s/%v", a.sendAddr, storageType, metricName, metric)
+                        req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+                        resp, err := a.client.Do(req)
+
+                        if err != nil </span><span class="cov8" title="1">{
                                 return err
                         }</span>
+
+                        <span class="cov8" title="1">resp.Body.Close()
+
+                        if resp.StatusCode != http.StatusOK </span><span class="cov8" title="1">{
+                                return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
+                        }</span>
+
+                        <span class="cov8" title="1">return nil</span>
                 }
         }
 
-        <span class="cov0" title="0">return nil</span>
-}
-
-func sendMetric(ctx context.Context, addr string, storageType string, name string, metric any) error <span class="cov0" title="0">{
-        url := fmt.Sprintf("http://%s/update/%s/%s/%v", addr, storageType, name, metric)
-        req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
-        if err != nil </span><span class="cov0" title="0">{
-                return err
-        }</span>
-
-        <span class="cov0" title="0">client := &amp;http.Client{}
-        resp, err := client.Do(req)
-        if err != nil </span><span class="cov0" title="0">{
-                return err
-        }</span>
-
-        <span class="cov0" title="0">if err := resp.Body.Close(); err != nil </span><span class="cov0" title="0">{
-                return err
-        }</span>
-
-        <span class="cov0" title="0">if resp.StatusCode != http.StatusOK </span><span class="cov0" title="0">{
-                return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-        }</span>
-
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov8" title="1">return fmt.Errorf("no metrics to send")</span>
 }
 </pre>
 		
@@ -347,25 +345,23 @@ import (
         "log"
 )
 
-func (a *Agent) Run(ctx context.Context) error <span class="cov0" title="0">{
-        s := a.storage
-
-        for </span><span class="cov0" title="0">{
+func (a *Agent) Run(ctx context.Context) error <span class="cov8" title="1">{
+        for </span><span class="cov8" title="1">{
                 select </span>{
-                case &lt;-ctx.Done():<span class="cov0" title="0">
+                case &lt;-ctx.Done():<span class="cov8" title="1">
                         return nil</span>
-                case &lt;-a.pollInterval:<span class="cov0" title="0">
-                        err := updateStoragePeriodically(s)
-                        if err != nil </span><span class="cov0" title="0">{
+                case &lt;-a.pollInterval:<span class="cov8" title="1">
+                        err := a.updateStoragePeriodically()
+                        if err != nil </span><span class="cov8" title="1">{
                                 return fmt.Errorf("error occurred while updating storage: %w", err)
                         }</span>
-                        <span class="cov0" title="0">log.Println("storage updated")</span>
-                case &lt;-a.reportInterval:<span class="cov0" title="0">
-                        err := sendMetricsPeriodically(ctx, a.flagSendAddr, s)
-                        if err != nil </span><span class="cov0" title="0">{
+                        <span class="cov8" title="1">log.Println("storage updated")</span>
+                case &lt;-a.reportInterval:<span class="cov8" title="1">
+                        err := a.sendMetricsPeriodically(ctx)
+                        if err != nil </span><span class="cov8" title="1">{
                                 return fmt.Errorf("error occurred while sending metrics: %w", err)
                         }</span>
-                        <span class="cov0" title="0">log.Println("metrics sent")</span>
+                        <span class="cov8" title="1">log.Println("metrics sent")</span>
                 }
         }
 }
@@ -386,33 +382,33 @@ var runtimeEntityArray = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFractio
         "MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse",
         "StackSys", "Sys", "TotalAlloc"}
 
-func updateStoragePeriodically(storage Storage) error <span class="cov0" title="0">{
+func (a *Agent) updateStoragePeriodically() error <span class="cov8" title="1">{
         runtime.ReadMemStats(&amp;m)
 
-        gauge, err := storage.GetMetricType("gauge")
-        if err != nil </span><span class="cov0" title="0">{
+        gauge, err := a.storage.GetMetricType("gauge")
+        if err != nil </span><span class="cov8" title="1">{
                 return fmt.Errorf("error getting gauge: %w", err)
         }</span>
 
-        <span class="cov0" title="0">counter, err := storage.GetMetricType("counter")
-        if err != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">counter, err := a.storage.GetMetricType("counter")
+        if err != nil </span><span class="cov8" title="1">{
                 return fmt.Errorf("error getting counter: %w", err)
         }</span>
 
-        <span class="cov0" title="0">if counter.Process("PollCount", "1") != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if counter.Process("PollCount", "1") != nil </span><span class="cov8" title="1">{
                 return fmt.Errorf("error while processing field: PollCount")
         }</span>
-        <span class="cov0" title="0">if gauge.Process("RandomValue", fmt.Sprintf("%v", time.Now().UnixNano())) != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">if gauge.Process("RandomValue", fmt.Sprintf("%v", time.Now().UnixNano())) != nil </span><span class="cov8" title="1">{
                 return fmt.Errorf("error while processing field: RandomValue")
         }</span>
 
-        <span class="cov0" title="0">for _, field := range runtimeEntityArray </span><span class="cov0" title="0">{
-                if gauge.Process(field, fmt.Sprintf("%v", reflect.ValueOf(m).FieldByName(field))) != nil </span><span class="cov0" title="0">{
+        <span class="cov8" title="1">for _, field := range runtimeEntityArray </span><span class="cov8" title="1">{
+                if gauge.Process(field, fmt.Sprintf("%v", reflect.ValueOf(m).FieldByName(field))) != nil </span><span class="cov8" title="1">{
                         return fmt.Errorf("error while processing field: %s", field)
                 }</span>
         }
 
-        <span class="cov0" title="0">return nil</span>
+        <span class="cov8" title="1">return nil</span>
 }
 </pre>
 		
@@ -429,12 +425,7 @@ func (s *Server) writeMetricHandlers(rw http.ResponseWriter, req *http.Request) 
         metricName := chi.URLParam(req, "metricName")
         metricValue := chi.URLParam(req, "metricValue")
 
-        if metricType == "" || metricName == "" || metricValue == "" </span><span class="cov0" title="0">{
-                http.Error(rw, "metric name is required", http.StatusNotFound)
-                return
-        }</span>
-
-        <span class="cov8" title="1">storage := s.storage
+        storage := s.storage
         metric, err := storage.GetMetricType(metricType)
 
         if err != nil </span><span class="cov8" title="1">{
@@ -451,7 +442,7 @@ func (s *Server) writeMetricHandlers(rw http.ResponseWriter, req *http.Request) 
 func (s *Server) showAllMetricHandlers(rw http.ResponseWriter, req *http.Request) <span class="cov8" title="1">{
         stgList := s.storage.GetList()
 
-        if len(stgList) == 0 </span><span class="cov0" title="0">{
+        if len(stgList) == 0 </span><span class="cov8" title="1">{
                 s.notFoundHandler(rw, req)
                 return
         }</span>
@@ -467,12 +458,7 @@ func (s *Server) showAllMetricHandlers(rw http.ResponseWriter, req *http.Request
 func (s *Server) showMetricTypeHandlers(rw http.ResponseWriter, req *http.Request) <span class="cov8" title="1">{
         metricType := chi.URLParam(req, "metricType")
 
-        if metricType == "" </span><span class="cov0" title="0">{
-                s.notFoundHandler(rw, req)
-                return
-        }</span>
-
-        <span class="cov8" title="1">storage, err := s.storage.GetMetricType(metricType)
+        storage, err := s.storage.GetMetricType(metricType)
         if err != nil </span><span class="cov8" title="1">{
                 http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusNotFound)
                 return
@@ -487,14 +473,9 @@ func (s *Server) showMetricNameHandlers(rw http.ResponseWriter, req *http.Reques
         metricType := chi.URLParam(req, "metricType")
         metricName := chi.URLParam(req, "metricName")
 
-        if metricType == "" || metricName == "" </span><span class="cov0" title="0">{
-                s.notFoundHandler(rw, req)
-                return
-        }</span>
-
-        <span class="cov8" title="1">storage, err := s.storage.GetMetricType(metricType)
-        if err != nil </span><span class="cov0" title="0">{
-                http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusBadRequest)
+        storage, err := s.storage.GetMetricType(metricType)
+        if err != nil </span><span class="cov8" title="1">{
+                http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusNotFound)
                 return
         }</span>
 
@@ -550,7 +531,7 @@ func (s *Server) setupRoutes() <span class="cov8" title="1">{
         s.router.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
 }</span>
 
-func (s *Server) Run(addr string) error <span class="cov0" title="0">{
+func (s *Server) Run(addr string) error <span class="cov8" title="1">{
         return http.ListenAndServe(addr, s.router)
 }</span>
 </pre>

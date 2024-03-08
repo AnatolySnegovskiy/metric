@@ -11,11 +11,6 @@ func (s *Server) writeMetricHandlers(rw http.ResponseWriter, req *http.Request) 
 	metricName := chi.URLParam(req, "metricName")
 	metricValue := chi.URLParam(req, "metricValue")
 
-	if metricType == "" || metricName == "" || metricValue == "" {
-		http.Error(rw, "metric name is required", http.StatusNotFound)
-		return
-	}
-
 	storage := s.storage
 	metric, err := storage.GetMetricType(metricType)
 
@@ -49,11 +44,6 @@ func (s *Server) showAllMetricHandlers(rw http.ResponseWriter, req *http.Request
 func (s *Server) showMetricTypeHandlers(rw http.ResponseWriter, req *http.Request) {
 	metricType := chi.URLParam(req, "metricType")
 
-	if metricType == "" {
-		s.notFoundHandler(rw, req)
-		return
-	}
-
 	storage, err := s.storage.GetMetricType(metricType)
 	if err != nil {
 		http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusNotFound)
@@ -69,14 +59,9 @@ func (s *Server) showMetricNameHandlers(rw http.ResponseWriter, req *http.Reques
 	metricType := chi.URLParam(req, "metricType")
 	metricName := chi.URLParam(req, "metricName")
 
-	if metricType == "" || metricName == "" {
-		s.notFoundHandler(rw, req)
-		return
-	}
-
 	storage, err := s.storage.GetMetricType(metricType)
 	if err != nil {
-		http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusBadRequest)
+		http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusNotFound)
 		return
 	}
 

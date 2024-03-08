@@ -4,9 +4,11 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/go-chi/chi/v5"
+	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
 	"testing"
+	"time"
 )
 
 func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int, response string) {
@@ -27,6 +29,21 @@ func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int
 		t.Errorf("handler returned wrong response: got %v want %v",
 			rr.Body.String(), response)
 	}
+}
+
+func TestClearStorage(t *testing.T) {
+	stg := storages.NewMemStorage()
+	s := New(stg)
+	r := chi.NewRouter()
+	r.NotFound(s.notFoundHandler) // H
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandlers)
+	r.Get("/", s.showAllMetricHandlers)
+	r.Get("/value/{metricType}", s.showMetricTypeHandlers)
+	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
+
+	t.Run("test clear storage", func(t *testing.T) {
+		testHandler(t, r, http.MethodGet, "/", http.StatusNotFound, "")
+	})
 }
 
 func TestServerHandlers(t *testing.T) {
@@ -50,16 +67,20 @@ func TestServerHandlers(t *testing.T) {
 		statusCode int
 		response   string
 	}{
+
 		{"writeMetricHandlers", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK, ""},
 		{"writeMetricHandlers", r, http.MethodPost, "/update/type100/name1/10", http.StatusOK, ""},
 
+		{"writeMetricHandlers", r, http.MethodPost, "/update/type1/", http.StatusNotFound, ""},
 		{"writeMetricHandlers", r, http.MethodPost, "/update/type23/name1/10/10", http.StatusNotFound, ""},
 		{"writeMetricHandlers", r, http.MethodPost, "/type1/name1/10", http.StatusNotFound, ""},
-		
+		{"writeMetricHandlers", r, http.MethodPost, "/update/", http.StatusNotFound, ""},
+
 		{"showAllMetricHandlers", r, http.MethodGet, "/", http.StatusOK, "skip"},
 		{"showMetricTypeHandlers", r, http.MethodGet, "/value/type1", http.StatusOK, "type1:\n\tname1: 10\n"},
 		{"showMetricNameHandlers", r, http.MethodGet, "/value/type1/name1", http.StatusOK, "10"},
 
+		{"showMetricNameHandlersNotFound", r, http.MethodGet, "/value/not/name1", http.StatusNotFound, "metric type not not found\n"},
 		{"showMetricTypeHandlersNotFound", r, http.MethodGet, "/value/type2", http.StatusNotFound, "metric type type2 not found\n"},
 		{"showMetricNameHandlersNotFound", r, http.MethodGet, "/value/type1/name2", http.StatusNotFound, ""},
 		{"notFoundHandler", r, http.MethodGet, "/nonexistentpath", http.StatusNotFound, ""},
@@ -79,4 +100,18 @@ func TestServerHandlers(t *testing.T) {
 			testHandler(t, tt.router, tt.method, tt.path, tt.statusCode, tt.response)
 		})
 	}
+}
+
+func TestServer_Run(t *testing.T) {
+	s := &Server{
+		router: chi.NewRouter(),
+	}
+	quit := make(chan struct{})
+	go func() {
+		defer close(quit)
+		err := s.Run(":8080")
+		time.Sleep(1 * time.Millisecond)
+		assert.NoError(t, err, "unexpected error")
+	}()
+
 }

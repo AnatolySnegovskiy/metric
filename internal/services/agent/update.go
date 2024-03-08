@@ -13,15 +13,15 @@ var runtimeEntityArray = []string{"Alloc", "BuckHashSys", "Frees", "GCCPUFractio
 	"MSpanSys", "Mallocs", "NextGC", "NumForcedGC", "NumGC", "OtherSys", "PauseTotalNs", "StackInuse",
 	"StackSys", "Sys", "TotalAlloc"}
 
-func updateStoragePeriodically(storage Storage) error {
+func (a *Agent) updateStoragePeriodically() error {
 	runtime.ReadMemStats(&m)
 
-	gauge, err := storage.GetMetricType("gauge")
+	gauge, err := a.storage.GetMetricType("gauge")
 	if err != nil {
 		return fmt.Errorf("error getting gauge: %w", err)
 	}
 
-	counter, err := storage.GetMetricType("counter")
+	counter, err := a.storage.GetMetricType("counter")
 	if err != nil {
 		return fmt.Errorf("error getting counter: %w", err)
 	}
