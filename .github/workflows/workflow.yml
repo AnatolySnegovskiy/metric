@@ -1,42 +1,22 @@
-name: all-checks
+name: Test and coverage
+
 on:
+  pull_request:
   push:
     branches:
-      - master
-  pull_request:
-env:
-  GO_VERSION: 1.14
+      - main
+
 jobs:
-  all-checks:
-    name: checks
+  build:
     runs-on: ubuntu-latest
     steps:
-      - name: set up go ${{env.GO_VERSION}}
-        uses: actions/setup-go@v2
+      - uses: actions/checkout@v2
         with:
-          go-version: ${{env.GO_VERSION}}
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v1
+          fetch-depth: 2
+      - uses: actions/setup-go@v2
         with:
-          fetch-depth: 1
-      - name: Install build tools
-        run: go install github.com/gojuno/minimock/v3/cmd/minimock
-      - name: Run go generate
-        run: go generate ./...
-      - name: Run tests
-        run: go test -count=1 -v ./...
-      - name: Check code coverage
-        run: |
-          go test -coverprofile=coverage.tmp.out ./...
-           cat coverage.tmp.out | grep -v _mock.go > coverage.out
-           go tool cover -html=coverage.out -o coverage.html
-      - name: Add coverage.out to artifacts
-        uses: actions/upload-artifact@v1
-        with:
-          name: coverage-out
-          path: ./coverage.out
-      - name: Add coverage.html to artifacts
-        uses: actions/upload-artifact@v1
-        with:
-          name: coverage-html
-          path: ./coverage.html
+          go-version: '1.21'
+      - name: Run coverage
+        run: go test -race -coverprofile=coverage.out -covermode=atomic
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v3
