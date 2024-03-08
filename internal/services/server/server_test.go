@@ -113,5 +113,4 @@ func TestServer_Run(t *testing.T) {
 		time.Sleep(1 * time.Millisecond)
 		assert.NoError(t, err, "unexpected error")
 	}()
-
 }

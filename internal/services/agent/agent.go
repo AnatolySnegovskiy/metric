@@ -2,7 +2,6 @@ package agent
 
 import (
 	"net/http"
-	"time"
 )
 
 //go:generate mockgen -source=agent.go -destination=mocks/agent.go -package=mocks
@@ -13,8 +12,8 @@ type HTTPClient interface {
 type Agent struct {
 	client         HTTPClient
 	storage        Storage
-	pollInterval   <-chan time.Time
-	reportInterval <-chan time.Time
+	pollInterval   int
+	reportInterval int
 	sendAddr       string
 }
 
@@ -30,8 +29,8 @@ func New(options Options) *Agent {
 	return &Agent{
 		client:         options.Client,
 		storage:        options.Storage,
-		pollInterval:   time.Tick(time.Duration(options.PollInterval) * time.Second),
-		reportInterval: time.Tick(time.Duration(options.ReportInterval) * time.Second),
+		pollInterval:   options.PollInterval,
+		reportInterval: options.ReportInterval,
 		sendAddr:       options.SendAddr,
 	}
 }
