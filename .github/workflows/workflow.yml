@@ -1,41 +1,42 @@
-name: "Go Coverage"
+name: all-checks
 on:
-  pull_request:
   push:
     branches:
-      # It's important that the action also runs on merge to main
-      - main
-
+      - master
+  pull_request:
+env:
+  GO_VERSION: 1.14
 jobs:
-  coverage:
+  all-checks:
+    name: checks
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: set up go ${{env.GO_VERSION}}
+        uses: actions/setup-go@v2
         with:
-          # default fetch-depth is insufficent to find previous coverage notes
-          fetch-depth: 10
-
-      - uses: gwatts/go-coverage-action@v1
-        id: coverage
+          go-version: ${{env.GO_VERSION}}
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v1
         with:
-          # Optional coverage threshold
-          # use fail-coverage to determine what should happen below this threshold
-          coverage-threshold: 80
-
-          # collect coverage for all packages beyond the one under test
-          cover-pkg: ./...
-
-          # Ignore code-generated files when calculating coverage totals
-          ignore-pattern: |
-            \.pb\.go$
-            \_string\.go$
-
-          # A url that the html report will be accessible at, once your
-          # workflow uploads it.  Used in the pull request comment.
-          report-url: https://artifacts.example.com/go-coverage/${{ github.ref_name}}.html
-
-      - name: Upload coverage to s3
-        # ensure this runs regardless of whether the threshold is met using always()
-        if: always() && steps.coverage.outputs.report-pathname != ''
+          fetch-depth: 1
+      - name: Install build tools
+        run: go install github.com/gojuno/minimock/v3/cmd/minimock
+      - name: Run go generate
+        run: go generate ./...
+      - name: Run tests
+        run: go test -count=1 -v ./...
+      - name: Check code coverage
         run: |
-          aws s3 cp ${{ steps.coverage.outputs.report-pathname }} s3://artifacts.example.com-bucket/go-coverage/${{ github.ref_name}}.html
+          go test -coverprofile=coverage.tmp.out ./...
+           cat coverage.tmp.out | grep -v _mock.go > coverage.out
+           go tool cover -html=coverage.out -o coverage.html
+      - name: Add coverage.out to artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: coverage-out
+          path: ./coverage.out
+      - name: Add coverage.html to artifacts
+        uses: actions/upload-artifact@v1
+        with:
+          name: coverage-html
+          path: ./coverage.html
