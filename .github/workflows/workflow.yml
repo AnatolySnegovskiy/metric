@@ -12,7 +12,7 @@ jobs:
           go-version: 'stable'
       - name: Run coverage
         run: go test -race -coverprofile=coverage.txt -covermode=atomic
-        working-directory: сmd/server
+        working-directory: ../
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4-beta
         env:
