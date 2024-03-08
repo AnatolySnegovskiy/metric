@@ -1,21 +1,5 @@
-name: Test and coverage
-
-on:
-  pull_request:
-  push:
-    branches:
-      - main
-
-jobs:
-  build:
-    runs-on: ubuntu-latest
-    container: golang:1.21
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-      - name: Checkout code
-        uses: actions/setup-go@v2
-      - name: Run coverage
-        run: go test -race -coverprofile=coverage.out -covermode=atomic
-      - name: Upload coverage to Codecov
-        uses: codecov/codecov-action@v3
+- name: Upload coverage reports to Codecov
+  uses: codecov/codecov-action@v4.0.1
+  with:
+    token: ${{ secrets.CODECOV_TOKEN }}
+    slug: AnatolySnegovskiy/metric
