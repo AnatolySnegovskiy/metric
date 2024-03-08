@@ -164,10 +164,9 @@ func TestAgentReportTickerEmpty(t *testing.T) {
 			storage:        storages.NewMemStorage(),
 			sendAddr:       "testAddr",
 			client:         httpClient,
+			pollInterval:   1,
 			reportInterval: 1,
 		}
-
-		a.reportInterval = 1
 		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
 		err := a.Run(ctx)
