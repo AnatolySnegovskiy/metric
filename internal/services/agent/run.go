@@ -8,18 +8,19 @@ import (
 )
 
 func (a *Agent) Run(ctx context.Context) error {
-
+	updateTicker := time.Tick(time.Duration(a.pollInterval) * time.Second)
+	sendTicker := time.Tick(time.Duration(a.reportInterval) * time.Second)
 	for {
 		select {
 		case <-ctx.Done():
 			return nil
-		case <-time.Tick(time.Duration(a.pollInterval) * time.Second):
+		case <-updateTicker:
 			err := a.updateStoragePeriodically()
 			if err != nil {
 				return fmt.Errorf("error occurred while updating storage: %w", err)
 			}
 			log.Println("storage updated")
-		case <-time.Tick(time.Duration(a.reportInterval) * time.Second):
+		case <-sendTicker:
 			err := a.sendMetricsPeriodically(ctx)
 			if err != nil {
 				return fmt.Errorf("error occurred while sending metrics: %w", err)

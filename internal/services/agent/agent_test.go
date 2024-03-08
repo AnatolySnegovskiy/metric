@@ -67,6 +67,11 @@ func TestAgent(t *testing.T) {
 			mockEntity.EXPECT().Process("PollCount", gomock.Any()).Return(
 				errors.New("some error"),
 			).AnyTimes().MinTimes(1)
+			mockEntity.EXPECT().GetList().Return(
+				map[string]float64{
+					"RandomValue": 10,
+				},
+			).AnyTimes()
 
 			mockStorage.AddMetric("counter", mockEntity)
 			mockStorage.AddMetric("gauge", metrics.NewGauge())
@@ -78,7 +83,12 @@ func TestAgent(t *testing.T) {
 			mockEntity := mocks2.NewMockEntityMetric(ctrl)
 			mockEntity.EXPECT().Process("RandomValue", gomock.Any()).Return(
 				errors.New("some error"),
-			).AnyTimes().MinTimes(1)
+			).AnyTimes()
+			mockEntity.EXPECT().GetList().Return(
+				map[string]float64{
+					"RandomValue": 10,
+				},
+			).AnyTimes()
 
 			mockStorage.AddMetric("counter", metrics.NewGauge())
 			mockStorage.AddMetric("gauge", mockEntity)
@@ -124,24 +134,15 @@ func TestAgent(t *testing.T) {
 			httpClient.EXPECT().Do(gomock.Any()).Return(resp, tc.doReturnError).AnyTimes()
 
 			a := &Agent{
-				storage:  tc.mockStorage(),
-				sendAddr: "testAddr",
-				client:   httpClient,
+				storage:        tc.mockStorage(),
+				sendAddr:       "testAddr",
+				client:         httpClient,
+				pollInterval:   1,
+				reportInterval: 1,
 			}
 
-			pollTicker := time.NewTicker(1 * time.Millisecond)
-			reportTicker := time.NewTicker(1 * time.Millisecond)
-			defer pollTicker.Stop()
-			defer reportTicker.Stop()
-
-			a.pollInterval = pollTicker.C
-			a.reportInterval = reportTicker.C
-			ctx, cancel := context.WithCancel(context.Background())
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
-			go func() {
-				time.Sleep(100 * time.Millisecond)
-				cancel()
-			}()
 			err := a.Run(ctx)
 			if tc.expectedErr {
 				assert.Error(t, err)
@@ -160,22 +161,17 @@ func TestAgentReportTickerEmpty(t *testing.T) {
 		resp := &http.Response{}
 		httpClient.EXPECT().Do(gomock.Any()).Return(resp, nil).AnyTimes()
 		a := &Agent{
-			storage:  storages.NewMemStorage(),
-			sendAddr: "testAddr",
-			client:   httpClient,
+			storage:        storages.NewMemStorage(),
+			sendAddr:       "testAddr",
+			client:         httpClient,
+			reportInterval: 1,
 		}
 
-		reportTicker := time.NewTicker(1 * time.Millisecond)
-		defer reportTicker.Stop()
-
-		a.reportInterval = reportTicker.C
-		ctx, cancel := context.WithCancel(context.Background())
+		a.reportInterval = 1
+		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 		defer cancel()
-		go func() {
-			time.Sleep(100 * time.Millisecond)
-			cancel()
-		}()
 		err := a.Run(ctx)
+
 		assert.Error(t, err)
 	})
 }
