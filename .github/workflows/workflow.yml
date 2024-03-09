@@ -10,8 +10,9 @@ jobs:
       - uses: actions/setup-go@v4
         with:
           go-version: 'stable'
+          export: CGO_ENABLED=1
       - name: Run coverage
-        run: go test -race -coverprofile=coverage.txt -covermode=atomic
+        run: go test -race -covermode=atomic -coverprofile=coverage.out ./...
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@v4-beta
         env:
