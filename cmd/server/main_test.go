@@ -4,10 +4,7 @@ import (
 	"bou.ke/monkey"
 	"bytes"
 	"errors"
-	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
-	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/stretchr/testify/assert"
-	"io"
 	"log"
 	"os"
 	"os/signal"
@@ -17,26 +14,14 @@ import (
 )
 
 func Test_Main(t *testing.T) {
-	resetVars()
-	os.Args = []string{"cmd", "-a=127.21.10.1:8150"}
-	s := storages.NewMemStorage()
-	s.AddMetric("gauge", metrics.NewGauge())
-	s.AddMetric("counter", metrics.NewCounter())
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-
-	quit := make(chan struct{})
-
+	os.Args = []string{"cmd", "-a=localhost:8150"}
 	go func() {
-		defer close(quit)
-		go main()
-		time.Sleep(1 * time.Second)
-		_ = w.Close()
-		var buf bytes.Buffer
-		_, _ = io.Copy(&buf, r)
-		expectedOutput := "Agent started\n"
-		assert.Contains(t, buf.String(), expectedOutput, "Unexpected output. Expected: %s, got: %s", expectedOutput, buf.String())
+		main()
 	}()
+	var stdoutBuf bytes.Buffer
+	log.SetOutput(&stdoutBuf)
+	time.Sleep(1 * time.Second)
+	assert.Contains(t, stdoutBuf.String(), "server started on localhost:8150", "Expected start message not found in the console output")
 }
 
 func TestHandleShutdownSignal(t *testing.T) {

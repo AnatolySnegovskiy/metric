@@ -20,7 +20,7 @@ func handleError(err error) {
 
 func handleShutdownSignal(quit chan os.Signal) {
 	<-quit
-	fmt.Println("Agent stopped")
+	fmt.Println("server stopped")
 	os.Exit(0)
 }
 
