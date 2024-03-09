@@ -34,7 +34,7 @@ func Test_Main(t *testing.T) {
 		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = io.Copy(&buf, r)
-		expectedOutput := "Agent started\n"
+		expectedOutput := "server started on 127.21.10.1:8150"
 		assert.Contains(t, buf.String(), expectedOutput, "Unexpected output. Expected: %s, got: %s", expectedOutput, buf.String())
 	}()
 }

@@ -36,8 +36,5 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	go handleShutdownSignal(quit)
 	log.Println("server started on " + c.flagRunAddr)
-
-	if err := server.New(s).Run(c.flagRunAddr); err != nil {
-		handleError(err)
-	}
+	handleError(server.New(s).Run(c.flagRunAddr))
 }
