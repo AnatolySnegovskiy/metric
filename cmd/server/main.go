@@ -20,7 +20,7 @@ func handleError(err error) {
 
 func handleShutdownSignal(quit chan os.Signal) {
 	<-quit
-	fmt.Println("server stopped")
+	fmt.Println("Agent stopped")
 	os.Exit(0)
 }
 
@@ -36,5 +36,8 @@ func main() {
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	go handleShutdownSignal(quit)
 	log.Println("server started on " + c.flagRunAddr)
-	handleError(server.New(s).Run(c.flagRunAddr))
+
+	if err := server.New(s).Run(c.flagRunAddr); err != nil {
+		handleError(err)
+	}
 }
