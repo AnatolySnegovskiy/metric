@@ -36,9 +36,9 @@ func TestClearStorage(t *testing.T) {
 	s := New(stg)
 	r := chi.NewRouter()
 	r.NotFound(s.notFoundHandler) // H
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandlers)
-	r.Get("/", s.showAllMetricHandlers)
-	r.Get("/value/{metricType}", s.showMetricTypeHandlers)
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandler)
+	r.Get("/", s.showAllMetricHandler)
+	r.Get("/value/{metricType}", s.showMetricTypeHandler)
 	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
 
 	t.Run("test clear storage", func(t *testing.T) {
@@ -54,9 +54,9 @@ func TestServerHandlers(t *testing.T) {
 
 	r := chi.NewRouter()
 	r.NotFound(s.notFoundHandler) // H
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandlers)
-	r.Get("/", s.showAllMetricHandlers)
-	r.Get("/value/{metricType}", s.showMetricTypeHandlers)
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandler)
+	r.Get("/", s.showAllMetricHandler)
+	r.Get("/value/{metricType}", s.showMetricTypeHandler)
 	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
 
 	tests := []struct {
@@ -68,16 +68,16 @@ func TestServerHandlers(t *testing.T) {
 		response   string
 	}{
 
-		{"writeMetricHandlers", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK, ""},
-		{"writeMetricHandlers", r, http.MethodPost, "/update/type100/name1/10", http.StatusOK, ""},
+		{"writeMetricHandler", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK, ""},
+		{"writeMetricHandler", r, http.MethodPost, "/update/type100/name1/10", http.StatusOK, ""},
 
-		{"writeMetricHandlers", r, http.MethodPost, "/update/type1/", http.StatusNotFound, ""},
-		{"writeMetricHandlers", r, http.MethodPost, "/update/type23/name1/10/10", http.StatusNotFound, ""},
-		{"writeMetricHandlers", r, http.MethodPost, "/type1/name1/10", http.StatusNotFound, ""},
-		{"writeMetricHandlers", r, http.MethodPost, "/update/", http.StatusNotFound, ""},
+		{"writeMetricHandler", r, http.MethodPost, "/update/type1/", http.StatusNotFound, ""},
+		{"writeMetricHandler", r, http.MethodPost, "/update/type23/name1/10/10", http.StatusNotFound, ""},
+		{"writeMetricHandler", r, http.MethodPost, "/type1/name1/10", http.StatusNotFound, ""},
+		{"writeMetricHandler", r, http.MethodPost, "/update/", http.StatusNotFound, ""},
 
-		{"showAllMetricHandlers", r, http.MethodGet, "/", http.StatusOK, "skip"},
-		{"showMetricTypeHandlers", r, http.MethodGet, "/value/type1", http.StatusOK, "type1:\n\tname1: 10\n"},
+		{"showAllMetricHandler", r, http.MethodGet, "/", http.StatusOK, "skip"},
+		{"showMetricTypeHandler", r, http.MethodGet, "/value/type1", http.StatusOK, "type1:\n\tname1: 10\n"},
 		{"showMetricNameHandlers", r, http.MethodGet, "/value/type1/name1", http.StatusOK, "10"},
 
 		{"showMetricNameHandlersNotFound", r, http.MethodGet, "/value/not/name1", http.StatusNotFound, "metric type not not found\n"},
@@ -87,12 +87,12 @@ func TestServerHandlers(t *testing.T) {
 		{"showMetricTypeHandlersNotFound", r, http.MethodGet, "/value/nonexistenttype", http.StatusNotFound, "metric type nonexistenttype not found\n"},
 
 		{"writeMetricHandlersBadRequest", r, http.MethodPost, "/update/type1/name1/invalidValue", http.StatusBadRequest, "failed to process metric: metric value is not int\n"},
-		{"writeMetricHandlers", r, http.MethodPost, "/update/type23/name1/10", http.StatusBadRequest, "metric type type23 not found\n"},
-		{"writeMetricHandlers", r, http.MethodPost, "/", http.StatusMethodNotAllowed, ""},
+		{"writeMetricHandler", r, http.MethodPost, "/update/type23/name1/10", http.StatusBadRequest, "metric type type23 not found\n"},
+		{"writeMetricHandler", r, http.MethodPost, "/", http.StatusMethodNotAllowed, ""},
 		{"methodNotAllowedHandler", r, http.MethodPut, "/", http.StatusMethodNotAllowed, ""},
-		{"writeMetricHandlers", r, http.MethodConnect, "/", http.StatusMethodNotAllowed, ""},
+		{"writeMetricHandler", r, http.MethodConnect, "/", http.StatusMethodNotAllowed, ""},
 		{"methodNotAllowedHandler", r, http.MethodDelete, "/", http.StatusMethodNotAllowed, ""},
-		{"writeMetricHandlers", r, http.MethodHead, "/", http.StatusMethodNotAllowed, ""},
+		{"writeMetricHandler", r, http.MethodHead, "/", http.StatusMethodNotAllowed, ""},
 	}
 
 	for _, tt := range tests {

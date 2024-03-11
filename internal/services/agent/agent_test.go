@@ -5,10 +5,10 @@ import (
 	"errors"
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
-	mocks3 "github.com/AnatolySnegovskiy/metric/internal/services/agent/mocks"
-	"github.com/AnatolySnegovskiy/metric/internal/services/server/mocks"
+	agentmocks "github.com/AnatolySnegovskiy/metric/internal/services/agent/mocks"
+	servermocks "github.com/AnatolySnegovskiy/metric/internal/services/server/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
-	mocks2 "github.com/AnatolySnegovskiy/metric/internal/storages/mocks"
+	storagesmocks "github.com/AnatolySnegovskiy/metric/internal/storages/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"net/http"
@@ -18,7 +18,7 @@ import (
 
 func TestNew(t *testing.T) {
 	options := Options{
-		Storage:        mocks.NewMockStorage(gomock.NewController(t)),
+		Storage:        servermocks.NewMockStorage(gomock.NewController(t)),
 		PollInterval:   10,
 		ReportInterval: 20,
 		SendAddr:       "example.com:1234",
@@ -63,7 +63,7 @@ func TestAgent(t *testing.T) {
 		{"ErrorPollPollCount", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
-			mockEntity := mocks2.NewMockEntityMetric(ctrl)
+			mockEntity := storagesmocks.NewMockEntityMetric(ctrl)
 			mockEntity.EXPECT().Process("PollCount", gomock.Any()).Return(
 				errors.New("some error"),
 			).AnyTimes().MinTimes(1)
@@ -80,7 +80,7 @@ func TestAgent(t *testing.T) {
 		{"ErrorPollRandomValue", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
-			mockEntity := mocks2.NewMockEntityMetric(ctrl)
+			mockEntity := storagesmocks.NewMockEntityMetric(ctrl)
 			mockEntity.EXPECT().Process("RandomValue", gomock.Any()).Return(
 				errors.New("some error"),
 			).AnyTimes()
@@ -97,7 +97,7 @@ func TestAgent(t *testing.T) {
 		{"ErrorPollRuntimeEntityArray", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
-			mockEntity := mocks2.NewMockEntityMetric(ctrl)
+			mockEntity := storagesmocks.NewMockEntityMetric(ctrl)
 			mockEntity.EXPECT().Process("RandomValue", gomock.Any()).Return(
 				nil,
 			).AnyTimes().MinTimes(1)
@@ -128,7 +128,7 @@ func TestAgent(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			ctrl := gomock.NewController(t)
 			defer ctrl.Finish()
-			httpClient := mocks3.NewMockHTTPClient(ctrl)
+			httpClient := agentmocks.NewMockHTTPClient(ctrl)
 
 			resp := &http.Response{StatusCode: tc.statusCode, Body: http.NoBody}
 			httpClient.EXPECT().Do(gomock.Any()).Return(resp, tc.doReturnError).AnyTimes()
@@ -157,7 +157,7 @@ func TestAgentReportTickerEmpty(t *testing.T) {
 	t.Run("EmptyStorage", func(t *testing.T) {
 		ctrl := gomock.NewController(t)
 		defer ctrl.Finish()
-		httpClient := mocks3.NewMockHTTPClient(ctrl)
+		httpClient := agentmocks.NewMockHTTPClient(ctrl)
 		resp := &http.Response{}
 		httpClient.EXPECT().Do(gomock.Any()).Return(resp, nil).AnyTimes()
 		a := &Agent{

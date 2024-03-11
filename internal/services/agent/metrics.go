@@ -17,7 +17,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 				return err
 			}
 
-			resp.Body.Close()
+			defer resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
 				return fmt.Errorf("unexpected status code: %d", resp.StatusCode)

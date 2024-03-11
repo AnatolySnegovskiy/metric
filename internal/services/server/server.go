@@ -6,7 +6,6 @@ import (
 	"net/http"
 )
 
-//go:generate mockgen -source=server.go -destination=mocks/server_mock.go -package=mocks
 type Storage interface {
 	GetMetricType(metricType string) (storages.EntityMetric, error)
 	AddMetric(metricType string, metric storages.EntityMetric)
@@ -29,9 +28,9 @@ func New(s Storage) *Server {
 
 func (s *Server) setupRoutes() {
 	s.router.NotFound(s.notFoundHandler)
-	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandlers)
-	s.router.Get("/", s.showAllMetricHandlers)
-	s.router.Get("/value/{metricType}", s.showMetricTypeHandlers)
+	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandler)
+	s.router.Get("/", s.showAllMetricHandler)
+	s.router.Get("/value/{metricType}", s.showMetricTypeHandler)
 	s.router.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
 }
 

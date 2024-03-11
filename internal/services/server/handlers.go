@@ -6,7 +6,7 @@ import (
 	"net/http"
 )
 
-func (s *Server) writeMetricHandlers(rw http.ResponseWriter, req *http.Request) {
+func (s *Server) writeMetricHandler(rw http.ResponseWriter, req *http.Request) {
 	metricType := chi.URLParam(req, "metricType")
 	metricName := chi.URLParam(req, "metricName")
 	metricValue := chi.URLParam(req, "metricValue")
@@ -25,7 +25,7 @@ func (s *Server) writeMetricHandlers(rw http.ResponseWriter, req *http.Request) 
 	}
 }
 
-func (s *Server) showAllMetricHandlers(rw http.ResponseWriter, req *http.Request) {
+func (s *Server) showAllMetricHandler(rw http.ResponseWriter, req *http.Request) {
 	stgList := s.storage.GetList()
 
 	if len(stgList) == 0 {
@@ -41,7 +41,7 @@ func (s *Server) showAllMetricHandlers(rw http.ResponseWriter, req *http.Request
 	}
 }
 
-func (s *Server) showMetricTypeHandlers(rw http.ResponseWriter, req *http.Request) {
+func (s *Server) showMetricTypeHandler(rw http.ResponseWriter, req *http.Request) {
 	metricType := chi.URLParam(req, "metricType")
 
 	storage, err := s.storage.GetMetricType(metricType)
