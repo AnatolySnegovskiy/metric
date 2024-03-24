@@ -5,8 +5,7 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/services/server"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
-	"github.com/gookit/slog"
-	"github.com/gookit/slog/handler"
+	"go.uber.org/zap"
 	"os"
 	"os/signal"
 	"syscall"
@@ -26,10 +25,7 @@ func handleShutdownSignal(quit chan os.Signal) {
 }
 
 func main() {
-	logger := slog.New()
-	h := handler.NewConsoleHandler(slog.AllLevels)
-	logger.PushHandlers(h)
-
+	logger, _ := zap.NewProduction()
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge())
 	s.AddMetric("counter", metrics.NewCounter())
@@ -42,5 +38,5 @@ func main() {
 	go handleShutdownSignal(quit)
 	logger.Info("server started on " + c.flagRunAddr)
 
-	handleError(server.New(s, logger).Run(c.flagRunAddr))
+	handleError(server.New(s, logger.Sugar()).Run(c.flagRunAddr))
 }
