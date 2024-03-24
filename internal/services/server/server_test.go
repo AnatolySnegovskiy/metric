@@ -54,6 +54,7 @@ func TestServerHandlers(t *testing.T) {
 	s := New(stg, slog.New())
 
 	r := chi.NewRouter()
+	r.Use(s.logMiddleware)
 	r.NotFound(s.notFoundHandler) // H
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandler)
 	r.Get("/", s.showAllMetricHandler)
