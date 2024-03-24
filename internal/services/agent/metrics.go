@@ -22,10 +22,8 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			if resp.StatusCode != http.StatusOK {
 				return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
 			}
-
-			return nil
 		}
 	}
 
-	return fmt.Errorf("no metrics to send")
+	return nil
 }

@@ -3,6 +3,7 @@ package server
 import (
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/go-chi/chi/v5"
+	"github.com/gookit/gsr"
 	"net/http"
 )
 
@@ -15,18 +16,21 @@ type Storage interface {
 type Server struct {
 	storage Storage
 	router  *chi.Mux
+	logger  gsr.GenLogger
 }
 
-func New(s Storage) *Server {
+func New(s Storage, l gsr.GenLogger) *Server {
 	server := &Server{
 		storage: s,
 		router:  chi.NewRouter(),
+		logger:  l,
 	}
 	server.setupRoutes()
 	return server
 }
 
 func (s *Server) setupRoutes() {
+	s.router.Use(s.logMiddleware)
 	s.router.NotFound(s.notFoundHandler)
 	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandler)
 	s.router.Get("/", s.showAllMetricHandler)
