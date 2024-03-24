@@ -4,6 +4,7 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/go-chi/chi/v5"
+	"github.com/gookit/slog"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -33,9 +34,9 @@ func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int
 
 func TestClearStorage(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg)
+	s := New(stg, slog.New())
 	r := chi.NewRouter()
-	r.NotFound(s.notFoundHandler) // H
+	r.NotFound(s.notFoundHandler)
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandler)
 	r.Get("/", s.showAllMetricHandler)
 	r.Get("/value/{metricType}", s.showMetricTypeHandler)
@@ -50,7 +51,7 @@ func TestServerHandlers(t *testing.T) {
 	stg := storages.NewMemStorage()
 	stg.AddMetric("type1", metrics.NewCounter())
 	stg.AddMetric("type100", metrics.NewCounter())
-	s := New(stg)
+	s := New(stg, slog.New())
 
 	r := chi.NewRouter()
 	r.NotFound(s.notFoundHandler) // H
