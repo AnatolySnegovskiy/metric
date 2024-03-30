@@ -39,6 +39,11 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 	storage := s.storage
 	metric, err := storage.GetMetricType(metricDTO.MType)
 
+	if err != nil {
+		http.Error(rw, fmt.Sprintf("metric type %s not found", metricDTO.MType), http.StatusNotFound)
+		return
+	}
+
 	var value string
 	if metricDTO.Delta != nil {
 		value = strconv.FormatInt(*metricDTO.Delta, 10)
