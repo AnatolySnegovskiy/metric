@@ -28,7 +28,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 			resp, _ := a.client.Do(req)
-			
+
 			defer resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
