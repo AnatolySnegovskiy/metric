@@ -51,7 +51,10 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	metric.Process(metricDTO.ID, value)
+	if err := metric.Process(metricDTO.ID, value); err != nil {
+		http.Error(rw, fmt.Sprintf("failed to process metric: %s", err.Error()), http.StatusBadRequest)
+		return
+	}
 }
 
 func (s *Server) showAllMetricHandler(rw http.ResponseWriter, req *http.Request) {
