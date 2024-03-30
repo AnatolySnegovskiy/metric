@@ -68,6 +68,7 @@ func TestServerHandlers(t *testing.T) {
 	stg.AddMetric("type100", metrics.NewCounter())
 	stg.AddMetric("typePostData", metrics.NewCounter())
 	stg.AddMetric("gaugeValue", metrics.NewGauge())
+	stg.AddMetric("zero", metrics.NewGauge())
 	s := New(stg, slog.New())
 
 	r := chi.NewRouter()
@@ -111,7 +112,7 @@ func TestServerHandlers(t *testing.T) {
 	})
 
 	bodyMap["typePostDataZero"], _ = easyjson.Marshal(dto.Metrics{
-		MType: "typePostData",
+		MType: "zero",
 		ID:    "test",
 	})
 
@@ -151,6 +152,7 @@ func TestServerHandlers(t *testing.T) {
 		{"writeGetMetricHandler", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":10}", bodyMap["getPostValue"], "application/json"},
 
 		{"writeGetMetricHandler", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"gauge\",\"value\":10}", bodyMap["getPostValueGauge"], "application/json"},
+		{"writeGetMetricHandler", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"zero\",\"delta\":0}", bodyMap["typePostDataZero"], "application/json"},
 
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusBadRequest, "metric type unknown not found\n", bodyMap["unknown"], "application/json"},
 
