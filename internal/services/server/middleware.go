@@ -41,6 +41,11 @@ func (s *Server) logMiddleware(next http.Handler) http.Handler {
 		}
 
 		start := time.Now()
+
+		if r.ContentLength == 0 {
+			r.Body = http.NoBody
+		}
+
 		b, _ := io.ReadAll(r.Body)
 		defer r.Body.Close()
 

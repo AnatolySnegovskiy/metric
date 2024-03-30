@@ -72,6 +72,7 @@ func TestServerHandlers(t *testing.T) {
 	r.Use(s.logMiddleware)
 	r.NotFound(s.notFoundHandler) // H
 	r.With(s.JsonContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
+	r.With(s.JsonContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeGetMetricHandler)
 	r.Get("/", s.showAllMetricHandler)
 	r.Get("/value/{metricType}", s.showMetricTypeHandler)
@@ -101,6 +102,11 @@ func TestServerHandlers(t *testing.T) {
 		Value: float64Ptr,
 	})
 
+	bodyMap["getPostValue"], _ = easyjson.Marshal(dto.Metrics{
+		MType: "typePostData",
+		ID:    "test",
+	})
+
 	tests := []struct {
 		name        string
 		router      chi.Router
@@ -113,6 +119,9 @@ func TestServerHandlers(t *testing.T) {
 	}{
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusBadRequest, "bad request\n", bodyMap["typePostData"], ""},
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "", bodyMap["typePostData"], "application/json"},
+
+		{"writeGetMetricHandler", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":20}", bodyMap["getPostValue"], "application/json"},
+
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusNotFound, "failed to process Value and Delta is empty\n", bodyMap["unknown"], "application/json"},
 
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK, "", nil, ""},
