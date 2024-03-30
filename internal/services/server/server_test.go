@@ -63,10 +63,11 @@ func TestClearStorage(t *testing.T) {
 
 func TestServerHandlers(t *testing.T) {
 	stg := storages.NewMemStorage()
-	stg.AddMetric("gauge", metrics.NewCounter())
+	stg.AddMetric("gauge", metrics.NewGauge())
 	stg.AddMetric("type1", metrics.NewCounter())
 	stg.AddMetric("type100", metrics.NewCounter())
 	stg.AddMetric("typePostData", metrics.NewCounter())
+	stg.AddMetric("gaugeValue", metrics.NewGauge())
 	s := New(stg, slog.New())
 
 	r := chi.NewRouter()
@@ -100,6 +101,12 @@ func TestServerHandlers(t *testing.T) {
 		MType: "typePostData",
 		ID:    "test",
 		Delta: int64Ptr,
+		Value: float64Ptr,
+	})
+
+	bodyMap["typePostDataValue"], _ = easyjson.Marshal(dto.Metrics{
+		MType: "gaugeValue",
+		ID:    "test",
 		Value: float64Ptr,
 	})
 
@@ -140,6 +147,7 @@ func TestServerHandlers(t *testing.T) {
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusNotFound, "failed to process Value and Delta is empty\n", bodyMap["typePostDataZero"], "application/json"},
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "", bodyMap["typePostData"], "application/json"},
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "", bodyMap["typePostDataGauge"], "application/json"},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "", bodyMap["typePostDataValue"], "application/json"},
 
 		{"writeGetMetricHandler", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":20}", bodyMap["getPostValue"], "application/json"},
 

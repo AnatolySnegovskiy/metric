@@ -57,10 +57,7 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	if err := metric.Process(metricDTO.ID, value); err != nil {
-		http.Error(rw, fmt.Sprintf("failed to process metric: %s", err.Error()), http.StatusBadRequest)
-		return
-	}
+	_ = metric.Process(metricDTO.ID, value)
 }
 
 func (s *Server) showAllMetricHandler(rw http.ResponseWriter, req *http.Request) {
@@ -149,7 +146,11 @@ func (s *Server) notFoundHandler(w http.ResponseWriter, _ *http.Request) {
 
 func getMetricDto(req *http.Request) (*dto.Metrics, error) {
 	metricDTO := &dto.Metrics{}
-	rawBytes, _ := io.ReadAll(req.Body)
+	rawBytes, err := io.ReadAll(req.Body)
+	
+	if err != nil {
+		return nil, fmt.Errorf("failed to read body: %s", err.Error())
+	}
 
 	if err := easyjson.Unmarshal(rawBytes, metricDTO); err != nil {
 		return nil, fmt.Errorf("failed to unmarshal body: %s", err.Error())
