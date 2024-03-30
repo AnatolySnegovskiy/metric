@@ -31,7 +31,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			resp, err := a.client.Do(req)
 
 			if err != nil {
-				return err
+				return fmt.Errorf("client do error: %w", err)
 			}
 
 			defer resp.Body.Close()
