@@ -32,7 +32,8 @@ func New(s Storage, l gsr.GenLogger) *Server {
 func (s *Server) setupRoutes() {
 	s.router.Use(s.logMiddleware)
 	s.router.NotFound(s.notFoundHandler)
-	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandler)
+	s.router.With(s.JsonContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
+	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeGetMetricHandler)
 	s.router.Get("/", s.showAllMetricHandler)
 	s.router.Get("/value/{metricType}", s.showMetricTypeHandler)
 	s.router.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)

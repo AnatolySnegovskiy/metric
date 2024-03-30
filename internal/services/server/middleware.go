@@ -1,6 +1,8 @@
 package server
 
 import (
+	"bytes"
+	"io"
 	"net/http"
 	"time"
 )
@@ -39,10 +41,32 @@ func (s *Server) logMiddleware(next http.Handler) http.Handler {
 		}
 
 		start := time.Now()
+		b, _ := io.ReadAll(r.Body)
+		defer r.Body.Close()
+
+		r.Body = io.NopCloser(bytes.NewBuffer(b))
 		next.ServeHTTP(&lw, r)
+
 		duration := time.Since(start)
 
-		s.logger.Infof("request method: %s; uri: %s; duration: %s;", r.Method, r.RequestURI, duration)
+		s.logger.Infof(
+			"request method: %s; uri: %s; duration: %s; request size: %d, request body: %s",
+			r.Method,
+			r.RequestURI,
+			duration,
+			r.ContentLength,
+			string(b),
+		)
+
 		s.logger.Infof("response status: %d; size: %d;", responseData.status, responseData.size)
+	})
+}
+
+func (s *Server) JsonContentTypeMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Header.Get("Content-Type") != "application/json" {
+			http.Error(w, "bad request", http.StatusBadRequest)
+		}
+		next.ServeHTTP(w, r)
 	})
 }

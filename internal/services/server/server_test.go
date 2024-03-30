@@ -1,10 +1,13 @@
 package server
 
 import (
+	"bytes"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
+	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/go-chi/chi/v5"
 	"github.com/gookit/slog"
+	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
@@ -12,10 +15,21 @@ import (
 	"time"
 )
 
-func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int, response string) {
+func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int, response string, requestBody []byte, contentType string) {
 	req, err := http.NewRequest(method, path, nil)
 	if err != nil {
 		t.Fatal(err)
+	}
+
+	if method == http.MethodPost && requestBody != nil {
+		req, err = http.NewRequest(method, path, bytes.NewBuffer(requestBody))
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	if contentType != "" {
+		req.Header.Set("Content-Type", contentType)
 	}
 
 	rr := httptest.NewRecorder()
@@ -37,13 +51,13 @@ func TestClearStorage(t *testing.T) {
 	s := New(stg, slog.New())
 	r := chi.NewRouter()
 	r.NotFound(s.notFoundHandler)
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandler)
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeGetMetricHandler)
 	r.Get("/", s.showAllMetricHandler)
 	r.Get("/value/{metricType}", s.showMetricTypeHandler)
 	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
 
 	t.Run("test clear storage", func(t *testing.T) {
-		testHandler(t, r, http.MethodGet, "/", http.StatusNotFound, "")
+		testHandler(t, r, http.MethodGet, "/", http.StatusNotFound, "", nil, "")
 	})
 }
 
@@ -51,55 +65,85 @@ func TestServerHandlers(t *testing.T) {
 	stg := storages.NewMemStorage()
 	stg.AddMetric("type1", metrics.NewCounter())
 	stg.AddMetric("type100", metrics.NewCounter())
+	stg.AddMetric("typePostData", metrics.NewCounter())
 	s := New(stg, slog.New())
 
 	r := chi.NewRouter()
 	r.Use(s.logMiddleware)
 	r.NotFound(s.notFoundHandler) // H
-	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeMetricHandler)
+	r.With(s.JsonContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
+	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeGetMetricHandler)
 	r.Get("/", s.showAllMetricHandler)
 	r.Get("/value/{metricType}", s.showMetricTypeHandler)
 	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
 
+	bodyMap := map[string][]byte{}
+
+	bodyMap["unknown"], _ = easyjson.Marshal(dto.Metrics{
+		MType: "unknown",
+		ID:    "unknown",
+		Delta: nil,
+		Value: nil,
+	})
+
+	intValue := 10
+	int64Ptr := new(int64)
+	*int64Ptr = int64(intValue)
+
+	floatValue := 10.10
+	float64Ptr := new(float64)
+	*float64Ptr = float64(floatValue)
+
+	bodyMap["typePostData"], _ = easyjson.Marshal(dto.Metrics{
+		MType: "typePostData",
+		ID:    "test",
+		Delta: int64Ptr,
+		Value: float64Ptr,
+	})
+
 	tests := []struct {
-		name       string
-		router     chi.Router
-		method     string
-		path       string
-		statusCode int
-		response   string
+		name        string
+		router      chi.Router
+		method      string
+		path        string
+		statusCode  int
+		response    string
+		requestBody []byte
+		contentType string
 	}{
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusBadRequest, "bad request\n", bodyMap["typePostData"], ""},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "", bodyMap["typePostData"], "application/json"},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusNotFound, "failed to process Value and Delta is empty\n", bodyMap["unknown"], "application/json"},
 
-		{"writeMetricHandler", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK, ""},
-		{"writeMetricHandler", r, http.MethodPost, "/update/type100/name1/10", http.StatusOK, ""},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK, "", nil, ""},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/type100/name1/10", http.StatusOK, "", nil, ""},
 
-		{"writeMetricHandler", r, http.MethodPost, "/update/type1/", http.StatusNotFound, ""},
-		{"writeMetricHandler", r, http.MethodPost, "/update/type23/name1/10/10", http.StatusNotFound, ""},
-		{"writeMetricHandler", r, http.MethodPost, "/type1/name1/10", http.StatusNotFound, ""},
-		{"writeMetricHandler", r, http.MethodPost, "/update/", http.StatusNotFound, ""},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/type1/", http.StatusNotFound, "", nil, ""},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/type23/name1/10/10", http.StatusNotFound, "", nil, ""},
+		{"writeGetMetricHandler", r, http.MethodPost, "/type1/name1/10", http.StatusNotFound, "", nil, ""},
 
-		{"showAllMetricHandler", r, http.MethodGet, "/", http.StatusOK, "skip"},
-		{"showMetricTypeHandler", r, http.MethodGet, "/value/type1", http.StatusOK, "type1:\n\tname1: 10\n"},
-		{"showMetricNameHandlers", r, http.MethodGet, "/value/type1/name1", http.StatusOK, "10"},
+		{"showAllMetricHandler", r, http.MethodGet, "/", http.StatusOK, "skip", nil, ""},
+		{"showMetricTypeHandler", r, http.MethodGet, "/value/type1", http.StatusOK, "type1:\n\tname1: 10\n", nil, ""},
+		{"showMetricNameHandlers", r, http.MethodGet, "/value/type1/name1", http.StatusOK, "10", nil, ""},
 
-		{"showMetricNameHandlersNotFound", r, http.MethodGet, "/value/not/name1", http.StatusNotFound, "metric type not not found\n"},
-		{"showMetricTypeHandlersNotFound", r, http.MethodGet, "/value/type2", http.StatusNotFound, "metric type type2 not found\n"},
-		{"showMetricNameHandlersNotFound", r, http.MethodGet, "/value/type1/name2", http.StatusNotFound, ""},
-		{"notFoundHandler", r, http.MethodGet, "/nonexistentpath", http.StatusNotFound, ""},
-		{"showMetricTypeHandlersNotFound", r, http.MethodGet, "/value/nonexistenttype", http.StatusNotFound, "metric type nonexistenttype not found\n"},
+		{"showMetricNameHandlersNotFound", r, http.MethodGet, "/value/not/name1", http.StatusNotFound, "metric type not not found\n", nil, ""},
+		{"showMetricTypeHandlersNotFound", r, http.MethodGet, "/value/type2", http.StatusNotFound, "metric type type2 not found\n", nil, ""},
+		{"showMetricNameHandlersNotFound", r, http.MethodGet, "/value/type1/name2", http.StatusNotFound, "", nil, ""},
+		{"notFoundHandler", r, http.MethodGet, "/nonexistentpath", http.StatusNotFound, "", nil, ""},
+		{"showMetricTypeHandlersNotFound", r, http.MethodGet, "/value/nonexistenttype", http.StatusNotFound, "metric type nonexistenttype not found\n", nil, ""},
 
-		{"writeMetricHandlersBadRequest", r, http.MethodPost, "/update/type1/name1/invalidValue", http.StatusBadRequest, "failed to process metric: metric value is not int\n"},
-		{"writeMetricHandler", r, http.MethodPost, "/update/type23/name1/10", http.StatusBadRequest, "metric type type23 not found\n"},
-		{"writeMetricHandler", r, http.MethodPost, "/", http.StatusMethodNotAllowed, ""},
-		{"methodNotAllowedHandler", r, http.MethodPut, "/", http.StatusMethodNotAllowed, ""},
-		{"writeMetricHandler", r, http.MethodConnect, "/", http.StatusMethodNotAllowed, ""},
-		{"methodNotAllowedHandler", r, http.MethodDelete, "/", http.StatusMethodNotAllowed, ""},
-		{"writeMetricHandler", r, http.MethodHead, "/", http.StatusMethodNotAllowed, ""},
+		{"writeMetricHandlersBadRequest", r, http.MethodPost, "/update/type1/name1/invalidValue", http.StatusBadRequest, "failed to process metric: metric value is not int\n", nil, ""},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/type23/name1/10", http.StatusBadRequest, "metric type type23 not found\n", nil, ""},
+		{"writeGetMetricHandler", r, http.MethodPost, "/", http.StatusMethodNotAllowed, "", nil, ""},
+		{"methodNotAllowedHandler", r, http.MethodPut, "/", http.StatusMethodNotAllowed, "", nil, ""},
+		{"writeGetMetricHandler", r, http.MethodConnect, "/", http.StatusMethodNotAllowed, "", nil, ""},
+		{"methodNotAllowedHandler", r, http.MethodDelete, "/", http.StatusMethodNotAllowed, "", nil, ""},
+		{"writeGetMetricHandler", r, http.MethodHead, "/", http.StatusMethodNotAllowed, "", nil, ""},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testHandler(t, tt.router, tt.method, tt.path, tt.statusCode, tt.response)
+			testHandler(t, tt.router, tt.method, tt.path, tt.statusCode, tt.response, tt.requestBody, tt.contentType)
 		})
 	}
 }
