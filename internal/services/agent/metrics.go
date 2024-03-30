@@ -27,13 +27,8 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			body, _ := easyjson.Marshal(metricDto)
 			req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
-
-			resp, err := a.client.Do(req)
-
-			if err != nil {
-				return fmt.Errorf("failed to send metrics to %s: connection closed unexpectedly: %v", url, err)
-			}
-
+			resp, _ := a.client.Do(req)
+			
 			defer resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
