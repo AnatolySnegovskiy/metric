@@ -37,11 +37,6 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	if metricDTO == nil || metricDTO.MType == "" {
-		http.Error(rw, "metric type is empty", http.StatusBadRequest)
-		return
-	}
-
 	storage := s.storage
 	metric, err := storage.GetMetricType(metricDTO.MType)
 
@@ -133,6 +128,11 @@ func (s *Server) showPostMetricHandler(rw http.ResponseWriter, req *http.Request
 	}
 
 	metric := storage.GetList()[metricName]
+	
+	if metric == 0 {
+		s.notFoundHandler(rw, req)
+		return
+	}
 
 	if metricDTO.MType == "gauge" {
 		metricDTO.Value = &metric
