@@ -1,8 +1,6 @@
 package server
 
 import (
-	"bytes"
-	"io"
 	"net/http"
 	"time"
 )
@@ -41,26 +39,16 @@ func (s *Server) logMiddleware(next http.Handler) http.Handler {
 		}
 
 		start := time.Now()
-
-		if r.ContentLength == 0 {
-			r.Body = http.NoBody
-		}
-
-		b, _ := io.ReadAll(r.Body)
-		defer r.Body.Close()
-
-		r.Body = io.NopCloser(bytes.NewBuffer(b))
 		next.ServeHTTP(&lw, r)
 
 		duration := time.Since(start)
 
 		s.logger.Infof(
-			"request method: %s; uri: %s; duration: %s; request size: %d, request body: %s",
+			"request method: %s; uri: %s; duration: %s; request size: %d,",
 			r.Method,
 			r.RequestURI,
 			duration,
 			r.ContentLength,
-			string(b),
 		)
 
 		s.logger.Infof("response status: %d; size: %d;", responseData.status, responseData.size)
