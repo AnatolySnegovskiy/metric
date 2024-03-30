@@ -71,8 +71,8 @@ func TestServerHandlers(t *testing.T) {
 	r := chi.NewRouter()
 	r.Use(s.logMiddleware)
 	r.NotFound(s.notFoundHandler) // H
-	r.With(s.JsonContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
-	r.With(s.JsonContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)
+	r.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
+	r.With(s.JSONContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeGetMetricHandler)
 	r.Get("/", s.showAllMetricHandler)
 	r.Get("/value/{metricType}", s.showMetricTypeHandler)
