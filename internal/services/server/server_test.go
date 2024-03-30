@@ -122,7 +122,7 @@ func TestServerHandlers(t *testing.T) {
 
 		{"writeGetMetricHandler", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":20}", bodyMap["getPostValue"], "application/json"},
 
-		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusNotFound, "failed to process Value and Delta is empty\n", bodyMap["unknown"], "application/json"},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusBadRequest, "metric type unknown not found\n", bodyMap["unknown"], "application/json"},
 
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK, "", nil, ""},
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/type100/name1/10", http.StatusOK, "", nil, ""},

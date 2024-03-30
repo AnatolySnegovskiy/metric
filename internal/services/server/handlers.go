@@ -40,7 +40,7 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 	metric, err := storage.GetMetricType(metricDTO.MType)
 
 	if err != nil {
-		http.Error(rw, fmt.Sprintf("metric type %s not found", metricDTO.MType), http.StatusNotFound)
+		http.Error(rw, fmt.Sprintf("metric type %s not found", metricDTO.MType), http.StatusBadRequest)
 		return
 	}
 
@@ -52,7 +52,7 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 	}
 
 	if value == "" {
-		http.Error(rw, fmt.Sprintf("failed to process Value and Delta is empty"), http.StatusNotFound)
+		http.Error(rw, "failed to process Value and Delta is empty", http.StatusNotFound)
 		return
 	}
 
