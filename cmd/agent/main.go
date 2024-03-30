@@ -11,6 +11,7 @@ import (
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 )
 
 func handleError(err error) {
@@ -38,12 +39,13 @@ func main() {
 	fmt.Println("Agent started")
 	c, err := NewConfig()
 	handleError(err)
-
+	client := http.Client{}
+	client.Timeout = 5 * time.Second
 	handleError(
 		agent.New(
 			agent.Options{
 				Storage:        s,
-				Client:         &http.Client{},
+				Client:         &client,
 				PollInterval:   c.pollInterval,
 				ReportInterval: c.reportInterval,
 				SendAddr:       c.flagSendAddr,

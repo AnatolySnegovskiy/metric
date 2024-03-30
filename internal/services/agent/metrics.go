@@ -31,7 +31,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			resp, err := a.client.Do(req)
 
 			if err != nil {
-				return fmt.Errorf("client do error: %w", err)
+				return fmt.Errorf("failed to send metrics to %s: connection closed unexpectedly: %v", url, err)
 			}
 
 			defer resp.Body.Close()
