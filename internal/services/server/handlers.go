@@ -58,6 +58,8 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 	}
 
 	_ = metric.Process(metricDTO.ID, value)
+	json, _ := easyjson.Marshal(metricDTO)
+	fmt.Fprintf(rw, "%v", string(json))
 }
 
 func (s *Server) showAllMetricHandler(rw http.ResponseWriter, req *http.Request) {
@@ -128,7 +130,7 @@ func (s *Server) showPostMetricHandler(rw http.ResponseWriter, req *http.Request
 	}
 
 	metric := storage.GetList()[metricName]
-	
+
 	if metric == 0 {
 		s.notFoundHandler(rw, req)
 		return

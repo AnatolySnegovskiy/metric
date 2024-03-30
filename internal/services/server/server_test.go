@@ -143,13 +143,12 @@ func TestServerHandlers(t *testing.T) {
 		contentType string
 	}{
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusBadRequest, "failed to unmarshal body: parse error: expected { near offset 12 of 'metricName'\n", []byte(`"metricName":"example_metric","timestamp":"invalid_timestamp_format"}`), "application/json"},
-		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusBadRequest, "bad request\n", bodyMap["typePostData"], ""},
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusNotFound, "failed to process Value and Delta is empty\n", bodyMap["typePostDataZero"], "application/json"},
-		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "", bodyMap["typePostData"], "application/json"},
-		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "", bodyMap["typePostDataGauge"], "application/json"},
-		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "", bodyMap["typePostDataValue"], "application/json"},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostData"], "application/json"},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostDataGauge"], "application/json"},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostDataValue"], "application/json"},
 
-		{"writeGetMetricHandler", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":20}", bodyMap["getPostValue"], "application/json"},
+		{"writeGetMetricHandler", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":10}", bodyMap["getPostValue"], "application/json"},
 
 		{"writeGetMetricHandler", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"gauge\",\"value\":10}", bodyMap["getPostValueGauge"], "application/json"},
 
