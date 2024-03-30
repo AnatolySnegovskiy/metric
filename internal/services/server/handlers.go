@@ -128,9 +128,13 @@ func (s *Server) showPostMetricHandler(rw http.ResponseWriter, req *http.Request
 		http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusNotFound)
 		return
 	}
-	
-	var metric float64 = 0
-	metric = storage.GetList()[metricName]
+
+	metric := storage.GetList()[metricName]
+
+	if metric == 0 {
+		s.notFoundHandler(rw, req)
+		return
+	}
 
 	if metricDTO.MType == "gauge" {
 		metricDTO.Value = &metric
