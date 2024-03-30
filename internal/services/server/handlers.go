@@ -59,6 +59,7 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 
 	_ = metric.Process(metricDTO.ID, value)
 	json, _ := easyjson.Marshal(metricDTO)
+	rw.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(rw, "%v", string(json))
 }
 
@@ -144,6 +145,7 @@ func (s *Server) showPostMetricHandler(rw http.ResponseWriter, req *http.Request
 	}
 
 	json, _ := easyjson.Marshal(metricDTO)
+	rw.Header().Set("Content-Type", "application/json")
 	fmt.Fprintf(rw, "%v", string(json))
 }
 
