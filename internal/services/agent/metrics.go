@@ -24,23 +24,13 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			}
 
 			url := fmt.Sprintf("http://%s/update/", a.sendAddr)
-			body, err := easyjson.Marshal(metricDto)
-
-			if err != nil {
-				return err
-			}
-
-			req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
-
-			if err != nil {
-				return err
-			}
-
+			body, _ := easyjson.Marshal(metricDto)
+			req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
 			resp, err := a.client.Do(req)
 
 			if err != nil {
-				return err
+				continue
 			}
 
 			defer resp.Body.Close()
