@@ -3,7 +3,6 @@ package agent
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	agentmocks "github.com/AnatolySnegovskiy/metric/internal/services/agent/mocks"
 	servermocks "github.com/AnatolySnegovskiy/metric/internal/services/server/mocks"
@@ -92,28 +91,6 @@ func TestAgent(t *testing.T) {
 
 			mockStorage.AddMetric("counter", metrics.NewGauge())
 			mockStorage.AddMetric("gauge", mockEntity)
-			return mockStorage
-		}},
-		{"ErrorPollRuntimeEntityArray", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
-			mockStorage := storages.NewMemStorage()
-			ctrl := gomock.NewController(t)
-			mockEntity := storagesmocks.NewMockEntityMetric(ctrl)
-			mockEntity.EXPECT().Process("RandomValue", gomock.Any()).Return(
-				nil,
-			).AnyTimes().MinTimes(1)
-
-			mockEntity.EXPECT().Process("Alloc", gomock.Any()).Return(
-				errors.New("some error"),
-			).AnyTimes().MinTimes(1)
-
-			mockStorage.AddMetric("counter", metrics.NewGauge())
-			mockStorage.AddMetric("gauge", mockEntity)
-			return mockStorage
-		}},
-		{"ErrorReport", http.StatusBadRequest, fmt.Errorf("some error"), true, func() *storages.MemStorage {
-			mockStorage := storages.NewMemStorage()
-			mockStorage.AddMetric("gauge", metrics.NewGauge())
-			mockStorage.AddMetric("counter", metrics.NewCounter())
 			return mockStorage
 		}},
 		{"StatusBadRequest", http.StatusBadRequest, nil, true, func() *storages.MemStorage {

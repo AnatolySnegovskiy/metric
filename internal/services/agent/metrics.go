@@ -29,11 +29,10 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			req.Header.Set("Content-Type", "application/json")
 			resp, err := a.client.Do(req)
 
+			defer resp.Body.Close()
 			if err != nil {
 				continue
 			}
-
-			defer resp.Body.Close()
 
 			if resp.StatusCode != http.StatusOK {
 				return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
