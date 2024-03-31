@@ -72,7 +72,7 @@ func TestServerHandlers(t *testing.T) {
 	s := New(stg, slog.New())
 
 	r := chi.NewRouter()
-	r.Use(s.logMiddleware)
+	r.Use(s.logMiddleware, s.gzipResponseMiddleware, s.gzipRequestMiddleware)
 	r.NotFound(s.notFoundHandler) // H
 	r.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
 	r.With(s.JSONContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)

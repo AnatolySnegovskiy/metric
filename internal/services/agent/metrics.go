@@ -2,6 +2,7 @@ package agent
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
@@ -23,9 +24,21 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 				metricDto.Value = &metric
 			}
 
-			url := fmt.Sprintf("http://%s/update/", a.sendAddr)
+			var buf bytes.Buffer
+			gw := gzip.NewWriter(&buf)
+			defer gw.Close()
+
 			body, _ := easyjson.Marshal(metricDto)
-			req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
+			if _, err := gw.Write(body); err != nil {
+				return err
+			}
+			if err := gw.Close(); err != nil {
+				return err
+			}
+
+			url := fmt.Sprintf("http://%s/update/", a.sendAddr)
+			req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
+			req.Header.Set("Content-Encoding", "gzip")
 			req.Header.Set("Content-Type", "application/json")
 			resp, _ := a.client.Do(req)
 

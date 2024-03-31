@@ -1,7 +1,11 @@
 package server
 
 import (
+	"bytes"
+	"compress/gzip"
+	"io"
 	"net/http"
+	"strings"
 	"time"
 )
 
@@ -54,6 +58,54 @@ func (s *Server) logMiddleware(next http.Handler) http.Handler {
 	})
 }
 
+func (s *Server) gzipResponseMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
+			w.Header().Set("Content-Encoding", "gzip")
+			gz := gzip.NewWriter(w)
+			defer gz.Close()
+			w.Header().Del("Content-Length")
+			w = &gzipResponseWriter{ResponseWriter: w, Writer: gz}
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) gzipRequestMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+			reader, err := gzip.NewReader(r.Body)
+			if err != nil {
+				http.Error(w, "Failed to decompress request body", http.StatusBadRequest)
+				return
+			}
+			defer reader.Close()
+
+			uncompressed, err := io.ReadAll(reader)
+			if err != nil {
+				http.Error(w, "Failed to read decompressed request body", http.StatusInternalServerError)
+				return
+			}
+
+			r.Body = io.NopCloser(bytes.NewReader(uncompressed))
+		}
+
+		next.ServeHTTP(w, r)
+	})
+}
+
+type gzipResponseWriter struct {
+	http.ResponseWriter
+	io.Writer
+}
+
+func (w *gzipResponseWriter) Write(data []byte) (int, error) {
+	return w.Writer.Write(data)
+}
+
 func (s *Server) JSONContentTypeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Type") != "application/json" {
@@ -62,4 +114,16 @@ func (s *Server) JSONContentTypeMiddleware(next http.Handler) http.Handler {
 		}
 		next.ServeHTTP(w, r)
 	})
+}
+
+func isContentTypeAllowed(contentType string) bool {
+	allowedContentTypes := map[string]bool{
+		"text/plain":             true,
+		"text/html":              true,
+		"text/css":               true,
+		"text/xml":               true,
+		"application/javascript": true,
+		"application/json":       true,
+	}
+	return allowedContentTypes[contentType]
 }
