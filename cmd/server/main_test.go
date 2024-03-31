@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bou.ke/monkey"
 	"bytes"
+	"errors"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/services/server"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
@@ -50,4 +52,26 @@ func TestHandleNoError(t *testing.T) {
 		handleError(nil)
 		assert.Empty(t, logOutput.String())
 	})
+}
+
+func TestHandleError(t *testing.T) {
+	resetVars()
+	fakeExit := func(int) {
+		panic("os.Exit called")
+	}
+	patch := monkey.Patch(os.Exit, fakeExit)
+	defer patch.Unpatch()
+	err := errors.New("mock error")
+	assert.PanicsWithValue(t, "os.Exit called", func() { handleError(err) }, "os.Exit was not called")
+}
+
+func TestHandleErrorWithNil(t *testing.T) {
+	resetVars()
+	var logOutput bytes.Buffer
+	log.SetOutput(&logOutput)
+	defer func() {
+		log.SetOutput(os.Stderr)
+	}()
+	handleError(nil)
+	assert.Empty(t, logOutput.String())
 }
