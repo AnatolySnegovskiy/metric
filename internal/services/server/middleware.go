@@ -60,18 +60,16 @@ func (s *Server) logMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) gzipResponseMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			if !isContentTypeAllowed(w.Header().Get("Content-Type")) {
-				next.ServeHTTP(w, r)
-				return
-			}
-
-			gz := gzip.NewWriter(w)
-			defer gz.Close()
-			w.Header().Set("Content-Encoding", "gzip")
-			w.Header().Del("Content-Length")
-			w = &gzipResponseWriter{ResponseWriter: w, Writer: gz}
+		if !isContentTypeAllowed(r.Header.Get("Accept")) {
+			next.ServeHTTP(w, r)
+			return
 		}
+
+		gz := gzip.NewWriter(w)
+		defer gz.Close()
+		w.Header().Set("Content-Encoding", "gzip")
+		w.Header().Del("Content-Length")
+		w = &gzipResponseWriter{ResponseWriter: w, Writer: gz}
 
 		next.ServeHTTP(w, r)
 	})
