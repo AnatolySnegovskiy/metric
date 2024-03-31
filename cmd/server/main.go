@@ -39,7 +39,7 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	handleShutdownSignal(quit, serv, c)
+	go handleShutdownSignal(quit, serv, c)
 
 	if c.restore {
 		serv.LoadMetricsOnStart(c.fileStoragePath)

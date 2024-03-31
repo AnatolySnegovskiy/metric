@@ -37,8 +37,7 @@ func TestHandleShutdownSignal(t *testing.T) {
 	s := server.New(storages.NewMemStorage(), nil)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	conf, _ := NewConfig()
-	go handleShutdownSignal(quit, s, conf)
+	go handleShutdownSignal(quit, s, &Config{})
 }
 
 func TestHandleNoError(t *testing.T) {
@@ -74,10 +73,31 @@ func TestHandleErrorWithNil(t *testing.T) {
 }
 
 func TestMain_LoadMetricsOnStart(t *testing.T) {
-	resetVars()
 	logger, _ := zap.NewProduction()
 	s := storages.NewMemStorage()
 	c := &Config{}
 	serv := server.New(s, logger.Sugar())
 	serv.LoadMetricsOnStart(c.fileStoragePath)
+}
+
+func TestMain_SaveMetricsPeriodically(t *testing.T) {
+	logger, _ := zap.NewProduction()
+	s := storages.NewMemStorage()
+	c := &Config{}
+	serv := server.New(s, logger.Sugar())
+	go serv.SaveMetricsPeriodically(c.storeInterval, c.fileStoragePath)
+}
+
+func TestMain_RunServer(t *testing.T) {
+	// Подготовка тестовых данных и моков
+	logger, _ := zap.NewProduction()
+	s := storages.NewMemStorage()
+	c := &Config{ /* инициализация данных для теста */ }
+	serv := server.New(s, logger.Sugar())
+
+	// Вызов функций, которые нужно протестировать
+	serv.LoadMetricsOnStart(c.fileStoragePath)
+	serv.SaveMetricsPeriodically(c.storeInterval, c.fileStoragePath)
+	err := serv.Run(c.flagRunAddr)
+	assert.NoError(t, err, "Run returned an error")
 }
