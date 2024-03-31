@@ -79,7 +79,7 @@ func (s *Server) gzipResponseMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) gzipRequestMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") ||
+		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") &&
 			isContentTypeAllowed(r.Header.Get("Content-Type")) {
 			reader, err := gzip.NewReader(r.Body)
 			if err != nil {

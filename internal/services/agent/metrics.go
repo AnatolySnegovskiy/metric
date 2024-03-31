@@ -13,6 +13,10 @@ import (
 func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	metricDto := &dto.Metrics{}
 	for storageType, storage := range a.storage.GetList() {
+		if storage == nil {
+			continue
+		}
+
 		for metricName, metric := range storage.GetList() {
 			metricDto.MType = storageType
 			metricDto.ID = metricName
@@ -32,6 +36,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			if _, err := gw.Write(body); err != nil {
 				return err
 			}
+
 			if err := gw.Close(); err != nil {
 				return err
 			}
