@@ -1,6 +1,7 @@
 package server
 
 import (
+	"context"
 	"encoding/json"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/go-chi/chi/v5"
@@ -49,13 +50,17 @@ func (s *Server) Run(addr string) error {
 	return http.ListenAndServe(addr, s.router)
 }
 
-func (s *Server) SaveMetricsPeriodically(interval int, filePath string) {
+func (s *Server) SaveMetricsPeriodically(ctx context.Context, interval int, filePath string) {
 	ticker := time.NewTicker(time.Second * time.Duration(interval))
 	for {
-		<-ticker.C
-		err := s.saveMetricsToFile(filePath)
-		if err != nil {
-			s.logger.Error(err)
+		select {
+		case <-ctx.Done():
+			return
+		case <-ticker.C:
+			err := s.saveMetricsToFile(filePath)
+			if err != nil {
+				s.logger.Error(err)
+			}
 		}
 	}
 }
