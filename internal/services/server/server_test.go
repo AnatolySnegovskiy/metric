@@ -143,6 +143,7 @@ func TestServerHandlers(t *testing.T) {
 		requestBody []byte
 		contentType string
 	}{
+		{"notFoundHandler", r, http.MethodPost, "/update/", http.StatusBadRequest, "metric type nonexistent not found\n", []byte(`{"type":"nonexistent","id":"nonexistent"}`), "application/json"},
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusBadRequest, "failed to unmarshal body: parse error: expected { near offset 12 of 'metricName'\n", []byte(`"metricName":"example_metric","timestamp":"invalid_timestamp_format"}`), "application/json"},
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusNotFound, "failed to process Value and Delta is empty\n", bodyMap["typePostDataZero"], "application/json"},
 		{"writeGetMetricHandler", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostData"], "application/json"},
