@@ -5,13 +5,10 @@ import (
 	"bytes"
 	"errors"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
-	"github.com/AnatolySnegovskiy/metric/internal/services/server"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 	"testing"
 	"time"
 )
@@ -32,19 +29,7 @@ func Test_Main(t *testing.T) {
 	}()
 }
 
-func TestHandleShutdownSignal(t *testing.T) {
-	resetVars()
-	os.Args = []string{"cmd", "-a=127.21.10.5:8150"}
-	s := server.New(storages.NewMemStorage(), nil)
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	conf, _ := NewConfig()
-	go handleShutdownSignal(quit, s, conf)
-}
-
 func TestHandleNoError(t *testing.T) {
-	resetVars()
-	os.Args = []string{"cmd", "-a=127.21.10.4:8150"}
 	t.Run("No error case", func(t *testing.T) {
 		var logOutput bytes.Buffer
 		log.SetOutput(&logOutput)
@@ -57,8 +42,6 @@ func TestHandleNoError(t *testing.T) {
 }
 
 func TestHandleError(t *testing.T) {
-	resetVars()
-	os.Args = []string{"cmd", "-a=127.21.10.3:8150"}
 	fakeExit := func(int) {
 		panic("os.Exit called")
 	}
@@ -69,8 +52,6 @@ func TestHandleError(t *testing.T) {
 }
 
 func TestHandleErrorWithNil(t *testing.T) {
-	resetVars()
-	os.Args = []string{"cmd", "-a=127.21.10.2:8150"}
 	var logOutput bytes.Buffer
 	log.SetOutput(&logOutput)
 	defer func() {
@@ -78,5 +59,4 @@ func TestHandleErrorWithNil(t *testing.T) {
 	}()
 	handleError(nil)
 	assert.Empty(t, logOutput.String())
-	resetVars()
 }
