@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/mailru/easyjson"
-	"log"
 	"net/http"
 )
 
@@ -14,7 +13,6 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	metricDto := &dto.Metrics{}
 	for storageType, storage := range a.storage.GetList() {
 		for metricName, metric := range storage.GetList() {
-			log.Println(storageType, metricName, metric)
 			metricDto.MType = storageType
 			metricDto.ID = metricName
 
