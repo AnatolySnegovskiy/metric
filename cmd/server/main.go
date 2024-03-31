@@ -18,6 +18,14 @@ func handleError(err error) {
 	}
 }
 
+func handleShutdownSignal(quit chan os.Signal, serv *server.Server, c *Config) {
+	<-quit
+	fmt.Println("server stopped")
+	err := serv.HandleShutdownSignal(c.fileStoragePath)
+	handleError(err)
+	os.Exit(0)
+}
+
 func main() {
 	logger, _ := zap.NewProduction()
 	s := storages.NewMemStorage()
@@ -31,15 +39,7 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	go func() {
-		<-quit
-		logger.Info("server stopped")
-		err := serv.HandleShutdownSignal(c.fileStoragePath)
-		if err != nil {
-			logger.Error(err.Error())
-		}
-		os.Exit(0)
-	}()
+	handleShutdownSignal(quit, serv, c)
 
 	if c.restore {
 		serv.LoadMetricsOnStart(c.fileStoragePath)
