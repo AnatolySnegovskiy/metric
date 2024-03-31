@@ -54,6 +54,54 @@ func TestNewConfig(t *testing.T) {
 		assert.NoError(t, err)
 		assert.Equal(t, "localhost:8080", config.flagRunAddr, "expected default address")
 	})
+
+	t.Run("ENV_STORE_INTERVAL", func(t *testing.T) {
+		resetVars()
+		_ = os.Setenv("STORE_INTERVAL", "600")
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, 600, config.storeInterval, "expected default store interval")
+	})
+
+	t.Run("ENV_FILE_STORAGE_PATH", func(t *testing.T) {
+		resetVars()
+		_ = os.Setenv("FILE_STORAGE_PATH", "/tmp/metrics-db-test.json")
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "/tmp/metrics-db-test.json", config.fileStoragePath, "expected custom file storage path")
+	})
+
+	t.Run("ENV_RESTORE", func(t *testing.T) {
+		resetVars()
+		_ = os.Setenv("RESTORE", "false")
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, false, config.restore, "expected restore to be false")
+	})
+
+	t.Run("CMD_STORE_INTERVAL", func(t *testing.T) {
+		resetVars()
+		os.Args = []string{"cmd", "-i=600"}
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, 600, config.storeInterval, "expected custom store interval")
+	})
+
+	t.Run("CMD_FILE_STORAGE_PATH", func(t *testing.T) {
+		resetVars()
+		os.Args = []string{"cmd", "-f=/tmp/metrics-db-test.json"}
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "/tmp/metrics-db-test.json", config.fileStoragePath, "expected custom file storage path")
+	})
+
+	t.Run("CMD_RESTORE", func(t *testing.T) {
+		resetVars()
+		os.Args = []string{"cmd", "-r=false"}
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, false, config.restore, "expected restore to be false")
+	})
 }
 
 func resetVars() {
