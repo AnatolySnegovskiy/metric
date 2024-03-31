@@ -126,6 +126,10 @@ func isContentTypeAllowed(contentType string) bool {
 		"text/xml":               true,
 		"application/javascript": true,
 		"application/json":       true,
+		"html/text":              true,
+		"plain/text":             true,
+		"css/text":               true,
+		"xml/text":               true,
 	}
 	return allowedContentTypes[contentType]
 }
