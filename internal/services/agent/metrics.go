@@ -33,13 +33,8 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			defer gw.Close()
 
 			body, _ := easyjson.Marshal(metricDto)
-			if _, err := gw.Write(body); err != nil {
-				return err
-			}
-
-			if err := gw.Close(); err != nil {
-				return err
-			}
+			_, _ = gw.Write(body)
+			_ = gw.Close()
 
 			url := fmt.Sprintf("http://%s/update/", a.sendAddr)
 			req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
