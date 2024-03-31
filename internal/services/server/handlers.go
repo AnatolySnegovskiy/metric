@@ -67,6 +67,7 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 }
 
 func (s *Server) showAllMetricHandler(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	stgList := s.storage.GetList()
 
 	if len(stgList) == 0 {
@@ -80,7 +81,6 @@ func (s *Server) showAllMetricHandler(rw http.ResponseWriter, req *http.Request)
 			fmt.Fprintf(rw, "\t%s: %v\n", metricName, metric)
 		}
 	}
-	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 }
 
 func (s *Server) showMetricTypeHandler(rw http.ResponseWriter, req *http.Request) {
