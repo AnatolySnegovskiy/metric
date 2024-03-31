@@ -3,7 +3,6 @@ package main
 import (
 	"bou.ke/monkey"
 	"bytes"
-	"context"
 	"errors"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/services/server"
@@ -86,14 +85,11 @@ func TestMain_LoadMetricsOnStart(t *testing.T) {
 	serv.LoadMetricsOnStart(c.fileStoragePath)
 }
 
-func TestMain_RunServer(t *testing.T) {
+func TestMain_SaveMetricsPeriodically(t *testing.T) {
 	resetVars()
 	logger, _ := zap.NewProduction()
 	s := storages.NewMemStorage()
 	c, _ := NewConfig()
 	serv := server.New(s, logger.Sugar())
-	serv.LoadMetricsOnStart(c.fileStoragePath)
-	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
-	defer cancel()
-	serv.SaveMetricsPeriodically(ctx, c.storeInterval, c.fileStoragePath)
+	go serv.SaveMetricsPeriodically(c.storeInterval, c.fileStoragePath)
 }

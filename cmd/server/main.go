@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/services/server"
@@ -48,6 +47,6 @@ func main() {
 
 	logger.Info("server started on " + c.flagRunAddr)
 
-	go serv.SaveMetricsPeriodically(context.Background(), c.storeInterval, c.fileStoragePath)
+	go serv.SaveMetricsPeriodically(c.storeInterval, c.fileStoragePath)
 	handleError(serv.Run(c.flagRunAddr))
 }
