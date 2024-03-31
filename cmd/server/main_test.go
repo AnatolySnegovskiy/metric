@@ -37,7 +37,8 @@ func TestHandleShutdownSignal(t *testing.T) {
 	s := server.New(storages.NewMemStorage(), nil)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	go handleShutdownSignal(quit, s, &Config{})
+	conf, _ := NewConfig()
+	go handleShutdownSignal(quit, s, conf)
 }
 
 func TestHandleNoError(t *testing.T) {
