@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/mailru/easyjson"
+	"log"
 	"net/http"
 )
 
@@ -13,6 +14,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	metricDto := &dto.Metrics{}
 	for storageType, storage := range a.storage.GetList() {
 		for metricName, metric := range storage.GetList() {
+			log.Println(storageType, metricName, metric)
 			metricDto.MType = storageType
 			metricDto.ID = metricName
 
@@ -27,12 +29,9 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			body, _ := easyjson.Marshal(metricDto)
 			req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 			req.Header.Set("Content-Type", "application/json")
-			resp, err := a.client.Do(req)
+			resp, _ := a.client.Do(req)
 
 			defer resp.Body.Close()
-			if err != nil {
-				continue
-			}
 
 			if resp.StatusCode != http.StatusOK {
 				return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
