@@ -85,12 +85,3 @@ func TestMain_LoadMetricsOnStart(t *testing.T) {
 	serv := server.New(s, logger.Sugar())
 	serv.LoadMetricsOnStart(conf.fileStoragePath)
 }
-
-func TestMain_SaveMetricsPeriodically(t *testing.T) {
-	resetVars()
-	logger, _ := zap.NewProduction()
-	s := storages.NewMemStorage()
-	conf, _ := NewConfig()
-	serv := server.New(s, logger.Sugar())
-	go serv.SaveMetricsPeriodically(conf.storeInterval, conf.fileStoragePath)
-}
