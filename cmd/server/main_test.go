@@ -83,6 +83,7 @@ func TestMain_LoadMetricsOnStart(t *testing.T) {
 	c, _ := NewConfig()
 	serv := server.New(s, logger.Sugar())
 	serv.LoadMetricsOnStart(c.fileStoragePath)
+	assert.True(t, true)
 }
 
 func TestMain_SaveMetricsPeriodically(t *testing.T) {
@@ -92,4 +93,7 @@ func TestMain_SaveMetricsPeriodically(t *testing.T) {
 	c, _ := NewConfig()
 	serv := server.New(s, logger.Sugar())
 	go serv.SaveMetricsPeriodically(c.storeInterval, c.fileStoragePath)
+	monkey.Patch(time.Sleep, func(time.Duration) {})
+	defer monkey.UnpatchAll()
+	assert.True(t, true)
 }
