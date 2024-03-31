@@ -15,7 +15,7 @@ import (
 	"time"
 )
 
-func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int, response string, requestBody []byte, contentType string) {
+func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int, response string, requestBody []byte, headers map[string]string) {
 	req, err := http.NewRequest(method, path, nil)
 	if err != nil {
 		t.Fatal(err)
@@ -28,8 +28,11 @@ func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int
 		}
 	}
 
-	if contentType != "" {
-		req.Header.Set("Content-Type", contentType)
+	if headers != nil {
+		for k, v := range headers {
+			req.Header.Set(k, v)
+		}
+
 	}
 
 	rr := httptest.NewRecorder()
@@ -57,7 +60,7 @@ func TestClearStorage(t *testing.T) {
 	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
 
 	t.Run("test clear storage", func(t *testing.T) {
-		testHandler(t, r, http.MethodGet, "/", http.StatusNotFound, "", nil, "")
+		testHandler(t, r, http.MethodGet, "/", http.StatusNotFound, "", nil, nil)
 	})
 }
 
@@ -141,54 +144,55 @@ func TestServerHandlers(t *testing.T) {
 		statusCode  int
 		response    string
 		requestBody []byte
-		contentType string
+		headers     map[string]string
 	}{
-		{"notFoundHandler", r, http.MethodPost, "/update/", http.StatusBadRequest, "{\"error\":\"metric type nonexistent not found\"}", []byte(`{"type":"nonexistent","id":"nonexistent"}`), "application/json"},
-		{"failed to unmarshal", r, http.MethodPost, "/update/", http.StatusBadRequest, "{\"error\":\"failed to unmarshal body: parse error: expected { near offset 12 of 'metricName'\"}", []byte(`"metricName":"example_metric","timestamp":"invalid_timestamp_format"}`), "application/json"},
-		{"failed to process", r, http.MethodPost, "/update/", http.StatusBadRequest, "{\"error\":\"failed to process Value and Delta is empty\"}", bodyMap["typePostDataZero"], "application/json"},
-		{"writeGetMetricHandler1", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostData"], "application/json"},
-		{"writeGetMetricHandler2", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostDataGauge"], "application/json"},
-		{"writeGetMetricHandler3", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostDataValue"], "application/json"},
+		{"notFoundHandler", r, http.MethodPost, "/update/", http.StatusBadRequest, "{\"error\":\"metric type nonexistent not found\"}", []byte(`{"type":"nonexistent","id":"nonexistent"}`), map[string]string{"Content-Type": "application/json"}},
+		{"failed to unmarshal", r, http.MethodPost, "/update/", http.StatusBadRequest, "{\"error\":\"failed to unmarshal body: parse error: expected { near offset 12 of 'metricName'\"}", []byte(`"metricName":"example_metric","timestamp":"invalid_timestamp_format"}`), map[string]string{"Content-Type": "application/json"}},
+		{"failed to process", r, http.MethodPost, "/update/", http.StatusBadRequest, "{\"error\":\"failed to process Value and Delta is empty\"}", bodyMap["typePostDataZero"], map[string]string{"Content-Type": "application/json"}},
+		{"writeGetMetricHandler1", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostData"], map[string]string{"Content-Type": "application/json"}},
+		{"writeGetMetricHandler2", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostDataGauge"], map[string]string{"Content-Type": "application/json"}},
+		{"writeGetMetricHandler3", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostDataValue"], map[string]string{"Content-Type": "application/json"}},
 
-		{"writeGetMetricHandler4", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":10}", bodyMap["getPostValue"], "application/json"},
+		{"writeGetMetricHandler4", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":10}", bodyMap["getPostValue"], map[string]string{"Content-Type": "application/json"}},
 
-		{"writeGetMetricHandler5", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"gauge\",\"value\":10}", bodyMap["getPostValueGauge"], "application/json"},
-		{"writeGetMetricHandler6", r, http.MethodPost, "/value/", http.StatusNotFound, "{\"error\":\"metric test not found\"}", bodyMap["typePostDataZero"], "application/json"},
+		{"writeGetMetricHandler5", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"gauge\",\"value\":10}", bodyMap["getPostValueGauge"], map[string]string{"Content-Type": "application/json"}},
+		{"writeGetMetricHandler6", r, http.MethodPost, "/value/", http.StatusNotFound, "{\"error\":\"metric test not found\"}", bodyMap["typePostDataZero"], map[string]string{"Content-Type": "application/json"}},
 
-		{"writeGetMetricHandler7", r, http.MethodPost, "/update/", http.StatusBadRequest, "{\"error\":\"metric type unknown not found\"}", bodyMap["unknown"], "application/json"},
+		{"writeGetMetricHandler7", r, http.MethodPost, "/update/", http.StatusBadRequest, "{\"error\":\"metric type unknown not found\"}", bodyMap["unknown"], map[string]string{"Content-Type": "application/json"}},
 
-		{"writeGetMetricHandler7", r, http.MethodPost, "/value/", http.StatusNotFound, "{\"error\":\"metric type unknown not found\"}", bodyMap["unknown"], "application/json"},
-		{"failed to unmarshal", r, http.MethodPost, "/value/", http.StatusBadRequest, "{\"error\":\"failed to unmarshal body: parse error: expected { near offset 12 of 'metricName'\"}", []byte(`"metricName":"example_metric","timestamp":"invalid_timestamp_format"}`), "application/json"},
+		{"writeGetMetricHandler7", r, http.MethodPost, "/value/", http.StatusNotFound, "{\"error\":\"metric type unknown not found\"}", bodyMap["unknown"], map[string]string{"Content-Type": "application/json"}},
+		{"failed to unmarshal", r, http.MethodPost, "/value/", http.StatusBadRequest, "{\"error\":\"failed to unmarshal body: parse error: expected { near offset 12 of 'metricName'\"}", []byte(`"metricName":"example_metric","timestamp":"invalid_timestamp_format"}`), map[string]string{"Content-Type": "application/json"}},
 
-		{"writeGetMetricHandler8", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK, "", nil, ""},
-		{"writeGetMetricHandler9", r, http.MethodPost, "/update/type100/name1/10", http.StatusOK, "", nil, ""},
+		{"writeGetMetricHandler8", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK, "", nil, nil},
+		{"writeGetMetricHandler9", r, http.MethodPost, "/update/type100/name1/10", http.StatusOK, "", nil, nil},
 
-		{"writeGetMetricHandler11", r, http.MethodPost, "/update/type1/", http.StatusNotFound, "", nil, ""},
-		{"writeGetMetricHandler12", r, http.MethodPost, "/update/type23/name1/10/10", http.StatusNotFound, "", nil, ""},
-		{"writeGetMetricHandler13", r, http.MethodPost, "/type1/name1/10", http.StatusNotFound, "", nil, ""},
+		{"writeGetMetricHandler11", r, http.MethodPost, "/update/type1/", http.StatusNotFound, "", nil, nil},
+		{"writeGetMetricHandler12", r, http.MethodPost, "/update/type23/name1/10/10", http.StatusNotFound, "", nil, nil},
+		{"writeGetMetricHandler13", r, http.MethodPost, "/type1/name1/10", http.StatusNotFound, "", nil, nil},
 
-		{"showAllMetricHandler", r, http.MethodGet, "/", http.StatusOK, "skip", nil, ""},
-		{"showMetricTypeHandler", r, http.MethodGet, "/value/type1", http.StatusOK, "type1:\n\tname1: 10\n", nil, ""},
-		{"showMetricNameHandlers", r, http.MethodGet, "/value/type1/name1", http.StatusOK, "10", nil, ""},
+		{"showAllMetricHandler", r, http.MethodGet, "/", http.StatusOK, "skip", nil, nil},
+		{"showAllMetricHandler", r, http.MethodGet, "/", http.StatusOK, "skip", nil, map[string]string{"Content-Type": "application/json", "accept": "application/json", "Accept-Encoding": "gzip, deflate", "Connection": "keep-alive"}},
+		{"showMetricTypeHandler", r, http.MethodGet, "/value/type1", http.StatusOK, "type1:\n\tname1: 10\n", nil, nil},
+		{"showMetricNameHandlers", r, http.MethodGet, "/value/type1/name1", http.StatusOK, "10", nil, nil},
 
-		{"showMetricNameHandlersNotFound1", r, http.MethodGet, "/value/not/name1", http.StatusNotFound, "metric type not not found\n", nil, ""},
-		{"showMetricTypeHandlersNotFound2", r, http.MethodGet, "/value/type2", http.StatusNotFound, "metric type type2 not found\n", nil, ""},
-		{"showMetricNameHandlersNotFound3", r, http.MethodGet, "/value/type1/name2", http.StatusNotFound, "", nil, ""},
-		{"notFoundHandler", r, http.MethodGet, "/nonexistentpath", http.StatusNotFound, "", nil, ""},
-		{"showMetricTypeHandlersNotFound", r, http.MethodGet, "/value/nonexistenttype", http.StatusNotFound, "metric type nonexistenttype not found\n", nil, ""},
+		{"showMetricNameHandlersNotFound1", r, http.MethodGet, "/value/not/name1", http.StatusNotFound, "metric type not not found\n", nil, nil},
+		{"showMetricTypeHandlersNotFound2", r, http.MethodGet, "/value/type2", http.StatusNotFound, "metric type type2 not found\n", nil, nil},
+		{"showMetricNameHandlersNotFound3", r, http.MethodGet, "/value/type1/name2", http.StatusNotFound, "", nil, nil},
+		{"notFoundHandler", r, http.MethodGet, "/nonexistentpath", http.StatusNotFound, "", nil, nil},
+		{"showMetricTypeHandlersNotFound", r, http.MethodGet, "/value/nonexistenttype", http.StatusNotFound, "metric type nonexistenttype not found\n", nil, nil},
 
-		{"writeMetricHandlersBadRequest", r, http.MethodPost, "/update/type1/name1/invalidValue", http.StatusBadRequest, "failed to process metric: metric value is not int\n", nil, ""},
-		{"writeGetMetricHandler", r, http.MethodPost, "/update/type23/name1/10", http.StatusBadRequest, "metric type type23 not found\n", nil, ""},
-		{"writeGetMetricHandler", r, http.MethodPost, "/", http.StatusMethodNotAllowed, "", nil, ""},
-		{"methodNotAllowedHandler", r, http.MethodPut, "/", http.StatusMethodNotAllowed, "", nil, ""},
-		{"writeGetMetricHandler", r, http.MethodConnect, "/", http.StatusMethodNotAllowed, "", nil, ""},
-		{"methodNotAllowedHandler", r, http.MethodDelete, "/", http.StatusMethodNotAllowed, "", nil, ""},
-		{"writeGetMetricHandler", r, http.MethodHead, "/", http.StatusMethodNotAllowed, "", nil, ""},
+		{"writeMetricHandlersBadRequest", r, http.MethodPost, "/update/type1/name1/invalidValue", http.StatusBadRequest, "failed to process metric: metric value is not int\n", nil, nil},
+		{"writeGetMetricHandler", r, http.MethodPost, "/update/type23/name1/10", http.StatusBadRequest, "metric type type23 not found\n", nil, nil},
+		{"writeGetMetricHandler", r, http.MethodPost, "/", http.StatusMethodNotAllowed, "", nil, nil},
+		{"methodNotAllowedHandler", r, http.MethodPut, "/", http.StatusMethodNotAllowed, "", nil, nil},
+		{"writeGetMetricHandler", r, http.MethodConnect, "/", http.StatusMethodNotAllowed, "", nil, nil},
+		{"methodNotAllowedHandler", r, http.MethodDelete, "/", http.StatusMethodNotAllowed, "", nil, nil},
+		{"writeGetMetricHandler", r, http.MethodHead, "/", http.StatusMethodNotAllowed, "", nil, nil},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			testHandler(t, tt.router, tt.method, tt.path, tt.statusCode, tt.response, tt.requestBody, tt.contentType)
+			testHandler(t, tt.router, tt.method, tt.path, tt.statusCode, tt.response, tt.requestBody, tt.headers)
 		})
 	}
 }
