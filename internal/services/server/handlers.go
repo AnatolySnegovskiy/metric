@@ -34,7 +34,8 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 	metricDTO, err := getMetricDto(req)
 
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"%s"}`, err.Error()))
 		return
 	}
 
@@ -42,7 +43,8 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 	metric, err := storage.GetMetricType(metricDTO.MType)
 
 	if err != nil {
-		http.Error(rw, fmt.Sprintf("metric type %s not found", metricDTO.MType), http.StatusBadRequest)
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"metric type %s not found"}`, metricDTO.MType))
 		return
 	}
 
@@ -54,7 +56,8 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 	}
 
 	if value == "" {
-		http.Error(rw, "failed to process Value and Delta is empty", http.StatusNotFound)
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", `{"error":"failed to process Value and Delta is empty"}`)
 		return
 	}
 
@@ -118,7 +121,8 @@ func (s *Server) showPostMetricHandler(rw http.ResponseWriter, req *http.Request
 	metricDTO, err := getMetricDto(req)
 
 	if err != nil {
-		http.Error(rw, err.Error(), http.StatusBadRequest)
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"%s"}`, err.Error()))
 		return
 	}
 
@@ -127,11 +131,18 @@ func (s *Server) showPostMetricHandler(rw http.ResponseWriter, req *http.Request
 
 	storage, err := s.storage.GetMetricType(metricType)
 	if err != nil {
-		http.Error(rw, fmt.Sprintf("metric type %s not found", metricType), http.StatusNotFound)
+		rw.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"metric type %s not found"}`, metricType))
 		return
 	}
 
-	metric := storage.GetList()[metricName]
+	metric, ok := storage.GetList()[metricName]
+
+	if !ok {
+		rw.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"metric %s not found"}`, metricName))
+		return
+	}
 
 	if metricDTO.MType == "gauge" {
 		metricDTO.Value = &metric
