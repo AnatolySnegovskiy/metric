@@ -6,7 +6,7 @@ import (
 )
 
 type Gauge struct {
-	items map[string]float64
+	Items map[string]float64
 }
 
 func (g *Gauge) Process(name string, data string) error {
@@ -15,14 +15,14 @@ func (g *Gauge) Process(name string, data string) error {
 		return errors.New("metric value is not float64")
 	}
 
-	g.items[name] = floatValue
+	g.Items[name] = floatValue
 	return nil
 }
 
-func (g *Gauge) GetList() map[string]float64 { return g.items }
+func (g *Gauge) GetList() map[string]float64 { return g.Items }
 
 func NewGauge() *Gauge {
 	return &Gauge{
-		items: make(map[string]float64),
+		Items: make(map[string]float64),
 	}
 }
