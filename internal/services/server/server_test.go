@@ -157,6 +157,9 @@ func TestServerHandlers(t *testing.T) {
 
 		{"writeGetMetricHandler7", r, http.MethodPost, "/update/", http.StatusBadRequest, "{\"error\":\"metric type unknown not found\"}", bodyMap["unknown"], "application/json"},
 
+		{"writeGetMetricHandler7", r, http.MethodPost, "/value/", http.StatusNotFound, "{\"error\":\"metric type unknown not found\"}", bodyMap["unknown"], "application/json"},
+		{"failed to unmarshal", r, http.MethodPost, "/value/", http.StatusBadRequest, "{\"error\":\"failed to unmarshal body: parse error: expected { near offset 12 of 'metricName'\"}", []byte(`"metricName":"example_metric","timestamp":"invalid_timestamp_format"}`), "application/json"},
+
 		{"writeGetMetricHandler8", r, http.MethodPost, "/update/type1/name1/10", http.StatusOK, "", nil, ""},
 		{"writeGetMetricHandler9", r, http.MethodPost, "/update/type100/name1/10", http.StatusOK, "", nil, ""},
 
