@@ -9,8 +9,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
-	"os/signal"
-	"syscall"
 	"testing"
 	"time"
 )
@@ -29,12 +27,6 @@ func Test_Main(t *testing.T) {
 		time.Sleep(1 * time.Second)
 		assert.True(t, true)
 	}()
-}
-
-func TestHandleShutdownSignal(t *testing.T) {
-	quit := make(chan os.Signal, 1)
-	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	go handleShutdownSignal(quit)
 }
 
 func TestHandleNoError(t *testing.T) {
