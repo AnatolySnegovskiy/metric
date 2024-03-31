@@ -35,6 +35,7 @@ func Test_Main(t *testing.T) {
 
 func TestHandleShutdownSignal(t *testing.T) {
 	resetVars()
+	os.Args = []string{"cmd", "-a=127.21.10.7:8150"}
 	s := server.New(storages.NewMemStorage(), nil)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
@@ -43,6 +44,7 @@ func TestHandleShutdownSignal(t *testing.T) {
 
 func TestHandleNoError(t *testing.T) {
 	resetVars()
+	os.Args = []string{"cmd", "-a=127.21.10.6:8150"}
 	t.Run("No error case", func(t *testing.T) {
 		var logOutput bytes.Buffer
 		log.SetOutput(&logOutput)
@@ -56,6 +58,7 @@ func TestHandleNoError(t *testing.T) {
 
 func TestHandleError(t *testing.T) {
 	resetVars()
+	os.Args = []string{"cmd", "-a=127.21.10.5:8150"}
 	fakeExit := func(int) {
 		panic("os.Exit called")
 	}
@@ -67,6 +70,7 @@ func TestHandleError(t *testing.T) {
 
 func TestHandleErrorWithNil(t *testing.T) {
 	resetVars()
+	os.Args = []string{"cmd", "-a=127.21.10.4:8150"}
 	var logOutput bytes.Buffer
 	log.SetOutput(&logOutput)
 	defer func() {
@@ -78,6 +82,7 @@ func TestHandleErrorWithNil(t *testing.T) {
 
 func TestMain_LoadMetricsOnStart(t *testing.T) {
 	resetVars()
+	os.Args = []string{"cmd", "-a=127.21.10.3:8150"}
 	logger, _ := zap.NewProduction()
 	s := storages.NewMemStorage()
 	c, _ := NewConfig()
@@ -88,6 +93,7 @@ func TestMain_LoadMetricsOnStart(t *testing.T) {
 
 func TestMain_SaveMetricsPeriodically(t *testing.T) {
 	resetVars()
+	os.Args = []string{"cmd", "-a=127.21.10.2:8150"}
 	logger, _ := zap.NewProduction()
 	s := storages.NewMemStorage()
 	c, _ := NewConfig()
