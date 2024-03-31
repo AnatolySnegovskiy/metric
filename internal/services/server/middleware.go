@@ -61,13 +61,16 @@ func (s *Server) logMiddleware(next http.Handler) http.Handler {
 func (s *Server) gzipResponseMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Accept-Encoding"), "gzip") {
-			w.Header().Set("Content-Encoding", "gzip")
+			if !isContentTypeAllowed(w.Header().Get("Content-Type")) {
+				next.ServeHTTP(w, r)
+				return
+			}
+
 			gz := gzip.NewWriter(w)
 			defer gz.Close()
+			w.Header().Set("Content-Encoding", "gzip")
 			w.Header().Del("Content-Length")
 			w = &gzipResponseWriter{ResponseWriter: w, Writer: gz}
-			next.ServeHTTP(w, r)
-			return
 		}
 
 		next.ServeHTTP(w, r)
@@ -76,7 +79,8 @@ func (s *Server) gzipResponseMiddleware(next http.Handler) http.Handler {
 
 func (s *Server) gzipRequestMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") {
+		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") ||
+			isContentTypeAllowed(r.Header.Get("Content-Type")) {
 			reader, err := gzip.NewReader(r.Body)
 			if err != nil {
 				http.Error(w, "Failed to decompress request body", http.StatusBadRequest)
