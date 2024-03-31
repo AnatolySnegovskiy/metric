@@ -17,7 +17,7 @@ type Config struct {
 func NewConfig() (*Config, error) {
 	c := &Config{
 		flagRunAddr:     "localhost:8080",
-		storeInterval:   5,
+		storeInterval:   300,
 		fileStoragePath: "/tmp/metrics-db.json",
 		restore:         true,
 	}
