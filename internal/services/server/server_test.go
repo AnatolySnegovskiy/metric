@@ -28,11 +28,8 @@ func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int
 		}
 	}
 
-	if headers != nil {
-		for k, v := range headers {
-			req.Header.Set(k, v)
-		}
-
+	for k, v := range headers {
+		req.Header.Set(k, v)
 	}
 
 	rr := httptest.NewRecorder()
