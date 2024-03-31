@@ -67,19 +67,17 @@ func (s *Server) LoadMetricsOnStart(filePath string) {
 		s.logger.Error(err)
 	}
 
-	if savedMetrics != nil {
-		for metricType, metricValues := range savedMetrics {
-			metric, err := s.storage.GetMetricType(metricType)
+	for metricType, metricValues := range savedMetrics {
+		metric, err := s.storage.GetMetricType(metricType)
 
-			if err != nil {
-				s.logger.Error(err)
-				continue
-			}
+		if err != nil {
+			s.logger.Error(err)
+			continue
+		}
 
-			for _, items := range metricValues {
-				for key, value := range items {
-					metric.Process(key, strconv.FormatFloat(value, 'f', -1, 64))
-				}
+		for _, items := range metricValues {
+			for key, value := range items {
+				_ = metric.Process(key, strconv.FormatFloat(value, 'f', -1, 64))
 			}
 		}
 	}
