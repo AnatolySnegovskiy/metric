@@ -63,6 +63,13 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, 600, config.storeInterval, "expected default store interval")
 	})
 
+	t.Run("ENV_STORE_INTERVAL_NO_INT", func(t *testing.T) {
+		resetVars()
+		_ = os.Setenv("STORE_INTERVAL", "noint")
+		_, err := NewConfig()
+		assert.Error(t, err)
+	})
+
 	t.Run("ENV_FILE_STORAGE_PATH", func(t *testing.T) {
 		resetVars()
 		_ = os.Setenv("FILE_STORAGE_PATH", "/tmp/metrics-db-test.json")
@@ -77,6 +84,13 @@ func TestNewConfig(t *testing.T) {
 		config, err := NewConfig()
 		assert.NoError(t, err)
 		assert.Equal(t, false, config.restore, "expected restore to be false")
+	})
+
+	t.Run("ENV_RESTORE_NO_BOOL", func(t *testing.T) {
+		resetVars()
+		_ = os.Setenv("RESTORE", "nobool")
+		_, err := NewConfig()
+		assert.Error(t, err)
 	})
 
 	t.Run("CMD_STORE_INTERVAL", func(t *testing.T) {
