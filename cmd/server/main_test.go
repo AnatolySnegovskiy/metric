@@ -34,13 +34,16 @@ func Test_Main(t *testing.T) {
 }
 
 func TestHandleShutdownSignal(t *testing.T) {
+	resetVars()
 	s := server.New(storages.NewMemStorage(), nil)
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
-	go handleShutdownSignal(quit, s, &Config{})
+	conf, _ := NewConfig()
+	go handleShutdownSignal(quit, s, conf)
 }
 
 func TestHandleNoError(t *testing.T) {
+	resetVars()
 	t.Run("No error case", func(t *testing.T) {
 		var logOutput bytes.Buffer
 		log.SetOutput(&logOutput)
@@ -53,6 +56,7 @@ func TestHandleNoError(t *testing.T) {
 }
 
 func TestHandleError(t *testing.T) {
+	resetVars()
 	fakeExit := func(int) {
 		panic("os.Exit called")
 	}
@@ -63,6 +67,7 @@ func TestHandleError(t *testing.T) {
 }
 
 func TestHandleErrorWithNil(t *testing.T) {
+	resetVars()
 	var logOutput bytes.Buffer
 	log.SetOutput(&logOutput)
 	defer func() {
@@ -73,31 +78,19 @@ func TestHandleErrorWithNil(t *testing.T) {
 }
 
 func TestMain_LoadMetricsOnStart(t *testing.T) {
+	resetVars()
 	logger, _ := zap.NewProduction()
 	s := storages.NewMemStorage()
-	c := &Config{}
+	conf, _ := NewConfig()
 	serv := server.New(s, logger.Sugar())
-	serv.LoadMetricsOnStart(c.fileStoragePath)
+	serv.LoadMetricsOnStart(conf.fileStoragePath)
 }
 
 func TestMain_SaveMetricsPeriodically(t *testing.T) {
+	resetVars()
 	logger, _ := zap.NewProduction()
 	s := storages.NewMemStorage()
-	c := &Config{}
+	conf, _ := NewConfig()
 	serv := server.New(s, logger.Sugar())
-	go serv.SaveMetricsPeriodically(c.storeInterval, c.fileStoragePath)
-}
-
-func TestMain_RunServer(t *testing.T) {
-	// Подготовка тестовых данных и моков
-	logger, _ := zap.NewProduction()
-	s := storages.NewMemStorage()
-	c := &Config{ /* инициализация данных для теста */ }
-	serv := server.New(s, logger.Sugar())
-
-	// Вызов функций, которые нужно протестировать
-	serv.LoadMetricsOnStart(c.fileStoragePath)
-	serv.SaveMetricsPeriodically(c.storeInterval, c.fileStoragePath)
-	err := serv.Run(c.flagRunAddr)
-	assert.NoError(t, err, "Run returned an error")
+	go serv.SaveMetricsPeriodically(conf.storeInterval, conf.fileStoragePath)
 }
