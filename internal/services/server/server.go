@@ -53,10 +53,7 @@ func (s *Server) SaveMetricsPeriodically(interval int, filePath string) {
 	ticker := time.NewTicker(time.Second * time.Duration(interval))
 	for {
 		<-ticker.C
-		err := s.saveMetricsToFile(filePath)
-		if err != nil {
-			s.logger.Error(err)
-		}
+		s.saveMetricsToFile(filePath)
 	}
 }
 
@@ -85,42 +82,24 @@ func (s *Server) LoadMetricsOnStart(filePath string) {
 	s.logger.Info("Metrics loaded: " + filePath)
 }
 
-func (s *Server) HandleShutdownSignal(filePath string) error {
-	return s.saveMetricsToFile(filePath)
+func (s *Server) HandleShutdownSignal(filePath string) {
+	s.saveMetricsToFile(filePath)
 }
 
-func (s *Server) saveMetricsToFile(filePath string) error {
-	projectDir, err := os.Getwd()
-	if err != nil {
-		return err
-	}
+func (s *Server) saveMetricsToFile(filePath string) {
+	projectDir, _ := os.Getwd()
 
 	absoluteFilePath := filepath.Join(projectDir, filePath)
 
 	directory := filepath.Dir(absoluteFilePath)
-	err = os.MkdirAll(directory, os.ModePerm)
-	if err != nil {
-		return err
-	}
+	_ = os.MkdirAll(directory, os.ModePerm)
 
-	file, err := os.Create(absoluteFilePath)
-	if err != nil {
-		return err
-	}
+	file, _ := os.Create(absoluteFilePath)
 	defer file.Close()
+	jsonData, _ := json.Marshal(s.storage.GetList())
 
-	jsonData, err := json.Marshal(s.storage.GetList())
-	if err != nil {
-		return err
-	}
-
-	_, err = file.Write(jsonData)
-	if err != nil {
-		return err
-	}
-
+	_, _ = file.Write(jsonData)
 	s.logger.Info("Metrics saved: " + absoluteFilePath)
-	return nil
 }
 
 func loadMetricsFromFile(filePath string) (map[string]map[string]map[string]float64, error) {

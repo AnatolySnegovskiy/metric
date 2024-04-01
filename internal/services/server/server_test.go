@@ -10,6 +10,7 @@ import (
 	"github.com/gookit/slog"
 	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -239,4 +240,23 @@ func TestLoadMetricsFromFile(t *testing.T) {
 
 	assert.NoError(t, err)
 	assert.Equal(t, sampleData, m)
+}
+
+func TestSaveMetricsToFile(t *testing.T) {
+	logger, _ := zap.NewProduction()
+	s := &Server{
+		router:  chi.NewRouter(),
+		storage: storages.NewMemStorage(),
+		logger:  logger.Sugar(),
+	}
+
+	pathName := "/tmp/path.json"
+	s.saveMetricsToFile(pathName)
+	projectDir, _ := os.Getwd()
+	absoluteFilePath := filepath.Join(projectDir, pathName)
+
+	assert.FileExists(t, absoluteFilePath)
+
+	os.RemoveAll(absoluteFilePath)
+	os.RemoveAll(filepath.Dir(absoluteFilePath))
 }
