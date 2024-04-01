@@ -228,14 +228,15 @@ func TestLoadMetricsFromFile(t *testing.T) {
 	directory := filepath.Dir(absoluteFilePath)
 
 	_ = os.MkdirAll(directory, os.ModePerm)
-
 	file, _ := os.Create(absoluteFilePath)
+
+	_, _ = file.Write(sampleJSON)
 	defer os.Remove(absoluteFilePath)
 	defer os.RemoveAll(directory)
-	file.Write(sampleJSON)
 	defer file.Close()
-	metrics, err := loadMetricsFromFile(filePath)
+
+	m, err := loadMetricsFromFile(filePath)
 
 	assert.NoError(t, err)
-	assert.Equal(t, sampleData, metrics)
+	assert.Equal(t, sampleData, m)
 }
