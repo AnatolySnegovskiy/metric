@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
@@ -267,6 +268,11 @@ func TestLoadMetricsOnStart(t *testing.T) {
 				"value1": 1.23,
 			},
 		},
+		"No": {
+			"metricName1": {
+				"value1": 1.23,
+			},
+		},
 	}
 	sampleJSON, err := json.Marshal(sampleData)
 	assert.NoError(t, err)
@@ -299,4 +305,25 @@ func TestLoadMetricsOnStart(t *testing.T) {
 	defer os.Remove(absoluteFilePath)
 	defer os.RemoveAll(directory)
 	defer file.Close()
+}
+
+func TestSaveMetricsPeriodically(t *testing.T) {
+	logger, _ := zap.NewProduction()
+	s := &Server{
+		router:  chi.NewRouter(),
+		storage: storages.NewMemStorage(),
+		logger:  logger.Sugar(),
+	}
+
+	pathName := "/tmp/path.json"
+	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+	defer cancel()
+	s.SaveMetricsPeriodically(ctx, 1, pathName)
+
+	s.SaveMetricsToFile(pathName)
+	projectDir, _ := os.Getwd()
+	absoluteFilePath := filepath.Join(projectDir, pathName)
+	assert.FileExists(t, absoluteFilePath)
+	_ = os.RemoveAll(absoluteFilePath)
+	_ = os.RemoveAll(filepath.Dir(absoluteFilePath))
 }
