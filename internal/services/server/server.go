@@ -58,11 +58,7 @@ func (s *Server) SaveMetricsPeriodically(interval int, filePath string) {
 }
 
 func (s *Server) LoadMetricsOnStart(filePath string) {
-	savedMetrics, err := loadMetricsFromFile(filePath)
-
-	if err != nil {
-		s.logger.Error(err)
-	}
+	savedMetrics := loadMetricsFromFile(filePath)
 
 	for metricType, metricValues := range savedMetrics {
 		metric, err := s.storage.GetMetricType(metricType)
@@ -102,26 +98,15 @@ func (s *Server) saveMetricsToFile(filePath string) {
 	s.logger.Info("Metrics saved: " + absoluteFilePath)
 }
 
-func loadMetricsFromFile(filePath string) (map[string]map[string]map[string]float64, error) {
-	projectDir, err := os.Getwd()
-	if err != nil {
-		return nil, err
-	}
-
+func loadMetricsFromFile(filePath string) map[string]map[string]map[string]float64 {
+	projectDir, _ := os.Getwd()
 	absoluteFilePath := filepath.Join(projectDir, filePath)
-
-	file, err := os.Open(absoluteFilePath)
-	if err != nil {
-		return nil, err
-	}
+	file, _ := os.Open(absoluteFilePath)
 	defer file.Close()
 
 	var metrics map[string]map[string]map[string]float64
 	decoder := json.NewDecoder(file)
-	err = decoder.Decode(&metrics)
-	if err != nil {
-		return nil, err
-	}
+	_ = decoder.Decode(&metrics)
 
-	return metrics, nil
+	return metrics
 }

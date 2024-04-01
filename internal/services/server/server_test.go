@@ -236,9 +236,8 @@ func TestLoadMetricsFromFile(t *testing.T) {
 	defer os.RemoveAll(directory)
 	defer file.Close()
 
-	m, err := loadMetricsFromFile(filePath)
+	m := loadMetricsFromFile(filePath)
 
-	assert.NoError(t, err)
 	assert.Equal(t, sampleData, m)
 }
 
