@@ -34,7 +34,7 @@ func main() {
 	go func() {
 		<-quit
 		logger.Info("server stopped")
-		serv.HandleShutdownSignal(c.fileStoragePath)
+		serv.SaveMetricsToFile(c.fileStoragePath)
 		os.Exit(0)
 	}()
 	if c.restore {

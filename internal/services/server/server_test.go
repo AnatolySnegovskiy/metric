@@ -250,7 +250,7 @@ func TestSaveMetricsToFile(t *testing.T) {
 	}
 
 	pathName := "/tmp/path.json"
-	s.saveMetricsToFile(pathName)
+	s.SaveMetricsToFile(pathName)
 	projectDir, _ := os.Getwd()
 	absoluteFilePath := filepath.Join(projectDir, pathName)
 
@@ -258,4 +258,45 @@ func TestSaveMetricsToFile(t *testing.T) {
 
 	os.RemoveAll(absoluteFilePath)
 	os.RemoveAll(filepath.Dir(absoluteFilePath))
+}
+
+func TestLoadMetricsOnStart(t *testing.T) {
+	sampleData := map[string]map[string]map[string]float64{
+		"gauge": {
+			"metricName1": {
+				"value1": 1.23,
+			},
+		},
+	}
+	sampleJSON, err := json.Marshal(sampleData)
+	assert.NoError(t, err)
+
+	projectDir, _ := os.Getwd()
+	filePath := "tmp/metrics.json"
+
+	absoluteFilePath := filepath.Join(projectDir, filePath)
+	directory := filepath.Dir(absoluteFilePath)
+
+	_ = os.MkdirAll(directory, os.ModePerm)
+	file, _ := os.Create(absoluteFilePath)
+
+	_, _ = file.Write(sampleJSON)
+
+	str := storages.NewMemStorage()
+	str.AddMetric("gauge", metrics.NewGauge())
+	logger, _ := zap.NewProduction()
+	s := &Server{
+		router:  chi.NewRouter(),
+		storage: str,
+		logger:  logger.Sugar(),
+	}
+
+	s.LoadMetricsOnStart(filePath)
+
+	m, _ := str.GetMetricType("gauge")
+	assert.Equal(t, 1.23, m.GetList()["value1"])
+
+	defer os.Remove(absoluteFilePath)
+	defer os.RemoveAll(directory)
+	defer file.Close()
 }

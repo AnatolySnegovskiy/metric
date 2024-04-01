@@ -53,7 +53,7 @@ func (s *Server) SaveMetricsPeriodically(interval int, filePath string) {
 	ticker := time.NewTicker(time.Second * time.Duration(interval))
 	for {
 		<-ticker.C
-		s.saveMetricsToFile(filePath)
+		s.SaveMetricsToFile(filePath)
 	}
 }
 
@@ -78,13 +78,8 @@ func (s *Server) LoadMetricsOnStart(filePath string) {
 	s.logger.Info("Metrics loaded: " + filePath)
 }
 
-func (s *Server) HandleShutdownSignal(filePath string) {
-	s.saveMetricsToFile(filePath)
-}
-
-func (s *Server) saveMetricsToFile(filePath string) {
+func (s *Server) SaveMetricsToFile(filePath string) {
 	projectDir, _ := os.Getwd()
-
 	absoluteFilePath := filepath.Join(projectDir, filePath)
 
 	directory := filepath.Dir(absoluteFilePath)
