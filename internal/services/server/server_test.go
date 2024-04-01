@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"encoding/json"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
@@ -11,6 +12,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"net/http"
 	"net/http/httptest"
+	"os"
+	"path/filepath"
 	"testing"
 	"time"
 )
@@ -205,4 +208,34 @@ func TestServer_Run(t *testing.T) {
 		time.Sleep(1 * time.Millisecond)
 		assert.NoError(t, err, "unexpected error")
 	}()
+}
+
+func TestLoadMetricsFromFile(t *testing.T) {
+	sampleData := map[string]map[string]map[string]float64{
+		"metricType1": {
+			"metricName1": {
+				"value1": 1.23,
+			},
+		},
+	}
+	sampleJSON, err := json.Marshal(sampleData)
+	assert.NoError(t, err)
+
+	projectDir, _ := os.Getwd()
+	filePath := "tmp/metrics.json"
+
+	absoluteFilePath := filepath.Join(projectDir, filePath)
+	directory := filepath.Dir(absoluteFilePath)
+
+	_ = os.MkdirAll(directory, os.ModePerm)
+
+	file, _ := os.Create(absoluteFilePath)
+	defer os.Remove(absoluteFilePath)
+	defer os.RemoveAll(directory)
+	file.Write(sampleJSON)
+	defer file.Close()
+	metrics, err := loadMetricsFromFile(filePath)
+
+	assert.NoError(t, err)
+	assert.Equal(t, sampleData, metrics)
 }
