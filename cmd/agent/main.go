@@ -38,7 +38,6 @@ func main() {
 	fmt.Println("Agent started")
 	c, err := NewConfig()
 	handleError(err)
-
 	handleError(
 		agent.New(
 			agent.Options{

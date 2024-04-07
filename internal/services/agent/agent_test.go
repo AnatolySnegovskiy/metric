@@ -39,6 +39,13 @@ func TestAgent(t *testing.T) {
 		expectedErr   bool
 		mockStorage   func() *storages.MemStorage
 	}{
+		{"SuccessNil", http.StatusOK, nil, false, func() *storages.MemStorage {
+			mockStorage := storages.NewMemStorage()
+			mockStorage.AddMetric("gauge", metrics.NewGauge())
+			mockStorage.AddMetric("counter", metrics.NewCounter())
+			mockStorage.AddMetric("nil", nil)
+			return mockStorage
+		}},
 		{"Success", http.StatusOK, nil, false, func() *storages.MemStorage {
 			mockStorage := storages.NewMemStorage()
 			mockStorage.AddMetric("gauge", metrics.NewGauge())

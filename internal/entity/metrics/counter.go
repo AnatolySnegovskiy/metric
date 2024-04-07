@@ -6,7 +6,7 @@ import (
 )
 
 type Counter struct {
-	items map[string]float64
+	Items map[string]float64
 }
 
 func (c *Counter) Process(name string, data string) error {
@@ -15,16 +15,16 @@ func (c *Counter) Process(name string, data string) error {
 		return errors.New("metric value is not int")
 	}
 
-	c.items[name] += float64(intValue)
+	c.Items[name] += float64(intValue)
 	return nil
 }
 
 func (c *Counter) GetList() map[string]float64 {
-	return c.items
+	return c.Items
 }
 
 func NewCounter() *Counter {
 	return &Counter{
-		items: make(map[string]float64),
+		Items: make(map[string]float64),
 	}
 }

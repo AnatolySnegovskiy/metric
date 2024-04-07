@@ -2,11 +2,15 @@ package server
 
 import (
 	"fmt"
+	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/go-chi/chi/v5"
+	"github.com/mailru/easyjson"
+	"io"
 	"net/http"
+	"strconv"
 )
 
-func (s *Server) writeMetricHandler(rw http.ResponseWriter, req *http.Request) {
+func (s *Server) writeGetMetricHandler(rw http.ResponseWriter, req *http.Request) {
 	metricType := chi.URLParam(req, "metricType")
 	metricName := chi.URLParam(req, "metricName")
 	metricValue := chi.URLParam(req, "metricValue")
@@ -25,7 +29,45 @@ func (s *Server) writeMetricHandler(rw http.ResponseWriter, req *http.Request) {
 	}
 }
 
+func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Set("Content-Type", "application/json")
+	metricDTO, err := getMetricDto(req)
+
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"%s"}`, err.Error()))
+		return
+	}
+
+	storage := s.storage
+	metric, err := storage.GetMetricType(metricDTO.MType)
+
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"metric type %s not found"}`, metricDTO.MType))
+		return
+	}
+
+	var value string
+	if metricDTO.Delta != nil {
+		value = strconv.FormatInt(*metricDTO.Delta, 10)
+	} else if metricDTO.Value != nil {
+		value = strconv.FormatFloat(*metricDTO.Value, 'f', -1, 64)
+	}
+
+	if value == "" {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", `{"error":"failed to process Value and Delta is empty"}`)
+		return
+	}
+
+	_ = metric.Process(metricDTO.ID, value)
+	json, _ := easyjson.Marshal(metricDTO)
+	fmt.Fprintf(rw, "%v", string(json))
+}
+
 func (s *Server) showAllMetricHandler(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Set("Content-Type", "text/html; charset=utf-8")
 	stgList := s.storage.GetList()
 
 	if len(stgList) == 0 {
@@ -75,6 +117,57 @@ func (s *Server) showMetricNameHandlers(rw http.ResponseWriter, req *http.Reques
 	fmt.Fprintf(rw, "%v", storage.GetList()[metricName])
 }
 
+func (s *Server) showPostMetricHandler(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Set("Content-Type", "application/json")
+	metricDTO, err := getMetricDto(req)
+
+	if err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"%s"}`, err.Error()))
+		return
+	}
+
+	metricType := metricDTO.MType
+	metricName := metricDTO.ID
+
+	storage, err := s.storage.GetMetricType(metricType)
+	if err != nil {
+		rw.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"metric type %s not found"}`, metricType))
+		return
+	}
+
+	metric, ok := storage.GetList()[metricName]
+
+	if !ok {
+		rw.WriteHeader(http.StatusNotFound)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"metric %s not found"}`, metricName))
+		return
+	}
+
+	if metricDTO.MType == "gauge" {
+		metricDTO.Value = &metric
+	} else {
+		val := int64(metric)
+		metricDTO.Delta = &val
+	}
+
+	json, _ := easyjson.Marshal(metricDTO)
+
+	fmt.Fprintf(rw, "%v", string(json))
+}
+
 func (s *Server) notFoundHandler(w http.ResponseWriter, _ *http.Request) {
 	w.WriteHeader(http.StatusNotFound)
+}
+
+func getMetricDto(req *http.Request) (*dto.Metrics, error) {
+	metricDTO := &dto.Metrics{}
+	rawBytes, _ := io.ReadAll(req.Body)
+
+	if err := easyjson.Unmarshal(rawBytes, metricDTO); err != nil {
+		return nil, fmt.Errorf("failed to unmarshal body: %s", err.Error())
+	}
+
+	return metricDTO, nil
 }

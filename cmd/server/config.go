@@ -4,15 +4,22 @@ import (
 	"flag"
 	"fmt"
 	"os"
+	"strconv"
 )
 
 type Config struct {
-	flagRunAddr string
+	flagRunAddr     string
+	storeInterval   int
+	fileStoragePath string
+	restore         bool
 }
 
 func NewConfig() (*Config, error) {
 	c := &Config{
-		flagRunAddr: "localhost:8080",
+		flagRunAddr:     "localhost:8080",
+		storeInterval:   300,
+		fileStoragePath: "/tmp/metrics-db.json",
+		restore:         true,
 	}
 
 	if err := c.parseFlags(); err != nil {
@@ -27,7 +34,27 @@ func (c *Config) parseFlags() error {
 		c.flagRunAddr = val
 	}
 
+	var err error
+	if val, ok := os.LookupEnv("STORE_INTERVAL"); val != "" && ok {
+		if c.storeInterval, err = strconv.Atoi(val); err != nil {
+			return fmt.Errorf("ENV STORE_INTERVAL: %s", err)
+		}
+	}
+
+	if val, ok := os.LookupEnv("FILE_STORAGE_PATH"); val != "" && ok {
+		c.fileStoragePath = val
+	}
+
+	if val, ok := os.LookupEnv("RESTORE"); val != "" && ok {
+		if c.restore, err = strconv.ParseBool(val); err != nil {
+			return fmt.Errorf("ENV RESTORE: %s", err)
+		}
+	}
+
 	flag.StringVar(&c.flagRunAddr, "a", c.flagRunAddr, "address and port to run server")
+	flag.IntVar(&c.storeInterval, "i", c.storeInterval, "storeInterval")
+	flag.StringVar(&c.fileStoragePath, "f", c.fileStoragePath, "fileStoragePath")
+	flag.BoolVar(&c.restore, "r", c.restore, "restore")
 	flag.Parse()
 
 	if flag.NArg() > 0 {
