@@ -36,7 +36,7 @@ func New(s Storage, l gsr.GenLogger) *Server {
 }
 
 func (s *Server) setupRoutes() {
-	s.router.Use(s.logMiddleware, s.gzipResponseMiddleware, s.gzipRequestMiddleware)
+	s.router.Use(s.logMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware)
 	s.router.NotFound(s.notFoundHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)

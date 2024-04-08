@@ -1,7 +1,7 @@
 package storages
 
 import (
-	"github.com/AnatolySnegovskiy/metric/internal/storages/mocks"
+	"github.com/AnatolySnegovskiy/metric/internal/mocks"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"testing"

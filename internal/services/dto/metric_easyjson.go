@@ -17,7 +17,7 @@ var (
 	_ easyjson.Marshaler
 )
 
-func easyjson9478868cDecodeGithubComAnatolySnegovskiyMetricInternalServicesServerDto(in *jlexer.Lexer, out *Metrics) {
+func easyjson9478868cDecodeGithubComAnatolySnegovskiyMetricInternalServicesDto(in *jlexer.Lexer, out *Metrics) {
 	isTopLevel := in.IsStart()
 	if in.IsNull() {
 		if isTopLevel {
@@ -70,7 +70,7 @@ func easyjson9478868cDecodeGithubComAnatolySnegovskiyMetricInternalServicesServe
 		in.Consumed()
 	}
 }
-func easyjson9478868cEncodeGithubComAnatolySnegovskiyMetricInternalServicesServerDto(out *jwriter.Writer, in Metrics) {
+func easyjson9478868cEncodeGithubComAnatolySnegovskiyMetricInternalServicesDto(out *jwriter.Writer, in Metrics) {
 	out.RawByte('{')
 	first := true
 	_ = first
@@ -100,23 +100,23 @@ func easyjson9478868cEncodeGithubComAnatolySnegovskiyMetricInternalServicesServe
 // MarshalJSON supports json.Marshaler interface
 func (v Metrics) MarshalJSON() ([]byte, error) {
 	w := jwriter.Writer{}
-	easyjson9478868cEncodeGithubComAnatolySnegovskiyMetricInternalServicesServerDto(&w, v)
+	easyjson9478868cEncodeGithubComAnatolySnegovskiyMetricInternalServicesDto(&w, v)
 	return w.Buffer.BuildBytes(), w.Error
 }
 
 // MarshalEasyJSON supports easyjson.Marshaler interface
 func (v Metrics) MarshalEasyJSON(w *jwriter.Writer) {
-	easyjson9478868cEncodeGithubComAnatolySnegovskiyMetricInternalServicesServerDto(w, v)
+	easyjson9478868cEncodeGithubComAnatolySnegovskiyMetricInternalServicesDto(w, v)
 }
 
 // UnmarshalJSON supports json.Unmarshaler interface
 func (v *Metrics) UnmarshalJSON(data []byte) error {
 	r := jlexer.Lexer{Data: data}
-	easyjson9478868cDecodeGithubComAnatolySnegovskiyMetricInternalServicesServerDto(&r, v)
+	easyjson9478868cDecodeGithubComAnatolySnegovskiyMetricInternalServicesDto(&r, v)
 	return r.Error()
 }
 
 // UnmarshalEasyJSON supports easyjson.Unmarshaler interface
 func (v *Metrics) UnmarshalEasyJSON(l *jlexer.Lexer) {
-	easyjson9478868cDecodeGithubComAnatolySnegovskiyMetricInternalServicesServerDto(l, v)
+	easyjson9478868cDecodeGithubComAnatolySnegovskiyMetricInternalServicesDto(l, v)
 }

@@ -86,6 +86,14 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, false, config.restore, "expected restore to be false")
 	})
 
+	t.Run("ENV_DATABASE_DSN", func(t *testing.T) {
+		resetVars()
+		_ = os.Setenv("DATABASE_DSN", "postgres://postgres:root@localhost:1000/public")
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "postgres://postgres:root@localhost:1000/public", config.dataBaseDSN, "expected restore to be false")
+	})
+
 	t.Run("ENV_RESTORE_NO_BOOL", func(t *testing.T) {
 		resetVars()
 		_ = os.Setenv("RESTORE", "nobool")
@@ -115,6 +123,14 @@ func TestNewConfig(t *testing.T) {
 		config, err := NewConfig()
 		assert.NoError(t, err)
 		assert.Equal(t, false, config.restore, "expected restore to be false")
+	})
+
+	t.Run("CMD_DATABASE_DSN", func(t *testing.T) {
+		resetVars()
+		os.Args = []string{"cmd", "-d=postgres://postgres:test@localhost:1000/public"}
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "postgres://postgres:test@localhost:1000/public", config.dataBaseDSN, "expected restore to be false")
 	})
 }
 
