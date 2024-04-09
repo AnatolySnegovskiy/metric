@@ -5,14 +5,18 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
+type PgxConnInterface interface {
+	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
+	Close(ctx context.Context) error
+}
+
 type Postgres struct {
-	conn *pgx.Conn
+	conn PgxConnInterface
 	ctx  context.Context
 }
 
 func NewPostgres(ctx context.Context, configString string) (*Postgres, error) {
 	conn, err := pgx.Connect(ctx, configString)
-
 	if err != nil {
 		return nil, err
 	}
