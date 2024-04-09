@@ -6,6 +6,7 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/services/server"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
+	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 	"go.uber.org/zap"
 	"os"
 	"os/signal"
@@ -28,7 +29,9 @@ func main() {
 	c, err := NewConfig()
 	handleError(err)
 
-	serv := server.New(s, logger.Sugar())
+	db, _ := clients.NewPostgres(context.Background(), c.dataBaseDSN)
+
+	serv := server.New(s, db, logger.Sugar())
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)

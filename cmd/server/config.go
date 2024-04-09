@@ -21,7 +21,7 @@ func NewConfig() (*Config, error) {
 		storeInterval:   300,
 		fileStoragePath: "/tmp/metrics-db.json",
 		restore:         true,
-		dataBaseDSN:     "postgres://postgres:root@localhost:5432/public",
+		dataBaseDSN:     "postgres://postgres:root@localhost:5432",
 	}
 
 	if err := c.parseFlags(); err != nil {

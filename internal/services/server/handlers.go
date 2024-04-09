@@ -171,3 +171,12 @@ func getMetricDto(req *http.Request) (*dto.Metrics, error) {
 
 	return metricDTO, nil
 }
+
+func (s *Server) postgersPingHandler(writer http.ResponseWriter, _ *http.Request) {
+	if s.db != nil {
+		writer.WriteHeader(http.StatusOK)
+		return
+	}
+
+	writer.WriteHeader(http.StatusInternalServerError)
+}

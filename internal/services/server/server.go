@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
+	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 	"github.com/go-chi/chi/v5"
 	"github.com/gookit/gsr"
 	"net/http"
@@ -23,13 +24,15 @@ type Server struct {
 	storage Storage
 	router  *chi.Mux
 	logger  gsr.GenLogger
+	db      *clients.Postgres
 }
 
-func New(s Storage, l gsr.GenLogger) *Server {
+func New(s Storage, db *clients.Postgres, l gsr.GenLogger) *Server {
 	server := &Server{
 		storage: s,
 		router:  chi.NewRouter(),
 		logger:  l,
+		db:      db,
 	}
 	server.setupRoutes()
 	return server
@@ -44,6 +47,8 @@ func (s *Server) setupRoutes() {
 	s.router.Get("/", s.showAllMetricHandler)
 	s.router.Get("/value/{metricType}", s.showMetricTypeHandler)
 	s.router.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
+
+	s.router.Get("/ping", s.postgersPingHandler)
 }
 
 func (s *Server) Run(addr string) error {
