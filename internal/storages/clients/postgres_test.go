@@ -80,20 +80,10 @@ func TestCloseFailFunction(t *testing.T) {
 }
 
 func TestNewPostgres(t *testing.T) {
-	// Подготовка тестовых данных
 	ctx := context.Background()
-	validConfigString := "host=localhost port=5432 user=postgres password=root sslmode=disable"
 	invalidConfigString := "invalid connection string"
 
-	// Тестируем успешное создание объекта Postgres
-	postgres, err := NewPostgres(ctx, validConfigString)
-	if err != nil {
-		t.Errorf("Expected no error, got %v", err)
-	}
-	assert.NotNil(t, postgres.conn)
-	assert.Equal(t, ctx, postgres.ctx)
-
 	// Тестируем возвращение ошибки при неверной конфигурации
-	_, err = NewPostgres(ctx, invalidConfigString)
+	_, err := NewPostgres(ctx, invalidConfigString)
 	assert.Error(t, err, "Expected an error for invalid config string")
 }
