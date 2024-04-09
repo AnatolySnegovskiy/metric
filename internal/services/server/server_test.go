@@ -7,6 +7,7 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
+	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 	"github.com/go-chi/chi/v5"
 	"github.com/gookit/slog"
 	"github.com/mailru/easyjson"
@@ -53,7 +54,8 @@ func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int
 
 func TestClearStorage(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New())
+	db, _ := clients.NewPostgres(context.Background(), os.Getenv("POSTGRES_DSN"))
+	s := New(stg, db, slog.New())
 	r := chi.NewRouter()
 	r.NotFound(s.notFoundHandler)
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeGetMetricHandler)
@@ -74,7 +76,8 @@ func TestServerHandlers(t *testing.T) {
 	stg.AddMetric("typePostData", metrics.NewCounter())
 	stg.AddMetric("gaugeValue", metrics.NewGauge())
 	stg.AddMetric("zero", metrics.NewGauge())
-	s := New(stg, slog.New())
+	db, _ := clients.NewPostgres(context.Background(), os.Getenv("POSTGRES_DSN"))
+	s := New(stg, db, slog.New())
 
 	r := chi.NewRouter()
 	r.Use(s.logMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware)
