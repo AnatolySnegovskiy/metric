@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"flag"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
@@ -334,47 +333,20 @@ func TestSaveMetricsPeriodically(t *testing.T) {
 }
 
 func TestPingHandlerOk(t *testing.T) {
-	dataBaseDSN := "postgres://postgres:root@localhost:5432"
-
-	if val, ok := os.LookupEnv("DATABASE_DSN"); val != "" && ok {
-		dataBaseDSN = val
-	}
-
-	flag.StringVar(&dataBaseDSN, "d", dataBaseDSN, "databaseDSN")
-	flag.Parse()
-
 	stg := storages.NewMemStorage()
-	db, _ := clients.NewPostgres(context.Background(), dataBaseDSN)
+	db := &clients.Postgres{}
 	s := New(stg, db, slog.New())
 	r := chi.NewRouter()
 	r.Get("/ping", s.postgersPingHandler)
 
 	testHandler(t, r, http.MethodGet, "/ping", http.StatusOK, "skip", nil, nil)
-	resetVars()
 }
 
 func TestPingHandlerFail(t *testing.T) {
-	dataBaseDSN := "postgres://postgres:root@localhost:5432"
-
-	if val, ok := os.LookupEnv("DATABASE_DSN"); val != "" && ok {
-		dataBaseDSN = val
-	}
-
-	flag.StringVar(&dataBaseDSN, "d", dataBaseDSN, "databaseDSN")
-	flag.Parse()
-
 	stg := storages.NewMemStorage()
-	db, _ := clients.NewPostgres(context.Background(), dataBaseDSN+"invalid")
-	s := New(stg, db, slog.New())
+	s := New(stg, nil, slog.New())
 	r := chi.NewRouter()
 	r.Get("/ping", s.postgersPingHandler)
 
 	testHandler(t, r, http.MethodGet, "/ping", http.StatusInternalServerError, "skip", nil, nil)
-	resetVars()
-}
-
-func resetVars() {
-	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
-	os.Args = []string{"cmd"}
-	os.Clearenv()
 }
