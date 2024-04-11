@@ -3,11 +3,14 @@ package clients
 import (
 	"context"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 type PgxConnInterface interface {
 	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
 	Close(ctx context.Context) error
+	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
+	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
 }
 
 type Postgres struct {
@@ -39,4 +42,12 @@ func (db *Postgres) Close() (bool, error) {
 	}
 
 	return true, nil
+}
+
+func (db *Postgres) Exec(query string, args ...interface{}) (pgconn.CommandTag, error) {
+	return db.conn.Exec(db.ctx, query, args...)
+}
+
+func (db *Postgres) QueryRow(query string, args ...interface{}) pgx.Row {
+	return db.conn.QueryRow(db.ctx, query, args...)
 }

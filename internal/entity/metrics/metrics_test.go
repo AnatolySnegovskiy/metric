@@ -18,7 +18,7 @@ var counterProcessTests = []struct {
 }
 
 func TestCounter_Process(t *testing.T) {
-	counter := NewCounter()
+	counter := NewCounter(nil)
 
 	for _, tt := range counterProcessTests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -46,7 +46,7 @@ var gaugeProcessTests = []struct {
 }
 
 func TestGauge_Process(t *testing.T) {
-	gauge := NewGauge()
+	gauge := NewGauge(nil)
 
 	for _, tt := range gaugeProcessTests {
 		t.Run(tt.name, func(t *testing.T) {

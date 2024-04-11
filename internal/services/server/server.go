@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
-	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 	"github.com/go-chi/chi/v5"
 	"github.com/gookit/gsr"
 	"net/http"
@@ -21,19 +20,20 @@ type Storage interface {
 }
 
 type Server struct {
-	storage Storage
-	router  *chi.Mux
-	logger  gsr.GenLogger
-	db      *clients.Postgres
+	storage  Storage
+	router   *chi.Mux
+	logger   gsr.GenLogger
+	dbIsOpen bool
 }
 
-func New(s Storage, db *clients.Postgres, l gsr.GenLogger) *Server {
+func New(s Storage, l gsr.GenLogger, dbIsOpen bool) *Server {
 	server := &Server{
-		storage: s,
-		router:  chi.NewRouter(),
-		logger:  l,
-		db:      db,
+		storage:  s,
+		router:   chi.NewRouter(),
+		logger:   l,
+		dbIsOpen: dbIsOpen,
 	}
+
 	server.setupRoutes()
 	return server
 }

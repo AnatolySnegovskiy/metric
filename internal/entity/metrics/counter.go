@@ -2,11 +2,13 @@ package metrics
 
 import (
 	"errors"
+	"github.com/AnatolySnegovskiy/metric/internal/repositories"
 	"strconv"
 )
 
 type Counter struct {
 	Items map[string]float64
+	rep   *repositories.CounterRepo
 }
 
 func (c *Counter) Process(name string, data string) error {
@@ -16,15 +18,30 @@ func (c *Counter) Process(name string, data string) error {
 	}
 
 	c.Items[name] += float64(intValue)
+
+	if c.rep != nil {
+		c.rep.AddMetric(name, c.Items[name])
+	}
+
 	return nil
 }
 
 func (c *Counter) GetList() map[string]float64 {
+	if c.rep != nil {
+		rows := c.rep.GetList()
+		for rows.Next() {
+			var name string
+			var value float64
+			_ = rows.Scan(&name, &value)
+			c.Items[name] = value
+		}
+	}
 	return c.Items
 }
 
-func NewCounter() *Counter {
+func NewCounter(rep *repositories.CounterRepo) *Counter {
 	return &Counter{
 		Items: make(map[string]float64),
+		rep:   rep,
 	}
 }

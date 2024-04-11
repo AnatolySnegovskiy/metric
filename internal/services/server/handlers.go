@@ -173,7 +173,7 @@ func getMetricDto(req *http.Request) (*dto.Metrics, error) {
 }
 
 func (s *Server) postgersPingHandler(writer http.ResponseWriter, _ *http.Request) {
-	if s.db != nil {
+	if s.dbIsOpen {
 		writer.WriteHeader(http.StatusOK)
 		return
 	}

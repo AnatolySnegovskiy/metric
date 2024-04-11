@@ -39,15 +39,15 @@ func TestAgent(t *testing.T) {
 	}{
 		{"SuccessNil", http.StatusOK, nil, false, func() *storages.MemStorage {
 			mockStorage := storages.NewMemStorage()
-			mockStorage.AddMetric("gauge", metrics.NewGauge())
-			mockStorage.AddMetric("counter", metrics.NewCounter())
+			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
+			mockStorage.AddMetric("counter", metrics.NewCounter(nil))
 			mockStorage.AddMetric("nil", nil)
 			return mockStorage
 		}},
 		{"Success", http.StatusOK, nil, false, func() *storages.MemStorage {
 			mockStorage := storages.NewMemStorage()
-			mockStorage.AddMetric("gauge", metrics.NewGauge())
-			mockStorage.AddMetric("counter", metrics.NewCounter())
+			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
+			mockStorage.AddMetric("counter", metrics.NewCounter(nil))
 			return mockStorage
 		}},
 		{"ErrorPoll", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
@@ -56,12 +56,12 @@ func TestAgent(t *testing.T) {
 		}},
 		{"ErrorPollCounter", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
 			mockStorage := storages.NewMemStorage()
-			mockStorage.AddMetric("gauge", metrics.NewGauge())
+			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
 			return mockStorage
 		}},
 		{"ErrorPollGauge", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
 			mockStorage := storages.NewMemStorage()
-			mockStorage.AddMetric("counter", metrics.NewCounter())
+			mockStorage.AddMetric("counter", metrics.NewCounter(nil))
 			return mockStorage
 		}},
 
@@ -79,7 +79,7 @@ func TestAgent(t *testing.T) {
 			).AnyTimes()
 
 			mockStorage.AddMetric("counter", mockEntity)
-			mockStorage.AddMetric("gauge", metrics.NewGauge())
+			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
 			return mockStorage
 		}},
 		{"ErrorPollRandomValue", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
@@ -95,7 +95,7 @@ func TestAgent(t *testing.T) {
 				},
 			).AnyTimes()
 
-			mockStorage.AddMetric("counter", metrics.NewGauge())
+			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
 			mockStorage.AddMetric("gauge", mockEntity)
 			return mockStorage
 		}},
@@ -111,20 +111,20 @@ func TestAgent(t *testing.T) {
 				errors.New("some error"),
 			).AnyTimes().MinTimes(1)
 
-			mockStorage.AddMetric("counter", metrics.NewGauge())
+			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
 			mockStorage.AddMetric("gauge", mockEntity)
 			return mockStorage
 		}},
 		{"ErrorReport", http.StatusBadRequest, fmt.Errorf("some error"), true, func() *storages.MemStorage {
 			mockStorage := storages.NewMemStorage()
-			mockStorage.AddMetric("gauge", metrics.NewGauge())
-			mockStorage.AddMetric("counter", metrics.NewCounter())
+			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
+			mockStorage.AddMetric("counter", metrics.NewCounter(nil))
 			return mockStorage
 		}},
 		{"StatusBadRequest", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
 			mockStorage := storages.NewMemStorage()
-			mockStorage.AddMetric("gauge", metrics.NewGauge())
-			mockStorage.AddMetric("counter", metrics.NewCounter())
+			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
+			mockStorage.AddMetric("counter", metrics.NewCounter(nil))
 			return mockStorage
 		}},
 	}

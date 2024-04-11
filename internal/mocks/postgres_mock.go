@@ -14,6 +14,7 @@ import (
 	reflect "reflect"
 
 	pgx "github.com/jackc/pgx/v5"
+	pgconn "github.com/jackc/pgx/v5/pgconn"
 	gomock "go.uber.org/mock/gomock"
 )
 
@@ -54,6 +55,26 @@ func (mr *MockPgxConnInterfaceMockRecorder) Close(ctx any) *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockPgxConnInterface)(nil).Close), ctx)
 }
 
+// Exec mocks base method.
+func (m *MockPgxConnInterface) Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error) {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, sql}
+	for _, a := range arguments {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "Exec", varargs...)
+	ret0, _ := ret[0].(pgconn.CommandTag)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// Exec indicates an expected call of Exec.
+func (mr *MockPgxConnInterfaceMockRecorder) Exec(ctx, sql any, arguments ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, sql}, arguments...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exec", reflect.TypeOf((*MockPgxConnInterface)(nil).Exec), varargs...)
+}
+
 // Query mocks base method.
 func (m *MockPgxConnInterface) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
 	m.ctrl.T.Helper()
@@ -72,4 +93,23 @@ func (mr *MockPgxConnInterfaceMockRecorder) Query(ctx, sql any, args ...any) *go
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, sql}, args...)
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Query", reflect.TypeOf((*MockPgxConnInterface)(nil).Query), varargs...)
+}
+
+// QueryRow mocks base method.
+func (m *MockPgxConnInterface) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
+	m.ctrl.T.Helper()
+	varargs := []any{ctx, sql}
+	for _, a := range args {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "QueryRow", varargs...)
+	ret0, _ := ret[0].(pgx.Row)
+	return ret0
+}
+
+// QueryRow indicates an expected call of QueryRow.
+func (mr *MockPgxConnInterfaceMockRecorder) QueryRow(ctx, sql any, args ...any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	varargs := append([]any{ctx, sql}, args...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryRow", reflect.TypeOf((*MockPgxConnInterface)(nil).QueryRow), varargs...)
 }

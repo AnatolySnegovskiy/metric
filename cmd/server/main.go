@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
+	"github.com/AnatolySnegovskiy/metric/internal/repositories"
 	"github.com/AnatolySnegovskiy/metric/internal/services/server"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
@@ -22,16 +23,24 @@ func handleError(err error) {
 
 func main() {
 	logger, _ := zap.NewProduction()
-	s := storages.NewMemStorage()
-	s.AddMetric("gauge", metrics.NewGauge())
-	s.AddMetric("counter", metrics.NewCounter())
-
 	c, err := NewConfig()
 	handleError(err)
 
 	db, _ := clients.NewPostgres(context.Background(), c.dataBaseDSN)
+	var gaugeRepo *repositories.GaugeRepo
+	var counterRepo *repositories.CounterRepo
 
-	serv := server.New(s, db, logger.Sugar())
+	if db != nil {
+		defer db.Close()
+		gaugeRepo = repositories.NewGaugeRepo(db)
+		counterRepo = repositories.NewCounterRepo(db)
+	}
+
+	s := storages.NewMemStorage()
+	s.AddMetric("gauge", metrics.NewGauge(gaugeRepo))
+	s.AddMetric("counter", metrics.NewCounter(counterRepo))
+
+	serv := server.New(s, logger.Sugar(), db != nil)
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
