@@ -23,7 +23,7 @@ func (g *GaugeRepo) makeTable() {
 	_, _ = g.db.Exec("CREATE TABLE IF NOT EXISTS guage (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")
 }
 
-func (g *GaugeRepo) getItem(name string) float64 {
+func (g *GaugeRepo) GetItem(name string) float64 {
 	var value float64
 	_ = g.db.QueryRow("SELECT value FROM guage WHERE name = $1", name).Scan(&value)
 	return value

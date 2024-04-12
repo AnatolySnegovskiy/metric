@@ -22,7 +22,7 @@ func (c *CounterRepo) makeTable() {
 	_, _ = c.db.Exec("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int)")
 }
 
-func (c *CounterRepo) getItem(name string) float64 {
+func (c *CounterRepo) GetItem(name string) float64 {
 	var value float64
 	_ = c.db.QueryRow("SELECT value FROM counter WHERE name = $1", name).Scan(&value)
 	return value
