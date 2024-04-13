@@ -36,9 +36,9 @@ func (c *Counter) GetList() (map[string]float64, error) {
 
 		for rows.Next() {
 			var name string
-			var value float64
+			var value int
 			_ = rows.Scan(&name, &value)
-			c.Items[name] = value
+			c.Items[name] = float64(value)
 		}
 	}
 	return c.Items, nil
