@@ -103,7 +103,7 @@ func TestCounterRepo_Test(t *testing.T) {
 				cr := &CounterRepo{
 					pg: mockDB,
 				}
-				err := cr.AddMetrics(map[string]int{"test": 500})
+				err := cr.AddMetrics(map[string]float64{"test": 500})
 				assert.NoError(t, err, "AddMetrics", err)
 			},
 		},
