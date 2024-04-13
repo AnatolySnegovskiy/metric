@@ -28,7 +28,7 @@ func (c *Counter) Process(name string, data string) error {
 
 func (c *Counter) ProcessMassive(data map[string]float64) error {
 	for name, value := range data {
-		c.Items[name] = value
+		c.Items[name] += value
 	}
 
 	if c.rep != nil {
