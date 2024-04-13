@@ -15,7 +15,6 @@ func NewGaugeRepo(pg *clients.Postgres) (*GaugeRepo, error) {
 	cr := &GaugeRepo{
 		pg: pg,
 	}
-
 	if err := cr.makeTable(); err != nil {
 		return nil, err
 	}
