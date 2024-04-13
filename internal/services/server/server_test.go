@@ -166,7 +166,7 @@ func TestServerHandlers(t *testing.T) {
 		{"writeGetMetricHandler3CompressError", r, http.MethodPost, "/update/", http.StatusInternalServerError, "skip", bodyMap["typePostDataValue"], map[string]string{"Content-Type": "application/json", "Content-Encoding": "gzip"}},
 
 		{"writeGetMetricHandler3CompressOK", r, http.MethodPost, "/update/", http.StatusOK, "skip", buf.Bytes(), map[string]string{"Content-Type": "application/json", "Content-Encoding": "gzip"}},
-
+		{"writeGetMetricHandler3NoJson", r, http.MethodPost, "/update/", http.StatusBadRequest, "skip", buf.Bytes(), map[string]string{"Content-Type": "text plain", "Content-Encoding": "gzip"}},
 		{"writeGetMetricHandler4", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":10}", bodyMap["getPostValue"], map[string]string{"Content-Type": "application/json"}},
 
 		{"writeGetMetricHandler5", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"gauge\",\"value\":10}", bodyMap["getPostValueGauge"], map[string]string{"Content-Type": "application/json"}},
