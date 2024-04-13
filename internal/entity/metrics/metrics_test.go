@@ -94,7 +94,7 @@ func TestCounter_getListErrorDB(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer mock.Close()
-	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int)")).
+	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")).
 		WillReturnResult(pgxmock.NewResult("CREATE", 1))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM counter")).
 		WillReturnError(errors.New("db error"))
@@ -137,7 +137,7 @@ func TestCounter_ProcessDB(t *testing.T) {
 	}
 	defer mock.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int)")).
+	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")).
 		WillReturnResult(pgxmock.NewResult("CREATE", 1))
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO counter (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2")).
 		WithArgs("test", int(100)).

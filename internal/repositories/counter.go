@@ -24,7 +24,7 @@ func NewCounterRepo(pg *clients.Postgres) (*CounterRepo, error) {
 }
 
 func (c *CounterRepo) makeTable() error {
-	_, err := c.pg.Exec("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int)")
+	_, err := c.pg.Exec("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")
 	return err
 }
 

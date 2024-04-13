@@ -19,7 +19,7 @@ func TestCounterRepo_Test(t *testing.T) {
 		{
 			name: "NewCounterRepo",
 			expect: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int)")).
+				mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")).
 					WillReturnResult(pgxmock.NewResult("CREATE", 1))
 			},
 			check: func(mockDB *clients.Postgres) {
@@ -30,7 +30,7 @@ func TestCounterRepo_Test(t *testing.T) {
 		{
 			name: "NewCounterRepoError",
 			expect: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int)")).
+				mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")).
 					WillReturnError(pgx.ErrTxCommitRollback)
 			},
 			check: func(mockDB *clients.Postgres) {
