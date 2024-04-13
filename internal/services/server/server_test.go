@@ -392,3 +392,48 @@ func TestErrorReadDBHandlerFail(t *testing.T) {
 	testHandler(t, r, http.MethodGet, "/value/gauge/metricName", http.StatusInternalServerError, "skip", nil, nil)
 	testHandler(t, r, http.MethodPost, "/value/", http.StatusInternalServerError, "skip", bodyMap["getPostValueGauge"], map[string]string{"Content-Type": "application/json"})
 }
+
+func TestErrorWriteMassiveHandler(t *testing.T) {
+	stg := storages.NewMemStorage()
+	s := New(stg, slog.New(), false)
+	r := chi.NewRouter()
+	r.Post("/updates", s.writeMassPostMetricHandler)
+
+	testHandler(t, r, http.MethodPost, "/updates", http.StatusNotFound, "skip", []byte(`[{"id":"CounterBatchZip215","type":"counter","delta":1890208871},{"id":"GaugeBatchZip241","type":"gauge","value":504963.8348398412},{"id":"CounterBatchZip215","type":"counter","delta":769036543},{"id":"GaugeBatchZip241","type":"gauge","value":576160.9397215487}]`), nil)
+
+	stg.AddMetric("gauge", metrics.NewGauge(nil))
+	stg.AddMetric("counter", metrics.NewCounter(nil))
+	metricDtoCollection := dto.MetricsCollection{}
+	intV := int64(1890208871)
+	metricDtoCollection = append(metricDtoCollection, dto.Metrics{
+		MType: "counter",
+		ID:    "CounterBatchZip215",
+		Delta: &intV,
+	})
+	floatV := 504963.8348398412
+	metricDtoCollection = append(metricDtoCollection, dto.Metrics{
+		MType: "gauge",
+		ID:    "GaugeBatchZip241",
+		Value: &floatV,
+	})
+	body, _ := easyjson.Marshal(metricDtoCollection)
+
+	testHandler(t, r, http.MethodPost, "/updates", http.StatusOK, "skip", body, nil)
+	testHandler(t, r, http.MethodPost, "/updates", http.StatusBadRequest, "skip", []byte(`[{"id":"Count}]`), nil)
+}
+
+func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
+	stg := storages.NewMemStorage()
+	s := New(stg, slog.New(), false)
+	r := chi.NewRouter()
+	r.Post("/updates", s.writeMassPostMetricHandler)
+	ctrl := gomock.NewController(t)
+	mockEntity := mocks.NewMockEntityMetric(ctrl)
+	mockEntity.EXPECT().ProcessMassive(gomock.Any()).Return(
+		errors.New("some error"),
+	).AnyTimes().MinTimes(1)
+
+	stg.AddMetric("gauge", mockEntity)
+	stg.AddMetric("counter", mockEntity)
+	testHandler(t, r, http.MethodPost, "/updates", http.StatusInternalServerError, "skip", []byte(`[{"id":"CounterBatchZip215","type":"counter","delta":1890208871},{"id":"GaugeBatchZip241","type":"gauge","value":504963.8348398412},{"id":"CounterBatchZip215","type":"counter","delta":769036543},{"id":"GaugeBatchZip241","type":"gauge","value":576160.9397215487}]`), nil)
+}
