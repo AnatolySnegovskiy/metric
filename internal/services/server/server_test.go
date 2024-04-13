@@ -5,13 +5,16 @@ import (
 	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
+	"github.com/AnatolySnegovskiy/metric/internal/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/go-chi/chi/v5"
 	"github.com/gookit/slog"
 	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
@@ -358,4 +361,34 @@ func TestPingHandlerFail(t *testing.T) {
 	r.Get("/ping", s.postgersPingHandler)
 
 	testHandler(t, r, http.MethodGet, "/ping", http.StatusInternalServerError, "skip", nil, nil)
+}
+
+func TestErrorReadDBHandlerFail(t *testing.T) {
+	stg := storages.NewMemStorage()
+	ctrl := gomock.NewController(t)
+	mockEntity := mocks.NewMockEntityMetric(ctrl)
+	mockEntity.EXPECT().GetList().Return(
+		nil,
+		errors.New("some error"),
+	).AnyTimes().MinTimes(1)
+
+	stg.AddMetric("gauge", mockEntity)
+
+	s := New(stg, slog.New(), false)
+	r := chi.NewRouter()
+	r.With(s.JSONContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)
+	r.Get("/", s.showAllMetricHandler)
+	r.Get("/value/{metricType}", s.showMetricTypeHandler)
+	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
+
+	bodyMap := map[string][]byte{}
+	bodyMap["getPostValueGauge"], _ = easyjson.Marshal(dto.Metrics{
+		MType: "gauge",
+		ID:    "test",
+	})
+
+	testHandler(t, r, http.MethodGet, "/", http.StatusInternalServerError, "skip", nil, nil)
+	testHandler(t, r, http.MethodGet, "/value/gauge", http.StatusInternalServerError, "skip", nil, nil)
+	testHandler(t, r, http.MethodGet, "/value/gauge/metricName", http.StatusInternalServerError, "skip", nil, nil)
+	testHandler(t, r, http.MethodPost, "/value/", http.StatusInternalServerError, "skip", bodyMap["getPostValueGauge"], map[string]string{"Content-Type": "application/json"})
 }
