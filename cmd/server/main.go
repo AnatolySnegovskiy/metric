@@ -28,16 +28,18 @@ func main() {
 
 	c, err := NewConfig()
 	handleError(err)
-
 	db, err := pgx.Connect(context.Background(), c.dataBaseDSN)
-	handleError(err)
 
-	pg, err := clients.NewPostgres(context.Background(), db)
-	handleError(err)
+	if err != nil {
+		logger.Sugar().Error(err)
+		db = nil
+	}
 
 	var gaugeRepo *repositories.GaugeRepo
 	var counterRepo *repositories.CounterRepo
 	if db != nil {
+		pg, err := clients.NewPostgres(context.Background(), db)
+		handleError(err)
 		gaugeRepo, err = repositories.NewGaugeRepo(pg)
 		handleError(err)
 		counterRepo, err = repositories.NewCounterRepo(pg)
