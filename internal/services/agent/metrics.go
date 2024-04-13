@@ -17,10 +17,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			continue
 		}
 
-		list, err := storage.GetList()
-		if err != nil {
-			continue
-		}
+		list, _ := storage.GetList()
 
 		for metricName, metric := range list {
 			metricDto.MType = storageType
