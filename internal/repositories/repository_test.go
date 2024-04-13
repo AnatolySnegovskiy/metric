@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
+	"github.com/jackc/pgx/v5"
 	"github.com/pashagolub/pgxmock/v3"
 	"github.com/stretchr/testify/assert"
 	"regexp"
@@ -24,6 +25,17 @@ func TestCounterRepo_Test(t *testing.T) {
 			check: func(mockDB *clients.Postgres) {
 				_, err := NewCounterRepo(mockDB)
 				assert.NoError(t, err)
+			},
+		},
+		{
+			name: "NewCounterRepoError",
+			expect: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int)")).
+					WillReturnError(pgx.ErrTxCommitRollback)
+			},
+			check: func(mockDB *clients.Postgres) {
+				_, err := NewCounterRepo(mockDB)
+				assert.Error(t, err)
 			},
 		},
 		{
@@ -119,7 +131,7 @@ func TestGaugeRepo_Test(t *testing.T) {
 		check  func(mockDB *clients.Postgres)
 	}{
 		{
-			name: "NewCounterRepo",
+			name: "NewGaugeRepo",
 			expect: func(mock pgxmock.PgxPoolIface) {
 				mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")).
 					WillReturnResult(pgxmock.NewResult("CREATE", 1))
@@ -127,6 +139,17 @@ func TestGaugeRepo_Test(t *testing.T) {
 			check: func(mockDB *clients.Postgres) {
 				_, err := NewGaugeRepo(mockDB)
 				assert.NoError(t, err)
+			},
+		},
+		{
+			name: "NewGaugeRepoError",
+			expect: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")).
+					WillReturnError(pgx.ErrTxCommitRollback)
+			},
+			check: func(mockDB *clients.Postgres) {
+				_, err := NewCounterRepo(mockDB)
+				assert.Error(t, err)
 			},
 		},
 		{
