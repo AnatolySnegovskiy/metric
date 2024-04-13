@@ -227,7 +227,7 @@ func (s *Server) writeMassPostMetricHandler(rw http.ResponseWriter, req *http.Re
 		}
 
 		if metricDTO.Delta != nil {
-			list[metricDTO.MType][metricDTO.ID] = float64(*metricDTO.Delta)
+			list[metricDTO.MType][metricDTO.ID] += float64(*metricDTO.Delta)
 		} else if metricDTO.Value != nil {
 			list[metricDTO.MType][metricDTO.ID] = *metricDTO.Value
 		}
