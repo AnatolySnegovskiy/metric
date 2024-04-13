@@ -25,7 +25,7 @@ func handleError(err error) {
 func main() {
 	logger, err := zap.NewProduction()
 	handleError(err)
-	
+
 	c, err := NewConfig()
 	handleError(err)
 
@@ -39,16 +39,16 @@ func main() {
 	var counterRepo *repositories.CounterRepo
 	if db != nil {
 		gaugeRepo, err = repositories.NewGaugeRepo(pg)
+		handleError(err)
 		counterRepo, err = repositories.NewCounterRepo(pg)
+		handleError(err)
 	}
-	handleError(err)
 
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(gaugeRepo))
 	s.AddMetric("counter", metrics.NewCounter(counterRepo))
 
 	serv := server.New(s, logger.Sugar(), db != nil)
-
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
 	go func() {
