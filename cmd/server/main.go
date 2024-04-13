@@ -24,16 +24,23 @@ func handleError(err error) {
 
 func main() {
 	logger, err := zap.NewProduction()
+	handleError(err)
+	
 	c, err := NewConfig()
+	handleError(err)
+
 	db, err := pgx.Connect(context.Background(), c.dataBaseDSN)
+	handleError(err)
+
 	pg, err := clients.NewPostgres(context.Background(), db)
+	handleError(err)
+
 	var gaugeRepo *repositories.GaugeRepo
 	var counterRepo *repositories.CounterRepo
 	if db != nil {
 		gaugeRepo, err = repositories.NewGaugeRepo(pg)
 		counterRepo, err = repositories.NewCounterRepo(pg)
 	}
-
 	handleError(err)
 
 	s := storages.NewMemStorage()
