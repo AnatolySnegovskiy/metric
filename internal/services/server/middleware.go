@@ -86,6 +86,7 @@ func (s *Server) gzipDecompressMiddleware(next http.Handler) http.Handler {
 			}
 			defer reader.Close()
 			uncompressed, _ := io.ReadAll(reader)
+			s.logger.Info("decompressed request body: %s", string(uncompressed))
 			r.Body = io.NopCloser(bytes.NewReader(uncompressed))
 		}
 
