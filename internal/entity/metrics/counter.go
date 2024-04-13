@@ -27,10 +27,12 @@ func (c *Counter) Process(name string, data string) error {
 }
 
 func (c *Counter) ProcessMassive(data map[string]float64) error {
-	c.Items = data
+	for name, value := range data {
+		c.Items[name] = value
+	}
 
 	if c.rep != nil {
-		return c.rep.AddMetrics(data)
+		return c.rep.AddMetrics(c.Items)
 	}
 
 	return nil

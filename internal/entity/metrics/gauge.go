@@ -27,10 +27,12 @@ func (g *Gauge) Process(name string, data string) error {
 }
 
 func (g *Gauge) ProcessMassive(data map[string]float64) error {
-	g.Items = data
+	for name, value := range data {
+		g.Items[name] = value
+	}
 
 	if g.rep != nil {
-		return g.rep.AddMetrics(data)
+		return g.rep.AddMetrics(g.Items)
 	}
 
 	return nil
