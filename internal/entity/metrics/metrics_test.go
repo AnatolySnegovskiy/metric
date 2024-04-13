@@ -1,8 +1,13 @@
 package metrics
 
 import (
+	"context"
 	"errors"
+	"github.com/AnatolySnegovskiy/metric/internal/repositories"
+	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
+	"github.com/pashagolub/pgxmock/v3"
 	"github.com/stretchr/testify/assert"
+	"regexp"
 	"testing"
 )
 
@@ -62,4 +67,40 @@ func TestGauge_Process(t *testing.T) {
 			}
 		})
 	}
+}
+
+func TestGauge_getListErrorDB(t *testing.T) {
+
+	mock, err := pgxmock.NewPool()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.Close()
+
+	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")).
+		WillReturnResult(pgxmock.NewResult("CREATE", 1))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM gauge")).
+		WillReturnError(errors.New("db error"))
+	mockDB, _ := clients.NewPostgres(context.Background(), mock)
+	cr, _ := repositories.NewGaugeRepo(mockDB)
+	gauge := NewGauge(cr)
+	_, err = gauge.GetList()
+	assert.Error(t, err)
+}
+
+func TestCounter_getListErrorDB(t *testing.T) {
+	mock, err := pgxmock.NewPool()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.Close()
+	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int)")).
+		WillReturnResult(pgxmock.NewResult("CREATE", 1))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM counter")).
+		WillReturnError(errors.New("db error"))
+	mockDB, _ := clients.NewPostgres(context.Background(), mock)
+	cr, _ := repositories.NewCounterRepo(mockDB)
+	counter := NewCounter(cr)
+	_, err = counter.GetList()
+	assert.Error(t, err)
 }
