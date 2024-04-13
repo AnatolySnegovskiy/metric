@@ -8,7 +8,5 @@ type Metrics struct {
 	Value *float64 `json:"value,omitempty"`
 }
 
-//go:generate easyjson -all
-type MetricsCollection struct {
-	Metrics []Metrics `json:"metrics"`
-}
+//easyjson:json
+type MetricsCollection []Metrics

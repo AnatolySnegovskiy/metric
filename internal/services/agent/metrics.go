@@ -12,7 +12,7 @@ import (
 )
 
 func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
-	vmetricDtoCollection := &dto.MetricsCollection{}
+	metricDtoCollection := dto.MetricsCollection{}
 
 	for storageType, storage := range a.storage.GetList() {
 		if storage == nil {
@@ -37,13 +37,13 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 				metricDto.Value = &newMetric
 			}
 
-			vmetricDtoCollection.Metrics = append(vmetricDtoCollection.Metrics, metricDto)
+			metricDtoCollection = append(metricDtoCollection, metricDto)
 		}
 	}
 
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
-	body, _ := easyjson.Marshal(vmetricDtoCollection)
+	body, _ := easyjson.Marshal(metricDtoCollection)
 	_, _ = gw.Write(body)
 	_ = gw.Close()
 

@@ -221,7 +221,7 @@ func (s *Server) writeMassPostMetricHandler(rw http.ResponseWriter, req *http.Re
 
 	list := make(map[string]map[string]float64)
 
-	for _, metricDTO := range metricDTOCollection.Metrics {
+	for _, metricDTO := range *metricDTOCollection {
 		if list[metricDTO.MType] == nil {
 			list[metricDTO.MType] = make(map[string]float64)
 		}
