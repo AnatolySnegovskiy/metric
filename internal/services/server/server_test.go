@@ -2,6 +2,7 @@ package server
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
@@ -139,6 +140,12 @@ func TestServerHandlers(t *testing.T) {
 		ID:    "test",
 	})
 
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	defer gw.Close()
+	_, _ = gw.Write(bodyMap["typePostDataValue"])
+	_ = gw.Close()
+
 	tests := []struct {
 		name        string
 		router      chi.Router
@@ -155,6 +162,10 @@ func TestServerHandlers(t *testing.T) {
 		{"writeGetMetricHandler1", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostData"], map[string]string{"Content-Type": "application/json"}},
 		{"writeGetMetricHandler2", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostDataGauge"], map[string]string{"Content-Type": "application/json"}},
 		{"writeGetMetricHandler3", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostDataValue"], map[string]string{"Content-Type": "application/json"}},
+
+		{"writeGetMetricHandler3CompressError", r, http.MethodPost, "/update/", http.StatusInternalServerError, "skip", bodyMap["typePostDataValue"], map[string]string{"Content-Type": "application/json", "Content-Encoding": "gzip"}},
+
+		{"writeGetMetricHandler3CompressOK", r, http.MethodPost, "/update/", http.StatusOK, "skip", buf.Bytes(), map[string]string{"Content-Type": "application/json", "Content-Encoding": "gzip"}},
 
 		{"writeGetMetricHandler4", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":10}", bodyMap["getPostValue"], map[string]string{"Content-Type": "application/json"}},
 

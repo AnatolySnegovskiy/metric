@@ -81,17 +81,11 @@ func (s *Server) gzipDecompressMiddleware(next http.Handler) http.Handler {
 			isContentTypeAllowed(r.Header.Get("Content-Type")) {
 			reader, err := gzip.NewReader(r.Body)
 			if err != nil {
-				http.Error(w, "Failed to decompress request body", http.StatusBadRequest)
+				http.Error(w, "Failed to decompress request body", http.StatusInternalServerError)
 				return
 			}
 			defer reader.Close()
-
-			uncompressed, err := io.ReadAll(reader)
-			if err != nil {
-				http.Error(w, "Failed to read decompressed request body", http.StatusInternalServerError)
-				return
-			}
-
+			uncompressed, _ := io.ReadAll(reader)
 			r.Body = io.NopCloser(bytes.NewReader(uncompressed))
 		}
 
