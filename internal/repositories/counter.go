@@ -43,13 +43,13 @@ func (c *CounterRepo) AddMetric(name string, value int) error {
 	return err
 }
 
-func (c *CounterRepo) AddMetrics(metrics map[string]int) error {
+func (c *CounterRepo) AddMetrics(metrics map[string]float64) error {
 	var valueStrings []string
 	var valueArgs []interface{}
 	i := 1
 	for name, value := range metrics {
 		valueStrings = append(valueStrings, fmt.Sprintf("($%d, $%d)", i, i+1))
-		valueArgs = append(valueArgs, name, value)
+		valueArgs = append(valueArgs, name, int(value))
 		i += 2
 	}
 	query := fmt.Sprintf("INSERT INTO counter (name, value) VALUES %s ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value", strings.Join(valueStrings, ","))

@@ -42,6 +42,7 @@ func (s *Server) setupRoutes() {
 	s.router.Use(s.logMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware)
 	s.router.NotFound(s.notFoundHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
+	s.router.With(s.JSONContentTypeMiddleware).Post("/updates/", s.writeMassPostMetricHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)
 	s.router.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeGetMetricHandler)
 	s.router.Get("/", s.showAllMetricHandler)

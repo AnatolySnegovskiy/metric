@@ -26,6 +26,16 @@ func (c *Counter) Process(name string, data string) error {
 	return nil
 }
 
+func (c *Counter) ProcessMassive(data map[string]float64) error {
+	c.Items = data
+
+	if c.rep != nil {
+		return c.rep.AddMetrics(data)
+	}
+
+	return nil
+}
+
 func (c *Counter) GetList() (map[string]float64, error) {
 	if c.rep != nil {
 		rows, err := c.rep.GetList()

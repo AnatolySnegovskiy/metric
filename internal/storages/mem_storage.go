@@ -6,6 +6,7 @@ import (
 
 type EntityMetric interface {
 	Process(name string, data string) error
+	ProcessMassive(data map[string]float64) error
 	GetList() (map[string]float64, error)
 }
 

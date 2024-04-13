@@ -26,6 +26,16 @@ func (g *Gauge) Process(name string, data string) error {
 	return nil
 }
 
+func (g *Gauge) ProcessMassive(data map[string]float64) error {
+	g.Items = data
+
+	if g.rep != nil {
+		return g.rep.AddMetrics(data)
+	}
+
+	return nil
+}
+
 func (g *Gauge) GetList() (map[string]float64, error) {
 	if g.rep != nil {
 		rows, err := g.rep.GetList()

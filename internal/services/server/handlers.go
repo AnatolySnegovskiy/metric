@@ -207,3 +207,52 @@ func (s *Server) postgersPingHandler(writer http.ResponseWriter, _ *http.Request
 
 	writer.WriteHeader(http.StatusInternalServerError)
 }
+
+func (s *Server) writeMassPostMetricHandler(rw http.ResponseWriter, req *http.Request) {
+	rw.Header().Set("Content-Type", "application/json")
+	metricDTOCollection := &dto.MetricsCollection{}
+	rawBytes, _ := io.ReadAll(req.Body)
+
+	if err := easyjson.Unmarshal(rawBytes, metricDTOCollection); err != nil {
+		rw.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"%s"}`, err.Error()))
+		return
+	}
+
+	list := make(map[string]map[string]float64)
+
+	for _, metricDTO := range metricDTOCollection.Metrics {
+		if list[metricDTO.MType] == nil {
+			list[metricDTO.MType] = make(map[string]float64)
+		}
+
+		if metricDTO.Delta != nil {
+			list[metricDTO.MType][metricDTO.ID] = float64(*metricDTO.Delta)
+		} else if metricDTO.Value != nil {
+			list[metricDTO.MType][metricDTO.ID] = *metricDTO.Value
+		}
+	}
+
+	storage := s.storage
+
+	for metricType, metric := range list {
+		matric, err := storage.GetMetricType(metricType)
+
+		if err != nil {
+			rw.WriteHeader(http.StatusNotFound)
+			fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"metric type %s not found"}`, metricType))
+			return
+		}
+
+		err = matric.ProcessMassive(metric)
+
+		if err != nil {
+			rw.WriteHeader(http.StatusInternalServerError)
+			fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"%s"}`, err.Error()))
+			return
+		}
+	}
+
+	json, _ := easyjson.Marshal(metricDTOCollection)
+	fmt.Fprintf(rw, "%v", string(json))
+}
