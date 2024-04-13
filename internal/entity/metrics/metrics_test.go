@@ -154,3 +154,71 @@ func TestCounter_ProcessDB(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, map[string]float64{"test": 100}, list, "Expected list %v, but got: %v", map[string]float64{"test": 100}, list)
 }
+
+func TestGauge_ProcessMassiveDB(t *testing.T) {
+	mock, err := pgxmock.NewPool()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.Close()
+
+	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")).
+		WillReturnResult(pgxmock.NewResult("CREATE", 1))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO gauge (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value")).
+		WithArgs("test", float64(500)).
+		WillReturnResult(pgxmock.NewResult("INSERT", 1))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM gauge")).
+		WillReturnRows(pgxmock.NewRows([]string{"name", "value"}).AddRow("test", float64(500)))
+
+	mockDB, _ := clients.NewPostgres(context.Background(), mock)
+	cr, _ := repositories.NewGaugeRepo(mockDB)
+	gauge := NewGauge(cr)
+	err = gauge.ProcessMassive(map[string]float64{"test": 500})
+	assert.NoError(t, err)
+	list, err := gauge.GetList()
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]float64{"test": 500}, list, "Expected list %v, but got: %v", map[string]float64{"test": 500}, list)
+}
+
+func TestCounter_ProcessMassiveDB(t *testing.T) {
+	mock, err := pgxmock.NewPool()
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer mock.Close()
+
+	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")).
+		WillReturnResult(pgxmock.NewResult("CREATE", 1))
+	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO counter (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value")).
+		WithArgs("test", int(500)).
+		WillReturnResult(pgxmock.NewResult("INSERT", 1))
+	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM counter")).
+		WillReturnRows(pgxmock.NewRows([]string{"name", "value"}).AddRow("test", 500))
+
+	mockDB, _ := clients.NewPostgres(context.Background(), mock)
+	cr, _ := repositories.NewCounterRepo(mockDB)
+	counter := NewCounter(cr)
+	err = counter.ProcessMassive(map[string]float64{"test": 500})
+	assert.NoError(t, err)
+	list, err := counter.GetList()
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]float64{"test": 500}, list, "Expected list %v, but got: %v", map[string]float64{"test": 500}, list)
+}
+
+func TestGauge_ProcessMassive(t *testing.T) {
+	gauge := NewGauge(nil)
+	err := gauge.ProcessMassive(map[string]float64{"test": 500})
+	assert.NoError(t, err)
+	list, err := gauge.GetList()
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]float64{"test": 500}, list, "Expected list %v, but got: %v", map[string]float64{"test": 500}, list)
+}
+
+func TestCounter_ProcessMassive(t *testing.T) {
+	counter := NewCounter(nil)
+	err := counter.ProcessMassive(map[string]float64{"test": 500})
+	assert.NoError(t, err)
+	list, err := counter.GetList()
+	assert.NoError(t, err)
+	assert.Equal(t, map[string]float64{"test": 500}, list, "Expected list %v, but got: %v", map[string]float64{"test": 500}, list)
+}
