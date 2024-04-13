@@ -43,18 +43,23 @@ func (s *Server) logMiddleware(next http.Handler) http.Handler {
 		}
 
 		start := time.Now()
-		next.ServeHTTP(&lw, r)
+		var buf bytes.Buffer
+		teeBody := io.TeeReader(r.Body, &buf)
+		newRequest := r.Clone(r.Context())
+		newRequest.Body = io.NopCloser(teeBody)
+		next.ServeHTTP(&lw, newRequest)
 		duration := time.Since(start)
-
 		s.logger.Infof(
-			"request method: %s; uri: %s; duration: %s; request size: %d,",
+			"request method: %s; uri: %s; duration: %s; request size: %d, content: %s",
 			r.Method,
 			r.RequestURI,
 			duration,
 			r.ContentLength,
+			buf.String(),
 		)
 
 		s.logger.Infof("response status: %d; size: %d;", responseData.status, responseData.size)
+
 	})
 }
 
@@ -86,7 +91,6 @@ func (s *Server) gzipDecompressMiddleware(next http.Handler) http.Handler {
 			}
 			defer reader.Close()
 			uncompressed, _ := io.ReadAll(reader)
-			s.logger.Info("decompressed request body: %s", string(uncompressed))
 			r.Body = io.NopCloser(bytes.NewReader(uncompressed))
 		}
 
