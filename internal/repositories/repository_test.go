@@ -148,7 +148,7 @@ func TestGaugeRepo_Test(t *testing.T) {
 					WillReturnError(pgx.ErrTxCommitRollback)
 			},
 			check: func(mockDB *clients.Postgres) {
-				_, err := NewCounterRepo(mockDB)
+				_, err := NewGaugeRepo(mockDB)
 				assert.Error(t, err)
 			},
 		},
