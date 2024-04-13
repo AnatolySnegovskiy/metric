@@ -76,8 +76,14 @@ func (s *Server) showAllMetricHandler(rw http.ResponseWriter, req *http.Request)
 	}
 
 	for storageType, storage := range stgList {
+		list, err := storage.GetList()
+		if err != nil {
+			s.logger.Errorf("failed to get list of metrics: %s", err.Error())
+			continue
+		}
+
 		fmt.Fprintf(rw, "%s:\n", storageType)
-		for metricName, metric := range storage.GetList() {
+		for metricName, metric := range list {
 			fmt.Fprintf(rw, "\t%s: %v\n", metricName, metric)
 		}
 	}
@@ -92,7 +98,14 @@ func (s *Server) showMetricTypeHandler(rw http.ResponseWriter, req *http.Request
 		return
 	}
 	fmt.Fprintf(rw, "%s:\n", metricType)
-	for metricName, metric := range storage.GetList() {
+
+	list, err := storage.GetList()
+	if err != nil {
+		s.logger.Errorf("failed to get list of metrics: %s", err.Error())
+		return
+	}
+
+	for metricName, metric := range list {
 		fmt.Fprintf(rw, "\t%s: %v\n", metricName, metric)
 	}
 }
@@ -107,14 +120,20 @@ func (s *Server) showMetricNameHandlers(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	metric := storage.GetList()[metricName]
+	list, err := storage.GetList()
+	if err != nil {
+		s.logger.Errorf("failed to get list of metrics: %s", err.Error())
+		return
+	}
+
+	metric := list[metricName]
 
 	if metric == 0 {
 		s.notFoundHandler(rw, req)
 		return
 	}
 
-	fmt.Fprintf(rw, "%v", storage.GetList()[metricName])
+	fmt.Fprintf(rw, "%v", metric)
 }
 
 func (s *Server) showPostMetricHandler(rw http.ResponseWriter, req *http.Request) {
@@ -137,7 +156,13 @@ func (s *Server) showPostMetricHandler(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	metric, ok := storage.GetList()[metricName]
+	list, err := storage.GetList()
+	if err != nil {
+		s.logger.Errorf("failed to get list of metrics: %s", err.Error())
+		return
+	}
+
+	metric, ok := list[metricName]
 
 	if !ok {
 		rw.WriteHeader(http.StatusNotFound)

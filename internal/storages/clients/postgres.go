@@ -6,24 +6,19 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-type PgxConnInterface interface {
-	Query(ctx context.Context, sql string, args ...interface{}) (pgx.Rows, error)
-	Close(ctx context.Context) error
-	Exec(ctx context.Context, sql string, arguments ...interface{}) (pgconn.CommandTag, error)
-	QueryRow(ctx context.Context, sql string, args ...interface{}) pgx.Row
+type PgxIface interface {
+	Begin(context.Context) (pgx.Tx, error)
+	Query(context.Context, string, ...interface{}) (pgx.Rows, error)
+	Exec(context.Context, string, ...interface{}) (pgconn.CommandTag, error)
+	QueryRow(context.Context, string, ...interface{}) pgx.Row
 }
 
 type Postgres struct {
-	conn PgxConnInterface
+	conn PgxIface
 	ctx  context.Context
 }
 
-func NewPostgres(ctx context.Context, configString string) (*Postgres, error) {
-	conn, err := pgx.Connect(ctx, configString)
-	if err != nil {
-		return nil, err
-	}
-
+func NewPostgres(ctx context.Context, conn PgxIface) (*Postgres, error) {
 	return &Postgres{
 		conn: conn,
 		ctx:  ctx,
@@ -32,16 +27,6 @@ func NewPostgres(ctx context.Context, configString string) (*Postgres, error) {
 
 func (db *Postgres) Query(query string, args ...interface{}) (pgx.Rows, error) {
 	return db.conn.Query(db.ctx, query, args...)
-}
-
-func (db *Postgres) Close() (bool, error) {
-	err := db.conn.Close(db.ctx)
-
-	if err != nil {
-		return false, err
-	}
-
-	return true, nil
 }
 
 func (db *Postgres) Exec(query string, args ...interface{}) (pgconn.CommandTag, error) {

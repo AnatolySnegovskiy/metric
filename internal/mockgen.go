@@ -4,3 +4,4 @@ package internal
 //go:generate mockgen -source=services/agent/agent.go -destination=mocks/agent_mock.go -package=mocks
 //go:generate mockgen -source=services/agent/storage.go -destination=mocks/storage_mock.go -package=mocks
 //go:generate mockgen -source=storages/clients/postgres.go -destination=mocks/postgres_mock.go -package=mocks
+//go:generate mockgen -source=repositories/interface.go -destination=mocks/interface_mock.go -package=mocks

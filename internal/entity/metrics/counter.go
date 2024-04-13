@@ -20,15 +20,20 @@ func (c *Counter) Process(name string, data string) error {
 	c.Items[name] += float64(intValue)
 
 	if c.rep != nil {
-		c.rep.AddMetric(name, c.Items[name])
+		return c.rep.AddMetric(name, int(c.Items[name]))
 	}
 
 	return nil
 }
 
-func (c *Counter) GetList() map[string]float64 {
+func (c *Counter) GetList() (map[string]float64, error) {
 	if c.rep != nil {
-		rows := c.rep.GetList()
+		rows, err := c.rep.GetList()
+
+		if err != nil {
+			return nil, err
+		}
+
 		for rows.Next() {
 			var name string
 			var value float64
@@ -36,7 +41,7 @@ func (c *Counter) GetList() map[string]float64 {
 			c.Items[name] = value
 		}
 	}
-	return c.Items
+	return c.Items, nil
 }
 
 func NewCounter(rep *repositories.CounterRepo) *Counter {

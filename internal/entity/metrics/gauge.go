@@ -20,15 +20,20 @@ func (g *Gauge) Process(name string, data string) error {
 	g.Items[name] = floatValue
 
 	if g.rep != nil {
-		g.rep.AddMetric(name, g.Items[name])
+		return g.rep.AddMetric(name, g.Items[name])
 	}
 
 	return nil
 }
 
-func (g *Gauge) GetList() map[string]float64 {
+func (g *Gauge) GetList() (map[string]float64, error) {
 	if g.rep != nil {
-		rows := g.rep.GetList()
+		rows, err := g.rep.GetList()
+
+		if err != nil {
+			return nil, err
+		}
+
 		for rows.Next() {
 			var name string
 			var value float64
@@ -36,7 +41,7 @@ func (g *Gauge) GetList() map[string]float64 {
 			g.Items[name] = value
 		}
 	}
-	return g.Items
+	return g.Items, nil
 }
 
 func NewGauge(rep *repositories.GaugeRepo) *Gauge {

@@ -2,12 +2,14 @@ package main
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/repositories"
 	"github.com/AnatolySnegovskiy/metric/internal/services/server"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
+	"github.com/jackc/pgx/v5"
 	"go.uber.org/zap"
 	"os"
 	"os/signal"
@@ -24,17 +26,30 @@ func handleError(err error) {
 func main() {
 	logger, _ := zap.NewProduction()
 	c, err := NewConfig()
-	handleError(err)
+	db, err := pgx.Connect(context.Background(), c.dataBaseDSN)
 
-	db, _ := clients.NewPostgres(context.Background(), c.dataBaseDSN)
+	if err != nil {
+		err = errors.New("can't connect to database")
+	}
+
+	pg, err := clients.NewPostgres(context.Background(), db)
+
+	if err != nil {
+		err = errors.New("can't connect to postgres")
+	}
+
 	var gaugeRepo *repositories.GaugeRepo
 	var counterRepo *repositories.CounterRepo
-
 	if db != nil {
-		defer db.Close()
-		gaugeRepo = repositories.NewGaugeRepo(db)
-		counterRepo = repositories.NewCounterRepo(db)
+		gaugeRepo, err = repositories.NewGaugeRepo(pg)
+		counterRepo, err = repositories.NewCounterRepo(pg)
 	}
+
+	if err != nil {
+		err = errors.New("entity repository error")
+	}
+
+	handleError(err)
 
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(gaugeRepo))

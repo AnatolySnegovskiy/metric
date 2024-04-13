@@ -8,40 +8,42 @@ import (
 )
 
 type GaugeRepo struct {
-	db *clients.Postgres
+	pg *clients.Postgres
 }
 
-func NewGaugeRepo(db *clients.Postgres) *GaugeRepo {
-	gr := &GaugeRepo{
-		db: db,
+func NewGaugeRepo(pg *clients.Postgres) (*GaugeRepo, error) {
+	cr := &GaugeRepo{
+		pg: pg,
 	}
-	gr.makeTable()
-	return gr
+
+	if err := cr.makeTable(); err != nil {
+		return nil, err
+	}
+
+	return cr, nil
 }
 
-func (g *GaugeRepo) makeTable() {
-	_, _ = g.db.Exec("CREATE TABLE IF NOT EXISTS guage (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")
+func (g *GaugeRepo) makeTable() error {
+	_, err := g.pg.Exec("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")
+	return err
 }
 
-func (g *GaugeRepo) GetItem(name string) float64 {
+func (g *GaugeRepo) GetItem(name string) (float64, error) {
 	var value float64
-	_ = g.db.QueryRow("SELECT value FROM guage WHERE name = $1", name).Scan(&value)
-	return value
+	err := g.pg.QueryRow("SELECT value FROM gauge WHERE name = $1", name).Scan(&value)
+	return value, err
 }
 
-func (g *GaugeRepo) GetList() pgx.Rows {
-	rows, _ := g.db.Query("SELECT * FROM guage")
-	return rows
+func (g *GaugeRepo) GetList() (pgx.Rows, error) {
+	return g.pg.Query("SELECT * FROM gauge")
 }
 
-func (g *GaugeRepo) AddMetric(name string, value float64) {
-	_, err := g.db.Exec("INSERT INTO guage (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2", name, value)
-	if err != nil {
-		fmt.Println("GaugeRepo.AddMetric " + err.Error())
-	}
+func (g *GaugeRepo) AddMetric(name string, value float64) error {
+	_, err := g.pg.Exec("INSERT INTO gauge (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2", name, value)
+	return err
 }
 
-func (g *GaugeRepo) AddMetrics(metrics map[string]float64) {
+func (g *GaugeRepo) AddMetrics(metrics map[string]float64) error {
 	var valueStrings []string
 	var valueArgs []interface{}
 	i := 1
@@ -51,5 +53,6 @@ func (g *GaugeRepo) AddMetrics(metrics map[string]float64) {
 		i += 2
 	}
 	query := fmt.Sprintf("INSERT INTO gauge (name, value) VALUES %s ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value", strings.Join(valueStrings, ","))
-	_, _ = g.db.Exec(query, valueArgs...)
+	_, err := g.pg.Exec(query, valueArgs...)
+	return err
 }

@@ -2,88 +2,69 @@ package clients
 
 import (
 	"context"
-	"fmt"
-	"github.com/AnatolySnegovskiy/metric/internal/mocks"
-	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
-	"github.com/jackc/pgx/v5/pgtype"
+	"github.com/pashagolub/pgxmock/v3"
 	"github.com/stretchr/testify/assert"
-	"go.uber.org/mock/gomock"
+	"regexp"
 	"testing"
 )
 
-func TestQueryFunction(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockConn := mocks.NewMockPgxConnInterface(ctrl)
-	typeMap := &pgtype.Map{}
-	resultReader := &pgconn.ResultReader{}
-	expectedRows := pgx.RowsFromResultReader(typeMap, resultReader)
-	mockConn.EXPECT().Query(gomock.Any(), "SELECT * FROM table").Return(expectedRows, nil)
-
-	db := &Postgres{
-		conn: mockConn,
-		ctx:  context.Background(),
+func TestPostgres_Test(t *testing.T) {
+	testCases := []struct {
+		name   string
+		expect func(mock pgxmock.PgxPoolIface)
+		check  func(mockDB *Postgres)
+	}{
+		{
+			name: "Exec",
+			expect: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")).
+					WillReturnResult(pgxmock.NewResult("CREATE", 1))
+			},
+			check: func(mockDB *Postgres) {
+				_, err := mockDB.Exec("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")
+				assert.NoError(t, err)
+			},
+		},
+		{
+			name: "Query",
+			expect: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectQuery(regexp.QuoteMeta("SELECT value FROM gauge WHERE name = $1")).
+					WithArgs("test").
+					WillReturnRows(pgxmock.NewRows([]string{"value"}).AddRow(100))
+			},
+			check: func(mockDB *Postgres) {
+				_, err := mockDB.Query("SELECT value FROM gauge WHERE name = $1", "test")
+				assert.NoError(t, err)
+			},
+		},
+		{
+			name: "QueryRow",
+			expect: func(mock pgxmock.PgxPoolIface) {
+				mock.ExpectQuery(regexp.QuoteMeta("SELECT value FROM gauge WHERE name = $1")).
+					WithArgs("test").
+					WillReturnRows(pgxmock.NewRows([]string{"value"}).AddRow(100))
+			},
+			check: func(mockDB *Postgres) {
+				rows := mockDB.QueryRow("SELECT value FROM gauge WHERE name = $1", "test")
+				var value int
+				err := rows.Scan(&value)
+				assert.NoError(t, err)
+				assert.Equal(t, 100, value)
+			},
+		},
 	}
 
-	rows, err := db.Query("SELECT * FROM table")
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			mock, err := pgxmock.NewPool()
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer mock.Close()
 
-	assert.NoError(t, err)
-	assert.NotNil(t, rows)
-}
-
-func TestCloseFunction(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockConn := mocks.NewMockPgxConnInterface(ctrl)
-
-	// Устанавливаем ожидания для мок объекта
-	mockConn.EXPECT().Close(gomock.Any()).Return(nil)
-
-	// Создаем экземпляр Postgres с мок объектом
-	db := &Postgres{
-		conn: mockConn,
-		ctx:  context.Background(),
+			testCase.expect(mock)
+			mockDB, _ := NewPostgres(context.Background(), mock)
+			testCase.check(mockDB)
+		})
 	}
-
-	// Вызываем функцию Close
-	closed, err := db.Close()
-
-	// Проверяем, что ожидаемые данные возвращены
-	assert.NoError(t, err)
-	assert.True(t, closed)
-}
-
-func TestCloseFailFunction(t *testing.T) {
-	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
-
-	mockConn := mocks.NewMockPgxConnInterface(ctrl)
-
-	// Устанавливаем ожидания для мок объекта
-	mockConn.EXPECT().Close(gomock.Any()).Return(fmt.Errorf("some error"))
-
-	// Создаем экземпляр Postgres с мок объектом
-	db := &Postgres{
-		conn: mockConn,
-		ctx:  context.Background(),
-	}
-
-	// Вызываем функцию Close
-	closed, err := db.Close()
-
-	// Проверяем, что ожидаемые данные возвращены
-	assert.Error(t, err)
-	assert.False(t, closed)
-}
-
-func TestNewPostgres(t *testing.T) {
-	ctx := context.Background()
-	invalidConfigString := "invalid connection string"
-
-	// Тестируем возвращение ошибки при неверной конфигурации
-	_, err := NewPostgres(ctx, invalidConfigString)
-	assert.Error(t, err, "Expected an error for invalid config string")
 }

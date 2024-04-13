@@ -27,8 +27,9 @@ func TestCounter_Process(t *testing.T) {
 				assert.EqualError(t, err, tt.expectedErr.Error(), "Expected error")
 			} else {
 				assert.NoError(t, err, "Expected no error")
-				list := counter.GetList()
+				list, err := counter.GetList()
 				assert.Equal(t, tt.expected, list, "Expected list %v, but got: %v", tt.expected, list)
+				assert.NoError(t, err, "Expected no error")
 			}
 		})
 	}
@@ -55,7 +56,8 @@ func TestGauge_Process(t *testing.T) {
 				assert.EqualError(t, err, tt.expectedErr.Error(), "Expected error")
 			} else {
 				assert.NoError(t, err, "Expected no error")
-				list := gauge.GetList()
+				list, err := gauge.GetList()
+				assert.NoError(t, err, "Expected no error")
 				assert.Equal(t, tt.expected, list, "Expected list %v, but got: %v", tt.expected, list)
 			}
 		})

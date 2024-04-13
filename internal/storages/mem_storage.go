@@ -6,7 +6,7 @@ import (
 
 type EntityMetric interface {
 	Process(name string, data string) error
-	GetList() map[string]float64
+	GetList() (map[string]float64, error)
 }
 
 type MemStorage struct {
