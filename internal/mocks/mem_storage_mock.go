@@ -39,11 +39,12 @@ func (m *MockEntityMetric) EXPECT() *MockEntityMetricMockRecorder {
 }
 
 // GetList mocks base method.
-func (m *MockEntityMetric) GetList() map[string]float64 {
+func (m *MockEntityMetric) GetList() (map[string]float64, error) {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetList")
 	ret0, _ := ret[0].(map[string]float64)
-	return ret0
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
 // GetList indicates an expected call of GetList.

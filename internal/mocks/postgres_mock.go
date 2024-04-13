@@ -18,48 +18,49 @@ import (
 	gomock "go.uber.org/mock/gomock"
 )
 
-// MockPgxConnInterface is a mock of PgxConnInterface interface.
-type MockPgxConnInterface struct {
+// MockPgxIface is a mock of PgxIface interface.
+type MockPgxIface struct {
 	ctrl     *gomock.Controller
-	recorder *MockPgxConnInterfaceMockRecorder
+	recorder *MockPgxIfaceMockRecorder
 }
 
-// MockPgxConnInterfaceMockRecorder is the mock recorder for MockPgxConnInterface.
-type MockPgxConnInterfaceMockRecorder struct {
-	mock *MockPgxConnInterface
+// MockPgxIfaceMockRecorder is the mock recorder for MockPgxIface.
+type MockPgxIfaceMockRecorder struct {
+	mock *MockPgxIface
 }
 
-// NewMockPgxConnInterface creates a new mock instance.
-func NewMockPgxConnInterface(ctrl *gomock.Controller) *MockPgxConnInterface {
-	mock := &MockPgxConnInterface{ctrl: ctrl}
-	mock.recorder = &MockPgxConnInterfaceMockRecorder{mock}
+// NewMockPgxIface creates a new mock instance.
+func NewMockPgxIface(ctrl *gomock.Controller) *MockPgxIface {
+	mock := &MockPgxIface{ctrl: ctrl}
+	mock.recorder = &MockPgxIfaceMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockPgxConnInterface) EXPECT() *MockPgxConnInterfaceMockRecorder {
+func (m *MockPgxIface) EXPECT() *MockPgxIfaceMockRecorder {
 	return m.recorder
 }
 
-// Close mocks base method.
-func (m *MockPgxConnInterface) Close(ctx context.Context) error {
+// Begin mocks base method.
+func (m *MockPgxIface) Begin(arg0 context.Context) (pgx.Tx, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Close", ctx)
-	ret0, _ := ret[0].(error)
-	return ret0
+	ret := m.ctrl.Call(m, "Begin", arg0)
+	ret0, _ := ret[0].(pgx.Tx)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
 }
 
-// Close indicates an expected call of Close.
-func (mr *MockPgxConnInterfaceMockRecorder) Close(ctx any) *gomock.Call {
+// Begin indicates an expected call of Begin.
+func (mr *MockPgxIfaceMockRecorder) Begin(arg0 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Close", reflect.TypeOf((*MockPgxConnInterface)(nil).Close), ctx)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Begin", reflect.TypeOf((*MockPgxIface)(nil).Begin), arg0)
 }
 
 // Exec mocks base method.
-func (m *MockPgxConnInterface) Exec(ctx context.Context, sql string, arguments ...any) (pgconn.CommandTag, error) {
+func (m *MockPgxIface) Exec(arg0 context.Context, arg1 string, arg2 ...any) (pgconn.CommandTag, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, sql}
-	for _, a := range arguments {
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Exec", varargs...)
@@ -69,17 +70,17 @@ func (m *MockPgxConnInterface) Exec(ctx context.Context, sql string, arguments .
 }
 
 // Exec indicates an expected call of Exec.
-func (mr *MockPgxConnInterfaceMockRecorder) Exec(ctx, sql any, arguments ...any) *gomock.Call {
+func (mr *MockPgxIfaceMockRecorder) Exec(arg0, arg1 any, arg2 ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, sql}, arguments...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exec", reflect.TypeOf((*MockPgxConnInterface)(nil).Exec), varargs...)
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Exec", reflect.TypeOf((*MockPgxIface)(nil).Exec), varargs...)
 }
 
 // Query mocks base method.
-func (m *MockPgxConnInterface) Query(ctx context.Context, sql string, args ...any) (pgx.Rows, error) {
+func (m *MockPgxIface) Query(arg0 context.Context, arg1 string, arg2 ...any) (pgx.Rows, error) {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, sql}
-	for _, a := range args {
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "Query", varargs...)
@@ -89,17 +90,17 @@ func (m *MockPgxConnInterface) Query(ctx context.Context, sql string, args ...an
 }
 
 // Query indicates an expected call of Query.
-func (mr *MockPgxConnInterfaceMockRecorder) Query(ctx, sql any, args ...any) *gomock.Call {
+func (mr *MockPgxIfaceMockRecorder) Query(arg0, arg1 any, arg2 ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, sql}, args...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Query", reflect.TypeOf((*MockPgxConnInterface)(nil).Query), varargs...)
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Query", reflect.TypeOf((*MockPgxIface)(nil).Query), varargs...)
 }
 
 // QueryRow mocks base method.
-func (m *MockPgxConnInterface) QueryRow(ctx context.Context, sql string, args ...any) pgx.Row {
+func (m *MockPgxIface) QueryRow(arg0 context.Context, arg1 string, arg2 ...any) pgx.Row {
 	m.ctrl.T.Helper()
-	varargs := []any{ctx, sql}
-	for _, a := range args {
+	varargs := []any{arg0, arg1}
+	for _, a := range arg2 {
 		varargs = append(varargs, a)
 	}
 	ret := m.ctrl.Call(m, "QueryRow", varargs...)
@@ -108,8 +109,8 @@ func (m *MockPgxConnInterface) QueryRow(ctx context.Context, sql string, args ..
 }
 
 // QueryRow indicates an expected call of QueryRow.
-func (mr *MockPgxConnInterfaceMockRecorder) QueryRow(ctx, sql any, args ...any) *gomock.Call {
+func (mr *MockPgxIfaceMockRecorder) QueryRow(arg0, arg1 any, arg2 ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	varargs := append([]any{ctx, sql}, args...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryRow", reflect.TypeOf((*MockPgxConnInterface)(nil).QueryRow), varargs...)
+	varargs := append([]any{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "QueryRow", reflect.TypeOf((*MockPgxIface)(nil).QueryRow), varargs...)
 }

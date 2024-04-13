@@ -301,7 +301,9 @@ func TestLoadMetricsOnStart(t *testing.T) {
 	s.LoadMetricsOnStart(filePath)
 
 	m, _ := str.GetMetricType("gauge")
-	assert.Equal(t, 1.23, m.GetList()["value1"])
+
+	list, _ := m.GetList()
+	assert.Equal(t, 1.23, list["value1"])
 
 	defer os.Remove(absoluteFilePath)
 	defer os.RemoveAll(directory)

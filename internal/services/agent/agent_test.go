@@ -76,6 +76,7 @@ func TestAgent(t *testing.T) {
 				map[string]float64{
 					"RandomValue": 10,
 				},
+				nil,
 			).AnyTimes()
 
 			mockStorage.AddMetric("counter", mockEntity)
@@ -93,6 +94,7 @@ func TestAgent(t *testing.T) {
 				map[string]float64{
 					"RandomValue": 10,
 				},
+				nil,
 			).AnyTimes()
 
 			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
