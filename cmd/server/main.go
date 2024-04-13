@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/repositories"
@@ -24,29 +23,15 @@ func handleError(err error) {
 }
 
 func main() {
-	logger, _ := zap.NewProduction()
+	logger, err := zap.NewProduction()
 	c, err := NewConfig()
 	db, err := pgx.Connect(context.Background(), c.dataBaseDSN)
-
-	if err != nil {
-		err = errors.New("can't connect to database")
-	}
-
 	pg, err := clients.NewPostgres(context.Background(), db)
-
-	if err != nil {
-		err = errors.New("can't connect to postgres")
-	}
-
 	var gaugeRepo *repositories.GaugeRepo
 	var counterRepo *repositories.CounterRepo
 	if db != nil {
 		gaugeRepo, err = repositories.NewGaugeRepo(pg)
 		counterRepo, err = repositories.NewCounterRepo(pg)
-	}
-
-	if err != nil {
-		err = errors.New("entity repository error")
 	}
 
 	handleError(err)
