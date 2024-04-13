@@ -66,3 +66,17 @@ func (mr *MockEntityMetricMockRecorder) Process(name, data any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockEntityMetric)(nil).Process), name, data)
 }
+
+// ProcessMassive mocks base method.
+func (m *MockEntityMetric) ProcessMassive(data map[string]float64) error {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "ProcessMassive", data)
+	ret0, _ := ret[0].(error)
+	return ret0
+}
+
+// ProcessMassive indicates an expected call of ProcessMassive.
+func (mr *MockEntityMetricMockRecorder) ProcessMassive(data any) *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessMassive", reflect.TypeOf((*MockEntityMetric)(nil).ProcessMassive), data)
+}
