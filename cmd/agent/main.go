@@ -46,6 +46,7 @@ func main() {
 				PollInterval:   c.pollInterval,
 				ReportInterval: c.reportInterval,
 				SendAddr:       c.flagSendAddr,
+				MaxRetries:     c.maxRetries,
 			},
 		).Run(context.Background()))
 }

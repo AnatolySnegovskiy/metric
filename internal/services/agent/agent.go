@@ -14,6 +14,7 @@ type Agent struct {
 	pollInterval   int
 	reportInterval int
 	sendAddr       string
+	maxRetries     int
 }
 
 type Options struct {
@@ -22,6 +23,7 @@ type Options struct {
 	PollInterval   int
 	ReportInterval int
 	SendAddr       string
+	MaxRetries     int
 }
 
 func New(options Options) *Agent {
@@ -31,5 +33,6 @@ func New(options Options) *Agent {
 		pollInterval:   options.PollInterval,
 		reportInterval: options.ReportInterval,
 		sendAddr:       options.SendAddr,
+		maxRetries:     options.MaxRetries,
 	}
 }

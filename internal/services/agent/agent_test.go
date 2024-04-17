@@ -146,9 +146,10 @@ func TestAgent(t *testing.T) {
 				client:         httpClient,
 				pollInterval:   1,
 				reportInterval: 1,
+				maxRetries:     1,
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 			defer cancel()
 			err := a.Run(ctx)
 			if tc.expectedErr {

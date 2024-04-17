@@ -11,7 +11,6 @@ func (a *Agent) Run(ctx context.Context) error {
 	pollTicker := time.NewTicker(time.Duration(a.pollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(a.reportInterval) * time.Second)
 	retrievableCounter := 0
-	maxRetries := 5
 
 	for {
 		select {
@@ -26,7 +25,7 @@ func (a *Agent) Run(ctx context.Context) error {
 		case <-reportTicker.C:
 			err := a.sendMetricsPeriodically(ctx)
 			if err != nil {
-				if retrievableCounter < maxRetries {
+				if retrievableCounter < a.maxRetries {
 					retrievableCounter++
 					log.Println(err)
 					continue
