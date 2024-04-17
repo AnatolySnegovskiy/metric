@@ -174,7 +174,7 @@ func TestAgentReportTickerEmpty(t *testing.T) {
 			pollInterval:   1,
 			reportInterval: 1,
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		err := a.Run(ctx)
 

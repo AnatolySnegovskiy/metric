@@ -40,18 +40,11 @@ func (c *Counter) ProcessMassive(data map[string]float64) error {
 
 func (c *Counter) GetList() (map[string]float64, error) {
 	if c.rep != nil {
-		rows, err := c.rep.GetList()
-
+		items, err := c.rep.GetList()
 		if err != nil {
 			return nil, err
 		}
-
-		for rows.Next() {
-			var name string
-			var value int
-			_ = rows.Scan(&name, &value)
-			c.Items[name] = float64(value)
-		}
+		c.Items = items
 	}
 	return c.Items, nil
 }

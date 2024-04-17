@@ -3,7 +3,6 @@ package repositories
 import (
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
-	"github.com/jackc/pgx/v5"
 	"strings"
 )
 
@@ -11,21 +10,12 @@ type CounterRepo struct {
 	pg *clients.Postgres
 }
 
-func NewCounterRepo(pg *clients.Postgres) (*CounterRepo, error) {
+func NewCounterRepo(pg *clients.Postgres) *CounterRepo {
 	cr := &CounterRepo{
 		pg: pg,
 	}
 
-	if err := cr.makeTable(); err != nil {
-		return nil, err
-	}
-
-	return cr, nil
-}
-
-func (c *CounterRepo) makeTable() error {
-	_, err := c.pg.Exec("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")
-	return err
+	return cr
 }
 
 func (c *CounterRepo) GetItem(name string) (int, error) {
@@ -34,8 +24,21 @@ func (c *CounterRepo) GetItem(name string) (int, error) {
 	return value, err
 }
 
-func (c *CounterRepo) GetList() (pgx.Rows, error) {
-	return c.pg.Query("SELECT * FROM counter")
+func (c *CounterRepo) GetList() (map[string]float64, error) {
+	rows, err := c.pg.Query("SELECT * FROM counter")
+
+	if err != nil {
+		return nil, err
+	}
+	items := make(map[string]float64)
+	for rows.Next() {
+		var name string
+		var value int
+		_ = rows.Scan(&name, &value)
+		items[name] = float64(value)
+	}
+
+	return items, nil
 }
 
 func (c *CounterRepo) AddMetric(name string, value int) error {

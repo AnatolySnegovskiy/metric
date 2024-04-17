@@ -77,12 +77,10 @@ func TestGauge_getListErrorDB(t *testing.T) {
 	}
 	defer mock.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")).
-		WillReturnResult(pgxmock.NewResult("CREATE", 1))
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM gauge")).
 		WillReturnError(errors.New("db error"))
 	mockDB, _ := clients.NewPostgres(context.Background(), mock)
-	cr, _ := repositories.NewGaugeRepo(mockDB)
+	cr := repositories.NewGaugeRepo(mockDB)
 	gauge := NewGauge(cr)
 	_, err = gauge.GetList()
 	assert.Error(t, err)
@@ -94,12 +92,11 @@ func TestCounter_getListErrorDB(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer mock.Close()
-	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")).
-		WillReturnResult(pgxmock.NewResult("CREATE", 1))
+
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM counter")).
 		WillReturnError(errors.New("db error"))
 	mockDB, _ := clients.NewPostgres(context.Background(), mock)
-	cr, _ := repositories.NewCounterRepo(mockDB)
+	cr := repositories.NewCounterRepo(mockDB)
 	counter := NewCounter(cr)
 	_, err = counter.GetList()
 	assert.Error(t, err)
@@ -112,8 +109,6 @@ func TestGauge_ProcessDB(t *testing.T) {
 	}
 	defer mock.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")).
-		WillReturnResult(pgxmock.NewResult("CREATE", 1))
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO gauge (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2")).
 		WithArgs("test", float64(100)).
 		WillReturnResult(pgxmock.NewResult("INSERT", 1))
@@ -121,7 +116,7 @@ func TestGauge_ProcessDB(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"name", "value"}).AddRow("test", float64(100)))
 
 	mockDB, _ := clients.NewPostgres(context.Background(), mock)
-	cr, _ := repositories.NewGaugeRepo(mockDB)
+	cr := repositories.NewGaugeRepo(mockDB)
 	gauge := NewGauge(cr)
 	err = gauge.Process("test", "100")
 	assert.NoError(t, err)
@@ -137,8 +132,6 @@ func TestCounter_ProcessDB(t *testing.T) {
 	}
 	defer mock.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")).
-		WillReturnResult(pgxmock.NewResult("CREATE", 1))
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO counter (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2")).
 		WithArgs("test", int(100)).
 		WillReturnResult(pgxmock.NewResult("INSERT", 1))
@@ -146,7 +139,7 @@ func TestCounter_ProcessDB(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"name", "value"}).AddRow("test", 100))
 
 	mockDB, _ := clients.NewPostgres(context.Background(), mock)
-	cr, _ := repositories.NewCounterRepo(mockDB)
+	cr := repositories.NewCounterRepo(mockDB)
 	counter := NewCounter(cr)
 	err = counter.Process("test", "100")
 	assert.NoError(t, err)
@@ -162,8 +155,6 @@ func TestGauge_ProcessMassiveDB(t *testing.T) {
 	}
 	defer mock.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")).
-		WillReturnResult(pgxmock.NewResult("CREATE", 1))
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO gauge (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value")).
 		WithArgs("test", float64(500)).
 		WillReturnResult(pgxmock.NewResult("INSERT", 1))
@@ -171,7 +162,7 @@ func TestGauge_ProcessMassiveDB(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"name", "value"}).AddRow("test", float64(500)))
 
 	mockDB, _ := clients.NewPostgres(context.Background(), mock)
-	cr, _ := repositories.NewGaugeRepo(mockDB)
+	cr := repositories.NewGaugeRepo(mockDB)
 	gauge := NewGauge(cr)
 	err = gauge.ProcessMassive(map[string]float64{"test": 500})
 	assert.NoError(t, err)
@@ -187,8 +178,6 @@ func TestCounter_ProcessMassiveDB(t *testing.T) {
 	}
 	defer mock.Close()
 
-	mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")).
-		WillReturnResult(pgxmock.NewResult("CREATE", 1))
 	mock.ExpectExec(regexp.QuoteMeta("INSERT INTO counter (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value")).
 		WithArgs("test", int(500)).
 		WillReturnResult(pgxmock.NewResult("INSERT", 1))
@@ -196,7 +185,7 @@ func TestCounter_ProcessMassiveDB(t *testing.T) {
 		WillReturnRows(pgxmock.NewRows([]string{"name", "value"}).AddRow("test", 500))
 
 	mockDB, _ := clients.NewPostgres(context.Background(), mock)
-	cr, _ := repositories.NewCounterRepo(mockDB)
+	cr := repositories.NewCounterRepo(mockDB)
 	counter := NewCounter(cr)
 	err = counter.ProcessMassive(map[string]float64{"test": 500})
 	assert.NoError(t, err)

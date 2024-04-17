@@ -9,6 +9,7 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/tern/v2/migrate"
 	"go.uber.org/zap"
 	"os"
 	"os/signal"
@@ -23,6 +24,7 @@ func handleError(err error) {
 }
 
 func main() {
+
 	logger, err := zap.NewProduction()
 	handleError(err)
 
@@ -38,12 +40,19 @@ func main() {
 	var gaugeRepo *repositories.GaugeRepo
 	var counterRepo *repositories.CounterRepo
 	if db != nil {
+		migration, _ := migrate.NewMigrator(context.Background(), db, "public.schema_version")
+		projectDir, _ := os.Getwd()
+		err = migration.LoadMigrations(os.DirFS(projectDir + "/internal/storages/migrations"))
+		handleError(err)
+
+		err = migration.Migrate(context.Background())
+		handleError(err)
+
 		pg, err := clients.NewPostgres(context.Background(), db)
 		handleError(err)
-		gaugeRepo, err = repositories.NewGaugeRepo(pg)
-		handleError(err)
-		counterRepo, err = repositories.NewCounterRepo(pg)
-		handleError(err)
+
+		gaugeRepo = repositories.NewGaugeRepo(pg)
+		counterRepo = repositories.NewCounterRepo(pg)
 	}
 
 	s := storages.NewMemStorage()

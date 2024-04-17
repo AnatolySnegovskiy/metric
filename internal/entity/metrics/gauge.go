@@ -40,18 +40,11 @@ func (g *Gauge) ProcessMassive(data map[string]float64) error {
 
 func (g *Gauge) GetList() (map[string]float64, error) {
 	if g.rep != nil {
-		rows, err := g.rep.GetList()
-
+		items, err := g.rep.GetList()
 		if err != nil {
 			return nil, err
 		}
-
-		for rows.Next() {
-			var name string
-			var value float64
-			_ = rows.Scan(&name, &value)
-			g.Items[name] = value
-		}
+		g.Items = items
 	}
 	return g.Items, nil
 }

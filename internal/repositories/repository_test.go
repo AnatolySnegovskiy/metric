@@ -3,7 +3,6 @@ package repositories
 import (
 	"context"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
-	"github.com/jackc/pgx/v5"
 	"github.com/pashagolub/pgxmock/v3"
 	"github.com/stretchr/testify/assert"
 	"regexp"
@@ -23,19 +22,8 @@ func TestCounterRepo_Test(t *testing.T) {
 					WillReturnResult(pgxmock.NewResult("CREATE", 1))
 			},
 			check: func(mockDB *clients.Postgres) {
-				_, err := NewCounterRepo(mockDB)
-				assert.NoError(t, err)
-			},
-		},
-		{
-			name: "NewCounterRepoError",
-			expect: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS counter (name varchar(100) PRIMARY KEY, value int8)")).
-					WillReturnError(pgx.ErrTxCommitRollback)
-			},
-			check: func(mockDB *clients.Postgres) {
-				_, err := NewCounterRepo(mockDB)
-				assert.Error(t, err)
+				r := NewCounterRepo(mockDB)
+				assert.NotNil(t, r)
 			},
 		},
 		{
@@ -68,11 +56,14 @@ func TestCounterRepo_Test(t *testing.T) {
 				assert.NoError(t, err, "GetList", err)
 
 				var name string
-				var value int
-				actual.Next()
-				_ = actual.Scan(&name, &value)
+				var value float64
+				for k, v := range actual {
+					name = k
+					value = v
+					break
+				}
 				assert.Equal(t, "test", name)
-				assert.Equal(t, 100, value)
+				assert.Equal(t, float64(100), value)
 			},
 		},
 		{
@@ -137,19 +128,8 @@ func TestGaugeRepo_Test(t *testing.T) {
 					WillReturnResult(pgxmock.NewResult("CREATE", 1))
 			},
 			check: func(mockDB *clients.Postgres) {
-				_, err := NewGaugeRepo(mockDB)
-				assert.NoError(t, err)
-			},
-		},
-		{
-			name: "NewGaugeRepoError",
-			expect: func(mock pgxmock.PgxPoolIface) {
-				mock.ExpectExec(regexp.QuoteMeta("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")).
-					WillReturnError(pgx.ErrTxCommitRollback)
-			},
-			check: func(mockDB *clients.Postgres) {
-				_, err := NewGaugeRepo(mockDB)
-				assert.Error(t, err)
+				r := NewGaugeRepo(mockDB)
+				assert.NotNil(t, r)
 			},
 		},
 		{
@@ -183,8 +163,11 @@ func TestGaugeRepo_Test(t *testing.T) {
 
 				var name string
 				var value float64
-				actual.Next()
-				_ = actual.Scan(&name, &value)
+				for k, v := range actual {
+					name = k
+					value = v
+					break
+				}
 				assert.Equal(t, "test", name)
 				assert.Equal(t, float64(100), value)
 			},

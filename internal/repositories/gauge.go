@@ -3,7 +3,6 @@ package repositories
 import (
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
-	"github.com/jackc/pgx/v5"
 	"strings"
 )
 
@@ -11,20 +10,12 @@ type GaugeRepo struct {
 	pg *clients.Postgres
 }
 
-func NewGaugeRepo(pg *clients.Postgres) (*GaugeRepo, error) {
+func NewGaugeRepo(pg *clients.Postgres) *GaugeRepo {
 	cr := &GaugeRepo{
 		pg: pg,
 	}
-	if err := cr.makeTable(); err != nil {
-		return nil, err
-	}
 
-	return cr, nil
-}
-
-func (g *GaugeRepo) makeTable() error {
-	_, err := g.pg.Exec("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")
-	return err
+	return cr
 }
 
 func (g *GaugeRepo) GetItem(name string) (float64, error) {
@@ -33,8 +24,22 @@ func (g *GaugeRepo) GetItem(name string) (float64, error) {
 	return value, err
 }
 
-func (g *GaugeRepo) GetList() (pgx.Rows, error) {
-	return g.pg.Query("SELECT * FROM gauge")
+func (g *GaugeRepo) GetList() (map[string]float64, error) {
+	rows, err := g.pg.Query("SELECT * FROM gauge")
+
+	if err != nil {
+		return nil, err
+	}
+
+	items := make(map[string]float64)
+	for rows.Next() {
+		var name string
+		var value float64
+		_ = rows.Scan(&name, &value)
+		items[name] = value
+	}
+
+	return items, nil
 }
 
 func (g *GaugeRepo) AddMetric(name string, value float64) error {
