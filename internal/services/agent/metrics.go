@@ -51,9 +51,9 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
 	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Content-Type", "application/json")
-	resp, _ := a.client.Do(req)
+	resp, err := a.client.Do(req)
 
-	if resp != nil {
+	if err == nil {
 		defer resp.Body.Close()
 		if resp.StatusCode != http.StatusOK {
 			body, _ := io.ReadAll(resp.Body)
@@ -61,5 +61,5 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 		}
 	}
 
-	return nil
+	return err
 }

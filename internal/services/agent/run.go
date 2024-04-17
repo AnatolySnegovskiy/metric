@@ -10,6 +10,8 @@ import (
 func (a *Agent) Run(ctx context.Context) error {
 	pollTicker := time.NewTicker(time.Duration(a.pollInterval) * time.Second)
 	reportTicker := time.NewTicker(time.Duration(a.reportInterval) * time.Second)
+	retrievableCounter := 0
+	maxRetries := 5
 
 	for {
 		select {
@@ -24,8 +26,14 @@ func (a *Agent) Run(ctx context.Context) error {
 		case <-reportTicker.C:
 			err := a.sendMetricsPeriodically(ctx)
 			if err != nil {
+				if retrievableCounter < maxRetries {
+					retrievableCounter++
+					log.Println(err)
+					continue
+				}
 				return fmt.Errorf("error occurred while sending metrics: %w", err)
 			}
+			retrievableCounter = 0
 			log.Println("metrics sent")
 		}
 	}
