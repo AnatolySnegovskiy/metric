@@ -48,7 +48,7 @@ func main() {
 		err = migration.Migrate(context.Background())
 		handleError(err)
 
-		pg, err := clients.NewPostgres(context.Background(), db)
+		pg, err := clients.NewPostgres(db)
 		handleError(err)
 
 		gaugeRepo = repositories.NewGaugeRepo(pg)

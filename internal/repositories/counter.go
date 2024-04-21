@@ -1,6 +1,7 @@
 package repositories
 
 import (
+	"context"
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 	"strings"
@@ -18,14 +19,14 @@ func NewCounterRepo(pg *clients.Postgres) *CounterRepo {
 	return cr
 }
 
-func (c *CounterRepo) GetItem(name string) (int, error) {
+func (c *CounterRepo) GetItem(ctx context.Context, name string) (int, error) {
 	var value int
-	err := c.pg.QueryRow("SELECT value FROM counter WHERE name = $1", name).Scan(&value)
+	err := c.pg.QueryRow(ctx, "SELECT value FROM counter WHERE name = $1", name).Scan(&value)
 	return value, err
 }
 
-func (c *CounterRepo) GetList() (map[string]float64, error) {
-	rows, err := c.pg.Query("SELECT * FROM counter")
+func (c *CounterRepo) GetList(ctx context.Context) (map[string]float64, error) {
+	rows, err := c.pg.Query(ctx, "SELECT * FROM counter")
 
 	if err != nil {
 		return nil, err
@@ -41,12 +42,12 @@ func (c *CounterRepo) GetList() (map[string]float64, error) {
 	return items, nil
 }
 
-func (c *CounterRepo) AddMetric(name string, value int) error {
-	_, err := c.pg.Exec("INSERT INTO counter (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2", name, value)
+func (c *CounterRepo) AddMetric(ctx context.Context, name string, value int) error {
+	_, err := c.pg.Exec(ctx, "INSERT INTO counter (name, value) VALUES ($1, $2) ON CONFLICT (name) DO UPDATE SET value = $2", name, value)
 	return err
 }
 
-func (c *CounterRepo) AddMetrics(metrics map[string]float64) error {
+func (c *CounterRepo) AddMetrics(ctx context.Context, metrics map[string]float64) error {
 	var valueStrings []string
 	var valueArgs []interface{}
 	i := 1
@@ -56,6 +57,6 @@ func (c *CounterRepo) AddMetrics(metrics map[string]float64) error {
 		i += 2
 	}
 	query := fmt.Sprintf("INSERT INTO counter (name, value) VALUES %s ON CONFLICT (name) DO UPDATE SET value = EXCLUDED.value", strings.Join(valueStrings, ","))
-	_, err := c.pg.Exec(query, valueArgs...)
+	_, err := c.pg.Exec(ctx, query, valueArgs...)
 	return err
 }

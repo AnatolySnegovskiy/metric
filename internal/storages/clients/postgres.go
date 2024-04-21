@@ -15,24 +15,22 @@ type PgxIface interface {
 
 type Postgres struct {
 	conn PgxIface
-	ctx  context.Context
 }
 
-func NewPostgres(ctx context.Context, conn PgxIface) (*Postgres, error) {
+func NewPostgres(conn PgxIface) (*Postgres, error) {
 	return &Postgres{
 		conn: conn,
-		ctx:  ctx,
 	}, nil
 }
 
-func (db *Postgres) Query(query string, args ...interface{}) (pgx.Rows, error) {
-	return db.conn.Query(db.ctx, query, args...)
+func (db *Postgres) Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error) {
+	return db.conn.Query(ctx, query, args...)
 }
 
-func (db *Postgres) Exec(query string, args ...interface{}) (pgconn.CommandTag, error) {
-	return db.conn.Exec(db.ctx, query, args...)
+func (db *Postgres) Exec(ctx context.Context, query string, args ...interface{}) (pgconn.CommandTag, error) {
+	return db.conn.Exec(ctx, query, args...)
 }
 
-func (db *Postgres) QueryRow(query string, args ...interface{}) pgx.Row {
-	return db.conn.QueryRow(db.ctx, query, args...)
+func (db *Postgres) QueryRow(ctx context.Context, query string, args ...interface{}) pgx.Row {
+	return db.conn.QueryRow(ctx, query, args...)
 }

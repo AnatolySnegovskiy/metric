@@ -19,7 +19,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			continue
 		}
 
-		list, _ := storage.GetList()
+		list, _ := storage.GetList(ctx)
 
 		for metricName, metric := range list {
 

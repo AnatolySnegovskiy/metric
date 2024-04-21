@@ -23,7 +23,7 @@ func (s *Server) writeGetMetricHandler(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	if err := metric.Process(metricName, metricValue); err != nil {
+	if err := metric.Process(req.Context(), metricName, metricValue); err != nil {
 		http.Error(rw, fmt.Sprintf("failed to process metric: %s", err.Error()), http.StatusBadRequest)
 		return
 	}
@@ -61,7 +61,7 @@ func (s *Server) writePostMetricHandler(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	_ = metric.Process(metricDTO.ID, value)
+	_ = metric.Process(req.Context(), metricDTO.ID, value)
 	json, _ := easyjson.Marshal(metricDTO)
 	fmt.Fprintf(rw, "%v", string(json))
 }
@@ -76,7 +76,7 @@ func (s *Server) showAllMetricHandler(rw http.ResponseWriter, req *http.Request)
 	}
 
 	for storageType, storage := range stgList {
-		list, err := storage.GetList()
+		list, err := storage.GetList(req.Context())
 		if err != nil {
 			http.Error(rw, fmt.Sprintf("failed to get list of metrics: %s", err.Error()), http.StatusInternalServerError)
 			continue
@@ -99,7 +99,7 @@ func (s *Server) showMetricTypeHandler(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	list, err := storage.GetList()
+	list, err := storage.GetList(req.Context())
 	if err != nil {
 		http.Error(rw, fmt.Sprintf("failed to get list of metrics: %s", err.Error()), http.StatusInternalServerError)
 		return
@@ -122,7 +122,7 @@ func (s *Server) showMetricNameHandlers(rw http.ResponseWriter, req *http.Reques
 		return
 	}
 
-	list, err := storage.GetList()
+	list, err := storage.GetList(req.Context())
 	if err != nil {
 		http.Error(rw, fmt.Sprintf("failed to get list of metrics: %s", err.Error()), http.StatusInternalServerError)
 		return
@@ -158,7 +158,7 @@ func (s *Server) showPostMetricHandler(rw http.ResponseWriter, req *http.Request
 		return
 	}
 
-	list, err := storage.GetList()
+	list, err := storage.GetList(req.Context())
 	if err != nil {
 		http.Error(rw, fmt.Sprintf("failed to get list of metrics: %s", err.Error()), http.StatusInternalServerError)
 		return
@@ -244,7 +244,7 @@ func (s *Server) writeMassPostMetricHandler(rw http.ResponseWriter, req *http.Re
 			return
 		}
 
-		err = matric.ProcessMassive(metric)
+		err = matric.ProcessMassive(req.Context(), metric)
 
 		if err != nil {
 			rw.WriteHeader(http.StatusInternalServerError)

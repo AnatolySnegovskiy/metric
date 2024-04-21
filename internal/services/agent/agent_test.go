@@ -69,10 +69,10 @@ func TestAgent(t *testing.T) {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
 			mockEntity := mocks.NewMockEntityMetric(ctrl)
-			mockEntity.EXPECT().Process("PollCount", gomock.Any()).Return(
+			mockEntity.EXPECT().Process(gomock.Any(), "PollCount", gomock.Any()).Return(
 				errors.New("some error"),
 			).AnyTimes().MinTimes(1)
-			mockEntity.EXPECT().GetList().Return(
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(
 				map[string]float64{
 					"RandomValue": 10,
 				},
@@ -87,10 +87,10 @@ func TestAgent(t *testing.T) {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
 			mockEntity := mocks.NewMockEntityMetric(ctrl)
-			mockEntity.EXPECT().Process("RandomValue", gomock.Any()).Return(
+			mockEntity.EXPECT().Process(gomock.Any(), "RandomValue", gomock.Any()).Return(
 				errors.New("some error"),
 			).AnyTimes()
-			mockEntity.EXPECT().GetList().Return(
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(
 				map[string]float64{
 					"RandomValue": 10,
 				},
@@ -105,11 +105,11 @@ func TestAgent(t *testing.T) {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
 			mockEntity := mocks.NewMockEntityMetric(ctrl)
-			mockEntity.EXPECT().Process("RandomValue", gomock.Any()).Return(
+			mockEntity.EXPECT().Process(gomock.Any(), "RandomValue", gomock.Any()).Return(
 				nil,
 			).AnyTimes().MinTimes(1)
 
-			mockEntity.EXPECT().Process("Alloc", gomock.Any()).Return(
+			mockEntity.EXPECT().Process(gomock.Any(), "Alloc", gomock.Any()).Return(
 				errors.New("some error"),
 			).AnyTimes().MinTimes(1)
 

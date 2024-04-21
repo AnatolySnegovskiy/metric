@@ -37,7 +37,7 @@ func TestCounterRepo_Test(t *testing.T) {
 				cr := &CounterRepo{
 					pg: mockDB,
 				}
-				actual, err := cr.GetItem("test")
+				actual, err := cr.GetItem(context.Background(), "test")
 				assert.NoError(t, err, "GetItem", err)
 				assert.Equal(t, 100, actual)
 			},
@@ -52,7 +52,7 @@ func TestCounterRepo_Test(t *testing.T) {
 				cr := &CounterRepo{
 					pg: mockDB,
 				}
-				actual, err := cr.GetList()
+				actual, err := cr.GetList(context.Background())
 				assert.NoError(t, err, "GetList", err)
 
 				var name string
@@ -77,7 +77,7 @@ func TestCounterRepo_Test(t *testing.T) {
 				cr := &CounterRepo{
 					pg: mockDB,
 				}
-				err := cr.AddMetric("test", 100)
+				err := cr.AddMetric(context.Background(), "test", 100)
 				assert.NoError(t, err, "AddMetric", err)
 			},
 		},
@@ -94,7 +94,7 @@ func TestCounterRepo_Test(t *testing.T) {
 				cr := &CounterRepo{
 					pg: mockDB,
 				}
-				err := cr.AddMetrics(map[string]float64{"test": 500})
+				err := cr.AddMetrics(context.Background(), map[string]float64{"test": 500})
 				assert.NoError(t, err, "AddMetrics", err)
 			},
 		},
@@ -109,7 +109,7 @@ func TestCounterRepo_Test(t *testing.T) {
 			defer mock.Close()
 
 			testCase.expect(mock)
-			mockDB, _ := clients.NewPostgres(context.Background(), mock)
+			mockDB, _ := clients.NewPostgres(mock)
 			testCase.check(mockDB)
 		})
 	}
@@ -143,7 +143,7 @@ func TestGaugeRepo_Test(t *testing.T) {
 				cr := &GaugeRepo{
 					pg: mockDB,
 				}
-				actual, err := cr.GetItem("test")
+				actual, err := cr.GetItem(context.Background(), "test")
 				assert.NoError(t, err, "GetItem", err)
 				assert.Equal(t, float64(100), actual)
 			},
@@ -158,7 +158,7 @@ func TestGaugeRepo_Test(t *testing.T) {
 				cr := &GaugeRepo{
 					pg: mockDB,
 				}
-				actual, err := cr.GetList()
+				actual, err := cr.GetList(context.Background())
 				assert.NoError(t, err, "GetList", err)
 
 				var name string
@@ -183,7 +183,7 @@ func TestGaugeRepo_Test(t *testing.T) {
 				cr := &GaugeRepo{
 					pg: mockDB,
 				}
-				err := cr.AddMetric("test", float64(100))
+				err := cr.AddMetric(context.Background(), "test", float64(100))
 				assert.NoError(t, err, "AddMetric", err)
 			},
 		},
@@ -200,7 +200,7 @@ func TestGaugeRepo_Test(t *testing.T) {
 				cr := &GaugeRepo{
 					pg: mockDB,
 				}
-				err := cr.AddMetrics(map[string]float64{"test": 500.50})
+				err := cr.AddMetrics(context.Background(), map[string]float64{"test": 500.50})
 				assert.NoError(t, err, "AddMetrics", err)
 			},
 		},
@@ -215,7 +215,7 @@ func TestGaugeRepo_Test(t *testing.T) {
 			defer mock.Close()
 
 			testCase.expect(mock)
-			mockDB, _ := clients.NewPostgres(context.Background(), mock)
+			mockDB, _ := clients.NewPostgres(mock)
 			testCase.check(mockDB)
 		})
 	}

@@ -21,7 +21,7 @@ func TestPostgres_Test(t *testing.T) {
 					WillReturnResult(pgxmock.NewResult("CREATE", 1))
 			},
 			check: func(mockDB *Postgres) {
-				_, err := mockDB.Exec("CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")
+				_, err := mockDB.Exec(context.Background(), "CREATE TABLE IF NOT EXISTS gauge (name varchar(100) PRIMARY KEY, value DOUBLE PRECISION)")
 				assert.NoError(t, err)
 			},
 		},
@@ -33,7 +33,7 @@ func TestPostgres_Test(t *testing.T) {
 					WillReturnRows(pgxmock.NewRows([]string{"value"}).AddRow(100))
 			},
 			check: func(mockDB *Postgres) {
-				_, err := mockDB.Query("SELECT value FROM gauge WHERE name = $1", "test")
+				_, err := mockDB.Query(context.Background(), "SELECT value FROM gauge WHERE name = $1", "test")
 				assert.NoError(t, err)
 			},
 		},
@@ -45,7 +45,7 @@ func TestPostgres_Test(t *testing.T) {
 					WillReturnRows(pgxmock.NewRows([]string{"value"}).AddRow(100))
 			},
 			check: func(mockDB *Postgres) {
-				rows := mockDB.QueryRow("SELECT value FROM gauge WHERE name = $1", "test")
+				rows := mockDB.QueryRow(context.Background(), "SELECT value FROM gauge WHERE name = $1", "test")
 				var value int
 				err := rows.Scan(&value)
 				assert.NoError(t, err)
@@ -63,7 +63,7 @@ func TestPostgres_Test(t *testing.T) {
 			defer mock.Close()
 
 			testCase.expect(mock)
-			mockDB, _ := NewPostgres(context.Background(), mock)
+			mockDB, _ := NewPostgres(mock)
 			testCase.check(mockDB)
 		})
 	}

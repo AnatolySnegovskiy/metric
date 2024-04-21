@@ -316,7 +316,7 @@ func TestLoadMetricsOnStart(t *testing.T) {
 
 	m, _ := str.GetMetricType("gauge")
 
-	list, _ := m.GetList()
+	list, _ := m.GetList(context.Background())
 	assert.Equal(t, 1.23, list["value1"])
 
 	defer os.Remove(absoluteFilePath)
@@ -367,7 +367,7 @@ func TestErrorReadDBHandlerFail(t *testing.T) {
 	stg := storages.NewMemStorage()
 	ctrl := gomock.NewController(t)
 	mockEntity := mocks.NewMockEntityMetric(ctrl)
-	mockEntity.EXPECT().GetList().Return(
+	mockEntity.EXPECT().GetList(gomock.Any()).Return(
 		nil,
 		errors.New("some error"),
 	).AnyTimes().MinTimes(1)
@@ -429,7 +429,7 @@ func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
 	r.Post("/updates", s.writeMassPostMetricHandler)
 	ctrl := gomock.NewController(t)
 	mockEntity := mocks.NewMockEntityMetric(ctrl)
-	mockEntity.EXPECT().ProcessMassive(gomock.Any()).Return(
+	mockEntity.EXPECT().ProcessMassive(gomock.Any(), gomock.Any()).Return(
 		errors.New("some error"),
 	).AnyTimes().MinTimes(1)
 

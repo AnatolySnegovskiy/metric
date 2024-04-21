@@ -10,6 +10,7 @@
 package mocks
 
 import (
+	context "context"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -39,44 +40,44 @@ func (m *MockEntityMetric) EXPECT() *MockEntityMetricMockRecorder {
 }
 
 // GetList mocks base method.
-func (m *MockEntityMetric) GetList() (map[string]float64, error) {
+func (m *MockEntityMetric) GetList(ctx context.Context) (map[string]float64, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetList")
+	ret := m.ctrl.Call(m, "GetList", ctx)
 	ret0, _ := ret[0].(map[string]float64)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
 // GetList indicates an expected call of GetList.
-func (mr *MockEntityMetricMockRecorder) GetList() *gomock.Call {
+func (mr *MockEntityMetricMockRecorder) GetList(ctx any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetList", reflect.TypeOf((*MockEntityMetric)(nil).GetList))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetList", reflect.TypeOf((*MockEntityMetric)(nil).GetList), ctx)
 }
 
 // Process mocks base method.
-func (m *MockEntityMetric) Process(name, data string) error {
+func (m *MockEntityMetric) Process(ctx context.Context, name, data string) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Process", name, data)
+	ret := m.ctrl.Call(m, "Process", ctx, name, data)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // Process indicates an expected call of Process.
-func (mr *MockEntityMetricMockRecorder) Process(name, data any) *gomock.Call {
+func (mr *MockEntityMetricMockRecorder) Process(ctx, name, data any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockEntityMetric)(nil).Process), name, data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Process", reflect.TypeOf((*MockEntityMetric)(nil).Process), ctx, name, data)
 }
 
 // ProcessMassive mocks base method.
-func (m *MockEntityMetric) ProcessMassive(data map[string]float64) error {
+func (m *MockEntityMetric) ProcessMassive(ctx context.Context, data map[string]float64) error {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "ProcessMassive", data)
+	ret := m.ctrl.Call(m, "ProcessMassive", ctx, data)
 	ret0, _ := ret[0].(error)
 	return ret0
 }
 
 // ProcessMassive indicates an expected call of ProcessMassive.
-func (mr *MockEntityMetricMockRecorder) ProcessMassive(data any) *gomock.Call {
+func (mr *MockEntityMetricMockRecorder) ProcessMassive(ctx, data any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessMassive", reflect.TypeOf((*MockEntityMetric)(nil).ProcessMassive), data)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "ProcessMassive", reflect.TypeOf((*MockEntityMetric)(nil).ProcessMassive), ctx, data)
 }

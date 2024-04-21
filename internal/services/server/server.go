@@ -82,7 +82,7 @@ func (s *Server) LoadMetricsOnStart(filePath string) {
 
 		for _, items := range metricValues {
 			for key, value := range items {
-				_ = metric.Process(key, strconv.FormatFloat(value, 'f', -1, 64))
+				_ = metric.Process(context.Background(), key, strconv.FormatFloat(value, 'f', -1, 64))
 			}
 		}
 	}
