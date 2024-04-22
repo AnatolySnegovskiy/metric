@@ -1,12 +1,14 @@
 package storages
 
 import (
+	"context"
 	"errors"
 )
 
 type EntityMetric interface {
-	Process(name string, data string) error
-	GetList() map[string]float64
+	Process(ctx context.Context, name string, data string) error
+	ProcessMassive(ctx context.Context, data map[string]float64) error
+	GetList(ctx context.Context) (map[string]float64, error)
 }
 
 type MemStorage struct {

@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"context"
 	"fmt"
 	"reflect"
 	"runtime"
@@ -26,15 +27,15 @@ func (a *Agent) updateStoragePeriodically() error {
 		return fmt.Errorf("error getting counter: %w", err)
 	}
 
-	if counter.Process("PollCount", "1") != nil {
+	if counter.Process(context.Background(), "PollCount", "1") != nil {
 		return fmt.Errorf("error while processing field: PollCount")
 	}
-	if gauge.Process("RandomValue", fmt.Sprintf("%v", time.Now().UnixNano())) != nil {
+	if gauge.Process(context.Background(), "RandomValue", fmt.Sprintf("%v", time.Now().UnixNano())) != nil {
 		return fmt.Errorf("error while processing field: RandomValue")
 	}
 
 	for _, field := range runtimeEntityArray {
-		if gauge.Process(field, fmt.Sprintf("%v", reflect.ValueOf(m).FieldByName(field))) != nil {
+		if gauge.Process(context.Background(), field, fmt.Sprintf("%v", reflect.ValueOf(m).FieldByName(field))) != nil {
 			return fmt.Errorf("error while processing field: %s", field)
 		}
 	}

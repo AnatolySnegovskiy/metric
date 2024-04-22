@@ -12,6 +12,7 @@ type Config struct {
 	storeInterval   int
 	fileStoragePath string
 	restore         bool
+	dataBaseDSN     string
 }
 
 func NewConfig() (*Config, error) {
@@ -20,6 +21,7 @@ func NewConfig() (*Config, error) {
 		storeInterval:   300,
 		fileStoragePath: "/tmp/metrics-db.json",
 		restore:         true,
+		dataBaseDSN:     "postgres://postgres:root@localhost:5432",
 	}
 
 	if err := c.parseFlags(); err != nil {
@@ -51,10 +53,15 @@ func (c *Config) parseFlags() error {
 		}
 	}
 
+	if val, ok := os.LookupEnv("DATABASE_DSN"); val != "" && ok {
+		c.dataBaseDSN = val
+	}
+
 	flag.StringVar(&c.flagRunAddr, "a", c.flagRunAddr, "address and port to run server")
 	flag.IntVar(&c.storeInterval, "i", c.storeInterval, "storeInterval")
 	flag.StringVar(&c.fileStoragePath, "f", c.fileStoragePath, "fileStoragePath")
 	flag.BoolVar(&c.restore, "r", c.restore, "restore")
+	flag.StringVar(&c.dataBaseDSN, "d", c.dataBaseDSN, "databaseDSN")
 	flag.Parse()
 
 	if flag.NArg() > 0 {

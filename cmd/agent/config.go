@@ -11,6 +11,7 @@ type Config struct {
 	flagSendAddr   string
 	reportInterval int
 	pollInterval   int
+	maxRetries     int
 }
 
 func NewConfig() (*Config, error) {
@@ -18,6 +19,7 @@ func NewConfig() (*Config, error) {
 		flagSendAddr:   "localhost:8080",
 		reportInterval: 10,
 		pollInterval:   2,
+		maxRetries:     5,
 	}
 
 	if err := c.parseFlags(); err != nil {

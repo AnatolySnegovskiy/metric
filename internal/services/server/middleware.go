@@ -43,22 +43,27 @@ func (s *Server) logMiddleware(next http.Handler) http.Handler {
 		}
 
 		start := time.Now()
-		next.ServeHTTP(&lw, r)
+		var buf bytes.Buffer
+		teeBody := io.TeeReader(r.Body, &buf)
+		newRequest := r.Clone(r.Context())
+		newRequest.Body = io.NopCloser(teeBody)
+		next.ServeHTTP(&lw, newRequest)
 		duration := time.Since(start)
-
 		s.logger.Infof(
-			"request method: %s; uri: %s; duration: %s; request size: %d,",
+			"request method: %s; uri: %s; duration: %s; request size: %d, content: %s",
 			r.Method,
 			r.RequestURI,
 			duration,
 			r.ContentLength,
+			buf.String(),
 		)
 
 		s.logger.Infof("response status: %d; size: %d;", responseData.status, responseData.size)
+
 	})
 }
 
-func (s *Server) gzipResponseMiddleware(next http.Handler) http.Handler {
+func (s *Server) gzipCompressMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if !isContentTypeAllowed(r.Header.Get("Accept")) {
 			next.ServeHTTP(w, r)
@@ -75,23 +80,17 @@ func (s *Server) gzipResponseMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) gzipRequestMiddleware(next http.Handler) http.Handler {
+func (s *Server) gzipDecompressMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if strings.Contains(r.Header.Get("Content-Encoding"), "gzip") &&
 			isContentTypeAllowed(r.Header.Get("Content-Type")) {
 			reader, err := gzip.NewReader(r.Body)
 			if err != nil {
-				http.Error(w, "Failed to decompress request body", http.StatusBadRequest)
+				http.Error(w, "Failed to decompress request body", http.StatusInternalServerError)
 				return
 			}
 			defer reader.Close()
-
-			uncompressed, err := io.ReadAll(reader)
-			if err != nil {
-				http.Error(w, "Failed to read decompressed request body", http.StatusInternalServerError)
-				return
-			}
-
+			uncompressed, _ := io.ReadAll(reader)
 			r.Body = io.NopCloser(bytes.NewReader(uncompressed))
 		}
 

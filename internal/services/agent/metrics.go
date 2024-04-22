@@ -7,49 +7,59 @@ import (
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/mailru/easyjson"
+	"io"
 	"net/http"
 )
 
 func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
-	metricDto := &dto.Metrics{}
+	metricDtoCollection := dto.MetricsCollection{}
+
 	for storageType, storage := range a.storage.GetList() {
 		if storage == nil {
 			continue
 		}
 
-		for metricName, metric := range storage.GetList() {
-			metricDto.MType = storageType
-			metricDto.ID = metricName
+		list, _ := storage.GetList(ctx)
+
+		for metricName, metric := range list {
+
+			metricDto := dto.Metrics{
+				ID:    metricName,
+				MType: storageType,
+			}
 
 			if storageType == "counter" {
 				iv := int64(metric)
-				metricDto.Delta = &iv
+				newIv := iv
+				metricDto.Delta = &newIv
 			} else {
-				metricDto.Value = &metric
+				newMetric := metric
+				metricDto.Value = &newMetric
 			}
 
-			var buf bytes.Buffer
-			gw := gzip.NewWriter(&buf)
-			defer gw.Close()
-
-			body, _ := easyjson.Marshal(metricDto)
-			_, _ = gw.Write(body)
-			_ = gw.Close()
-
-			url := fmt.Sprintf("http://%s/update/", a.sendAddr)
-			req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
-			req.Header.Set("Content-Encoding", "gzip")
-			req.Header.Set("Content-Type", "application/json")
-			resp, _ := a.client.Do(req)
-
-			if resp != nil {
-				defer resp.Body.Close()
-				if resp.StatusCode != http.StatusOK {
-					return fmt.Errorf("unexpected status code: %d", resp.StatusCode)
-				}
-			}
+			metricDtoCollection = append(metricDtoCollection, metricDto)
 		}
 	}
 
-	return nil
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	body, _ := easyjson.Marshal(metricDtoCollection)
+	_, _ = gw.Write(body)
+	_ = gw.Close()
+
+	url := fmt.Sprintf("http://%s/updates/", a.sendAddr)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
+	req.Header.Set("Content-Encoding", "gzip")
+	req.Header.Set("Content-Type", "application/json")
+	resp, err := a.client.Do(req)
+
+	if err == nil {
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			body, _ := io.ReadAll(resp.Body)
+			return fmt.Errorf("unexpected status code: %d - %s", resp.StatusCode, string(body))
+		}
+	}
+
+	return err
 }

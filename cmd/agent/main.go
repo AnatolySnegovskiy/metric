@@ -28,8 +28,8 @@ func handleShutdownSignal(quit chan os.Signal) {
 
 func main() {
 	s := storages.NewMemStorage()
-	s.AddMetric("gauge", metrics.NewGauge())
-	s.AddMetric("counter", metrics.NewCounter())
+	s.AddMetric("gauge", metrics.NewGauge(nil))
+	s.AddMetric("counter", metrics.NewCounter(nil))
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM)
@@ -46,6 +46,7 @@ func main() {
 				PollInterval:   c.pollInterval,
 				ReportInterval: c.reportInterval,
 				SendAddr:       c.flagSendAddr,
+				MaxRetries:     c.maxRetries,
 			},
 		).Run(context.Background()))
 }

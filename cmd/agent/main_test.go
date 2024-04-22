@@ -19,8 +19,8 @@ import (
 func Test_Main(t *testing.T) {
 	resetVars()
 	s := storages.NewMemStorage()
-	s.AddMetric("gauge", metrics.NewGauge())
-	s.AddMetric("counter", metrics.NewCounter())
+	s.AddMetric("gauge", metrics.NewGauge(nil))
+	s.AddMetric("counter", metrics.NewCounter(nil))
 	r, w, _ := os.Pipe()
 	os.Stdout = w
 

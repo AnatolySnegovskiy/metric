@@ -2,15 +2,19 @@ package server
 
 import (
 	"bytes"
+	"compress/gzip"
 	"context"
 	"encoding/json"
+	"errors"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
+	"github.com/AnatolySnegovskiy/metric/internal/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/go-chi/chi/v5"
 	"github.com/gookit/slog"
 	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
+	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
 	"net/http"
 	"net/http/httptest"
@@ -53,13 +57,14 @@ func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int
 
 func TestClearStorage(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New())
+	s := New(stg, slog.New(), true)
 	r := chi.NewRouter()
 	r.NotFound(s.notFoundHandler)
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeGetMetricHandler)
 	r.Get("/", s.showAllMetricHandler)
 	r.Get("/value/{metricType}", s.showMetricTypeHandler)
 	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
+	r.Get("/ping", s.postgersPingHandler)
 
 	t.Run("test clear storage", func(t *testing.T) {
 		testHandler(t, r, http.MethodGet, "/", http.StatusNotFound, "", nil, nil)
@@ -68,16 +73,16 @@ func TestClearStorage(t *testing.T) {
 
 func TestServerHandlers(t *testing.T) {
 	stg := storages.NewMemStorage()
-	stg.AddMetric("gauge", metrics.NewGauge())
-	stg.AddMetric("type1", metrics.NewCounter())
-	stg.AddMetric("type100", metrics.NewCounter())
-	stg.AddMetric("typePostData", metrics.NewCounter())
-	stg.AddMetric("gaugeValue", metrics.NewGauge())
-	stg.AddMetric("zero", metrics.NewGauge())
-	s := New(stg, slog.New())
+	stg.AddMetric("gauge", metrics.NewGauge(nil))
+	stg.AddMetric("type1", metrics.NewCounter(nil))
+	stg.AddMetric("type100", metrics.NewCounter(nil))
+	stg.AddMetric("typePostData", metrics.NewCounter(nil))
+	stg.AddMetric("gaugeValue", metrics.NewGauge(nil))
+	stg.AddMetric("zero", metrics.NewGauge(nil))
+	s := New(stg, slog.New(), true)
 
 	r := chi.NewRouter()
-	r.Use(s.logMiddleware, s.gzipResponseMiddleware, s.gzipRequestMiddleware)
+	r.Use(s.logMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware)
 	r.NotFound(s.notFoundHandler) // H
 	r.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
 	r.With(s.JSONContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)
@@ -138,6 +143,12 @@ func TestServerHandlers(t *testing.T) {
 		ID:    "test",
 	})
 
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	defer gw.Close()
+	_, _ = gw.Write(bodyMap["typePostDataValue"])
+	_ = gw.Close()
+
 	tests := []struct {
 		name        string
 		router      chi.Router
@@ -155,6 +166,10 @@ func TestServerHandlers(t *testing.T) {
 		{"writeGetMetricHandler2", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostDataGauge"], map[string]string{"Content-Type": "application/json"}},
 		{"writeGetMetricHandler3", r, http.MethodPost, "/update/", http.StatusOK, "skip", bodyMap["typePostDataValue"], map[string]string{"Content-Type": "application/json"}},
 
+		{"writeGetMetricHandler3CompressError", r, http.MethodPost, "/update/", http.StatusInternalServerError, "skip", bodyMap["typePostDataValue"], map[string]string{"Content-Type": "application/json", "Content-Encoding": "gzip"}},
+
+		{"writeGetMetricHandler3CompressOK", r, http.MethodPost, "/update/", http.StatusOK, "skip", buf.Bytes(), map[string]string{"Content-Type": "application/json", "Content-Encoding": "gzip"}},
+		{"writeGetMetricHandler3NoJson", r, http.MethodPost, "/update/", http.StatusBadRequest, "skip", buf.Bytes(), map[string]string{"Content-Type": "text plain", "Content-Encoding": "gzip"}},
 		{"writeGetMetricHandler4", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"typePostData\",\"delta\":10}", bodyMap["getPostValue"], map[string]string{"Content-Type": "application/json"}},
 
 		{"writeGetMetricHandler5", r, http.MethodPost, "/value/", http.StatusOK, "{\"id\":\"test\",\"type\":\"gauge\",\"value\":10}", bodyMap["getPostValueGauge"], map[string]string{"Content-Type": "application/json"}},
@@ -289,7 +304,7 @@ func TestLoadMetricsOnStart(t *testing.T) {
 	_, _ = file.Write(sampleJSON)
 
 	str := storages.NewMemStorage()
-	str.AddMetric("gauge", metrics.NewGauge())
+	str.AddMetric("gauge", metrics.NewGauge(nil))
 	logger, _ := zap.NewProduction()
 	s := &Server{
 		router:  chi.NewRouter(),
@@ -300,7 +315,9 @@ func TestLoadMetricsOnStart(t *testing.T) {
 	s.LoadMetricsOnStart(filePath)
 
 	m, _ := str.GetMetricType("gauge")
-	assert.Equal(t, 1.23, m.GetList()["value1"])
+
+	list, _ := m.GetList(context.Background())
+	assert.Equal(t, 1.23, list["value1"])
 
 	defer os.Remove(absoluteFilePath)
 	defer os.RemoveAll(directory)
@@ -326,4 +343,97 @@ func TestSaveMetricsPeriodically(t *testing.T) {
 	assert.FileExists(t, absoluteFilePath)
 	_ = os.RemoveAll(absoluteFilePath)
 	_ = os.RemoveAll(filepath.Dir(absoluteFilePath))
+}
+
+func TestPingHandlerOk(t *testing.T) {
+	stg := storages.NewMemStorage()
+	s := New(stg, slog.New(), true)
+	r := chi.NewRouter()
+	r.Get("/ping", s.postgersPingHandler)
+
+	testHandler(t, r, http.MethodGet, "/ping", http.StatusOK, "skip", nil, nil)
+}
+
+func TestPingHandlerFail(t *testing.T) {
+	stg := storages.NewMemStorage()
+	s := New(stg, slog.New(), false)
+	r := chi.NewRouter()
+	r.Get("/ping", s.postgersPingHandler)
+
+	testHandler(t, r, http.MethodGet, "/ping", http.StatusInternalServerError, "skip", nil, nil)
+}
+
+func TestErrorReadDBHandlerFail(t *testing.T) {
+	stg := storages.NewMemStorage()
+	ctrl := gomock.NewController(t)
+	mockEntity := mocks.NewMockEntityMetric(ctrl)
+	mockEntity.EXPECT().GetList(gomock.Any()).Return(
+		nil,
+		errors.New("some error"),
+	).AnyTimes().MinTimes(1)
+
+	stg.AddMetric("gauge", mockEntity)
+
+	s := New(stg, slog.New(), false)
+	r := chi.NewRouter()
+	r.With(s.JSONContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)
+	r.Get("/", s.showAllMetricHandler)
+	r.Get("/value/{metricType}", s.showMetricTypeHandler)
+	r.Get("/value/{metricType}/{metricName}", s.showMetricNameHandlers)
+
+	bodyMap := map[string][]byte{}
+	bodyMap["getPostValueGauge"], _ = easyjson.Marshal(dto.Metrics{
+		MType: "gauge",
+		ID:    "test",
+	})
+
+	testHandler(t, r, http.MethodGet, "/", http.StatusInternalServerError, "skip", nil, nil)
+	testHandler(t, r, http.MethodGet, "/value/gauge", http.StatusInternalServerError, "skip", nil, nil)
+	testHandler(t, r, http.MethodGet, "/value/gauge/metricName", http.StatusInternalServerError, "skip", nil, nil)
+	testHandler(t, r, http.MethodPost, "/value/", http.StatusInternalServerError, "skip", bodyMap["getPostValueGauge"], map[string]string{"Content-Type": "application/json"})
+}
+
+func TestErrorWriteMassiveHandler(t *testing.T) {
+	stg := storages.NewMemStorage()
+	s := New(stg, slog.New(), false)
+	r := chi.NewRouter()
+	r.Post("/updates", s.writeMassPostMetricHandler)
+
+	testHandler(t, r, http.MethodPost, "/updates", http.StatusNotFound, "skip", []byte(`[{"id":"CounterBatchZip215","type":"counter","delta":1890208871},{"id":"GaugeBatchZip241","type":"gauge","value":504963.8348398412},{"id":"CounterBatchZip215","type":"counter","delta":769036543},{"id":"GaugeBatchZip241","type":"gauge","value":576160.9397215487}]`), nil)
+
+	stg.AddMetric("gauge", metrics.NewGauge(nil))
+	stg.AddMetric("counter", metrics.NewCounter(nil))
+	metricDtoCollection := dto.MetricsCollection{}
+	intV := int64(1890208871)
+	metricDtoCollection = append(metricDtoCollection, dto.Metrics{
+		MType: "counter",
+		ID:    "CounterBatchZip215",
+		Delta: &intV,
+	})
+	floatV := 504963.8348398412
+	metricDtoCollection = append(metricDtoCollection, dto.Metrics{
+		MType: "gauge",
+		ID:    "GaugeBatchZip241",
+		Value: &floatV,
+	})
+	body, _ := easyjson.Marshal(metricDtoCollection)
+
+	testHandler(t, r, http.MethodPost, "/updates", http.StatusOK, "skip", body, nil)
+	testHandler(t, r, http.MethodPost, "/updates", http.StatusBadRequest, "skip", []byte(`[{"id":"Count}]`), nil)
+}
+
+func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
+	stg := storages.NewMemStorage()
+	s := New(stg, slog.New(), false)
+	r := chi.NewRouter()
+	r.Post("/updates", s.writeMassPostMetricHandler)
+	ctrl := gomock.NewController(t)
+	mockEntity := mocks.NewMockEntityMetric(ctrl)
+	mockEntity.EXPECT().ProcessMassive(gomock.Any(), gomock.Any()).Return(
+		errors.New("some error"),
+	).AnyTimes().MinTimes(1)
+
+	stg.AddMetric("gauge", mockEntity)
+	stg.AddMetric("counter", mockEntity)
+	testHandler(t, r, http.MethodPost, "/updates", http.StatusInternalServerError, "skip", []byte(`[{"id":"CounterBatchZip215","type":"counter","delta":1890208871},{"id":"GaugeBatchZip241","type":"gauge","value":504963.8348398412},{"id":"CounterBatchZip215","type":"counter","delta":769036543},{"id":"GaugeBatchZip241","type":"gauge","value":576160.9397215487}]`), nil)
 }
