@@ -12,6 +12,30 @@ import (
 	"time"
 )
 
+type gzipResponseWriter struct {
+	http.ResponseWriter
+	io.Writer
+}
+
+func (w *gzipResponseWriter) Write(data []byte) (int, error) {
+	return w.Writer.Write(data)
+}
+
+type sha256ResponseWriter struct {
+	http.ResponseWriter
+	key string
+}
+
+func (w *sha256ResponseWriter) Write(data []byte) (int, error) {
+	var buf bytes.Buffer
+	buf.Write(data)
+	hash := hmac.New(sha256.New, []byte(w.key))
+	calculatedHash := fmt.Sprintf("%x", hash.Sum(buf.Bytes()))
+	w.Header().Set("HashSHA256", calculatedHash)
+
+	return w.ResponseWriter.Write(data)
+}
+
 type responseData struct {
 	status int
 	size   int
@@ -22,15 +46,15 @@ type loggingResponseWriter struct {
 	responseData *responseData
 }
 
-func (r *loggingResponseWriter) Write(b []byte) (int, error) {
-	size, err := r.ResponseWriter.Write(b)
-	r.responseData.size += size
+func (w *loggingResponseWriter) Write(b []byte) (int, error) {
+	size, err := w.ResponseWriter.Write(b)
+	w.responseData.size += size
 	return size, err
 }
 
-func (r *loggingResponseWriter) WriteHeader(statusCode int) {
-	r.ResponseWriter.WriteHeader(statusCode)
-	r.responseData.status = statusCode
+func (w *loggingResponseWriter) WriteHeader(statusCode int) {
+	w.ResponseWriter.WriteHeader(statusCode)
+	w.responseData.status = statusCode
 }
 
 func (s *Server) logMiddleware(next http.Handler) http.Handler {
@@ -77,7 +101,7 @@ func (s *Server) gzipCompressMiddleware(next http.Handler) http.Handler {
 		defer gz.Close()
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Del("Content-Length")
-		w = &BufferedResponseWriter{w, gz}
+		w = &gzipResponseWriter{w, gz}
 
 		next.ServeHTTP(w, r)
 	})
@@ -99,15 +123,6 @@ func (s *Server) gzipDecompressMiddleware(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 	})
-}
-
-type BufferedResponseWriter struct {
-	http.ResponseWriter
-	io.Writer
-}
-
-func (w *BufferedResponseWriter) Write(data []byte) (int, error) {
-	return w.Writer.Write(data)
 }
 
 func (s *Server) JSONContentTypeMiddleware(next http.Handler) http.Handler {
@@ -137,7 +152,7 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 
 		expectedHash := r.Header.Get("HashSHA256")
 		if calculatedHash != expectedHash {
-			http.Error(w, "Хеш не совпадает", http.StatusBadRequest)
+			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
 
@@ -152,13 +167,8 @@ func (s *Server) hashResponseMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		var buf bytes.Buffer
-		w = &BufferedResponseWriter{w, &buf}
+		w = &sha256ResponseWriter{w, s.conf.GetShaKey()}
 		next.ServeHTTP(w, r)
-
-		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
-		calculatedHash := fmt.Sprintf("%x", hash.Sum(buf.Bytes()))
-		w.Header().Set("HashSHA256", calculatedHash)
 	})
 }
 
