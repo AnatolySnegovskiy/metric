@@ -47,7 +47,7 @@ func New(ctx context.Context, c Config, l gsr.GenLogger) (*Server, error) {
 }
 
 func (s *Server) setupRoutes() {
-	s.router.Use(s.hashCheckMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware, s.logMiddleware, s.hashResponseMiddleware)
+	s.router.Use(s.gzipCompressMiddleware, s.gzipDecompressMiddleware, s.hashCheckMiddleware, s.logMiddleware, s.hashResponseMiddleware)
 	s.router.NotFound(s.notFoundHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/updates/", s.writeMassPostMetricHandler)

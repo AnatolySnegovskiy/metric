@@ -56,7 +56,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 
 	if a.shaKey != "" {
 		hash := hmac.New(sha256.New, []byte(a.shaKey))
-		hash.Write(buf.Bytes())
+		hash.Write(body)
 		req.Header.Set("HashSHA256", fmt.Sprintf("%x", hash.Sum(nil)))
 	}
 
