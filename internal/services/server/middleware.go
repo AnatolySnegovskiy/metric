@@ -147,6 +147,7 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 
 		if expectedHash == "" {
 			next.ServeHTTP(w, r)
+			return
 		}
 
 		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
