@@ -174,6 +174,7 @@ func TestAgentReportTickerEmpty(t *testing.T) {
 			client:         httpClient,
 			pollInterval:   1,
 			reportInterval: 1,
+			shaKey:         "testKey",
 		}
 		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 		defer cancel()

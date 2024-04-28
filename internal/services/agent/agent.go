@@ -15,6 +15,7 @@ type Agent struct {
 	reportInterval int
 	sendAddr       string
 	maxRetries     int
+	shaKey         string
 }
 
 type Options struct {
@@ -24,6 +25,7 @@ type Options struct {
 	ReportInterval int
 	SendAddr       string
 	MaxRetries     int
+	ShaKey         string
 }
 
 func New(options Options) *Agent {
@@ -34,5 +36,6 @@ func New(options Options) *Agent {
 		reportInterval: options.ReportInterval,
 		sendAddr:       options.SendAddr,
 		maxRetries:     options.MaxRetries,
+		shaKey:         options.ShaKey,
 	}
 }

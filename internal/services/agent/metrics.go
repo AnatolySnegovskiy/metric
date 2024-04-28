@@ -4,6 +4,8 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/mailru/easyjson"
@@ -51,6 +53,13 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
 	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Content-Type", "application/json")
+
+	if a.shaKey != "" {
+		hash := hmac.New(sha256.New, []byte(a.shaKey))
+		hashedData := hash.Sum(buf.Bytes())
+		req.Header.Set("HashSHA256", fmt.Sprintf("%x", hashedData))
+	}
+
 	resp, err := a.client.Do(req)
 
 	if err == nil {
