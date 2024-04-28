@@ -158,7 +158,8 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		calculatedHash := fmt.Sprintf("%x", hash.Sum(body))
+		hash.Write(body)
+		calculatedHash := fmt.Sprintf("%x", hash.Sum(nil))
 
 		if calculatedHash != expectedHash {
 			log.Println(expectedHash)
