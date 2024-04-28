@@ -3,6 +3,9 @@ package server
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	"crypto/sha256"
+	"fmt"
 	"io"
 	"net/http"
 	"strings"
@@ -74,7 +77,7 @@ func (s *Server) gzipCompressMiddleware(next http.Handler) http.Handler {
 		defer gz.Close()
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Del("Content-Length")
-		w = &gzipResponseWriter{ResponseWriter: w, Writer: gz}
+		w = &BufferedResponseWriter{w, gz}
 
 		next.ServeHTTP(w, r)
 	})
@@ -98,12 +101,12 @@ func (s *Server) gzipDecompressMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-type gzipResponseWriter struct {
+type BufferedResponseWriter struct {
 	http.ResponseWriter
 	io.Writer
 }
 
-func (w *gzipResponseWriter) Write(data []byte) (int, error) {
+func (w *BufferedResponseWriter) Write(data []byte) (int, error) {
 	return w.Writer.Write(data)
 }
 
@@ -114,6 +117,48 @@ func (s *Server) JSONContentTypeMiddleware(next http.Handler) http.Handler {
 			return
 		}
 		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.conf.GetShaKey() == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
+
+		var buf bytes.Buffer
+		teeBody := io.TeeReader(r.Body, &buf)
+		newRequest := r.Clone(r.Context())
+		newRequest.Body = io.NopCloser(teeBody)
+		calculatedHash := fmt.Sprintf("%x", hash.Sum(buf.Bytes()))
+
+		expectedHash := r.Header.Get("HashSHA256")
+		if calculatedHash != expectedHash {
+			http.Error(w, "Хеш не совпадает", http.StatusBadRequest)
+			return
+		}
+
+		next.ServeHTTP(w, newRequest)
+	})
+}
+
+func (s *Server) hashResponseMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.conf.GetShaKey() == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		var buf bytes.Buffer
+		w = &BufferedResponseWriter{w, &buf}
+		next.ServeHTTP(w, r)
+
+		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
+		calculatedHash := fmt.Sprintf("%x", hash.Sum(buf.Bytes()))
+		w.Header().Set("HashSHA256", calculatedHash)
 	})
 }
 
