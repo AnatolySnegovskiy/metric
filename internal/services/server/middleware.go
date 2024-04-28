@@ -143,6 +143,12 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
+		expectedHash := r.Header.Get("HashSHA256")
+
+		if expectedHash == "" {
+			next.ServeHTTP(w, r)
+		}
+
 		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
 
 		body, err := io.ReadAll(r.Body)
@@ -152,7 +158,6 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 		}
 
 		calculatedHash := fmt.Sprintf("%x", hash.Sum(body))
-		expectedHash := r.Header.Get("HashSHA256")
 
 		if calculatedHash != expectedHash {
 			log.Println(expectedHash)
