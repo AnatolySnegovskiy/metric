@@ -7,6 +7,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -144,19 +145,24 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 
 		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
 
-		var buf bytes.Buffer
-		teeBody := io.TeeReader(r.Body, &buf)
-		newRequest := r.Clone(r.Context())
-		newRequest.Body = io.NopCloser(teeBody)
-		calculatedHash := fmt.Sprintf("%x", hash.Sum(buf.Bytes()))
-
-		expectedHash := r.Header.Get("HashSHA256")
-		if calculatedHash != expectedHash {
-			http.Error(w, "bad request", http.StatusBadRequest)
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "failed to read request body", http.StatusInternalServerError)
 			return
 		}
 
-		next.ServeHTTP(w, newRequest)
+		calculatedHash := fmt.Sprintf("%x", hash.Sum(body))
+		expectedHash := r.Header.Get("HashSHA256")
+
+		if calculatedHash != expectedHash {
+			log.Println(expectedHash)
+			log.Println(calculatedHash)
+			http.Error(w, "bad hash value", http.StatusBadRequest)
+			return
+		}
+
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
+		next.ServeHTTP(w, r)
 	})
 }
 
