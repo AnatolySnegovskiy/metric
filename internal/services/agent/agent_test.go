@@ -147,6 +147,7 @@ func TestAgent(t *testing.T) {
 				pollInterval:   1,
 				reportInterval: 1,
 				maxRetries:     1,
+				shaKey:         "testKey",
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
