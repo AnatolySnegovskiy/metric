@@ -71,15 +71,11 @@ func (s *Server) logMiddleware(next http.Handler) http.Handler {
 		}
 
 		start := time.Now()
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			s.logger.Error(err)
-			w.WriteHeader(http.StatusInternalServerError)
-		}
-
-		r.Body = io.NopCloser(bytes.NewBuffer(body))
-
-		next.ServeHTTP(&lw, r)
+		var buf bytes.Buffer
+		teeBody := io.TeeReader(r.Body, &buf)
+		newRequest := r.Clone(r.Context())
+		newRequest.Body = io.NopCloser(teeBody)
+		next.ServeHTTP(&lw, newRequest)
 		duration := time.Since(start)
 		s.logger.Infof(
 			"request method: %s; uri: %s; duration: %s; request size: %d, content: %s",
@@ -87,7 +83,7 @@ func (s *Server) logMiddleware(next http.Handler) http.Handler {
 			r.RequestURI,
 			duration,
 			r.ContentLength,
-			body,
+			buf.String(),
 		)
 
 		s.logger.Infof("response status: %d; size: %d;", responseData.status, responseData.size)
