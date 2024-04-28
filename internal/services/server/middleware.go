@@ -31,7 +31,7 @@ func (w *sha256ResponseWriter) Write(data []byte) (int, error) {
 	buf.Write(data)
 	hash := hmac.New(sha256.New, []byte(w.key))
 	calculatedHash := fmt.Sprintf("%x", hash.Sum(buf.Bytes()))
-	w.Header().Set("HashSHA256", calculatedHash)
+	w.ResponseWriter.Header().Set("HashSHA256", calculatedHash)
 
 	return w.ResponseWriter.Write(data)
 }
