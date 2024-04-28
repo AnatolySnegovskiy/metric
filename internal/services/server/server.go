@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/repositories"
+	"github.com/AnatolySnegovskiy/metric/internal/services/interfase"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 	"github.com/go-chi/chi/v5"
@@ -18,12 +19,6 @@ import (
 	"time"
 )
 
-type Storage interface {
-	GetMetricType(metricType string) (storages.EntityMetric, error)
-	AddMetric(metricType string, metric storages.EntityMetric)
-	GetList() map[string]storages.EntityMetric
-}
-
 type Config interface {
 	GetServerAddress() string
 	GetStoreInterval() int
@@ -34,7 +29,7 @@ type Config interface {
 }
 
 type Server struct {
-	storage  Storage
+	storage  interfase.Storage
 	router   *chi.Mux
 	logger   gsr.GenLogger
 	dbIsOpen bool
@@ -69,20 +64,19 @@ func (s *Server) Run() error {
 	return http.ListenAndServe(s.conf.GetServerAddress(), s.router)
 }
 
-func (s *Server) SaveMetricsPeriodically(ctx context.Context, interval int) {
+func (s *Server) saveMetricsPeriodically(ctx context.Context, interval int, filePath string) {
 	ticker := time.NewTicker(time.Second * time.Duration(interval))
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-
-			s.SaveMetricsToFile()
+			s.saveMetricsToFile(filePath)
 		}
 	}
 }
 
-func (s *Server) LoadMetricsOnStart(filePath string) {
+func (s *Server) loadMetricsOnStart(filePath string) {
 	savedMetrics := loadMetricsFromFile(filePath)
 
 	for metricType, metricValues := range savedMetrics {
@@ -103,9 +97,9 @@ func (s *Server) LoadMetricsOnStart(filePath string) {
 	s.logger.Info("Metrics loaded: " + filePath)
 }
 
-func (s *Server) SaveMetricsToFile() {
+func (s *Server) saveMetricsToFile(filePath string) {
 	projectDir, _ := os.Getwd()
-	absoluteFilePath := filepath.Join(projectDir, s.conf.GetFileStoragePath())
+	absoluteFilePath := filepath.Join(projectDir, filePath)
 
 	directory := filepath.Dir(absoluteFilePath)
 	_ = os.MkdirAll(directory, os.ModePerm)
@@ -183,14 +177,18 @@ func (s *Server) upServer(ctx context.Context) (*Server, error) {
 	fileStorage := s.conf.GetFileStoragePath()
 
 	if s.conf.GetRestore() {
-		s.LoadMetricsOnStart(fileStorage)
+		s.loadMetricsOnStart(fileStorage)
 	}
 
-	go s.SaveMetricsPeriodically(ctx, s.conf.GetStoreInterval())
+	go s.saveMetricsPeriodically(ctx, s.conf.GetStoreInterval(), s.conf.GetFileStoragePath())
 
 	s.setupRoutes()
 
 	return s, nil
+}
+
+func (s *Server) ShotDown() {
+	s.saveMetricsToFile(s.conf.GetFileStoragePath())
 }
 
 func loadMetricsFromFile(filePath string) map[string]map[string]map[string]float64 {

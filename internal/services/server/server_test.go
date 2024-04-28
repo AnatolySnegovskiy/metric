@@ -57,7 +57,10 @@ func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int
 
 func TestClearStorage(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New(), true)
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+	}
 	r := chi.NewRouter()
 	r.NotFound(s.notFoundHandler)
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeGetMetricHandler)
@@ -79,7 +82,10 @@ func TestServerHandlers(t *testing.T) {
 	stg.AddMetric("typePostData", metrics.NewCounter(nil))
 	stg.AddMetric("gaugeValue", metrics.NewGauge(nil))
 	stg.AddMetric("zero", metrics.NewGauge(nil))
-	s := New(stg, slog.New(), true)
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+	}
 
 	r := chi.NewRouter()
 	r.Use(s.logMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware)
@@ -215,13 +221,17 @@ func TestServerHandlers(t *testing.T) {
 }
 
 func TestServer_Run(t *testing.T) {
+
+	conf := getMockConf(t)
+	conf.EXPECT().GetServerAddress().Return(":8080")
 	s := &Server{
 		router: chi.NewRouter(),
+		conf:   conf,
 	}
 	quit := make(chan struct{})
 	go func() {
 		defer close(quit)
-		err := s.Run(":8080")
+		err := s.Run()
 		time.Sleep(1 * time.Millisecond)
 		assert.NoError(t, err, "unexpected error")
 	}()
@@ -266,7 +276,7 @@ func TestSaveMetricsToFile(t *testing.T) {
 	}
 
 	pathName := "/tmp/path.json"
-	s.SaveMetricsToFile(pathName)
+	s.saveMetricsToFile(pathName)
 	projectDir, _ := os.Getwd()
 	absoluteFilePath := filepath.Join(projectDir, pathName)
 
@@ -312,7 +322,7 @@ func TestLoadMetricsOnStart(t *testing.T) {
 		logger:  logger.Sugar(),
 	}
 
-	s.LoadMetricsOnStart(filePath)
+	s.loadMetricsOnStart(filePath)
 
 	m, _ := str.GetMetricType("gauge")
 
@@ -335,9 +345,9 @@ func TestSaveMetricsPeriodically(t *testing.T) {
 	pathName := "/tmp/path.json"
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	s.SaveMetricsPeriodically(ctx, 1, pathName)
+	s.saveMetricsPeriodically(ctx, 1, pathName)
 
-	s.SaveMetricsToFile(pathName)
+	s.saveMetricsToFile(pathName)
 	projectDir, _ := os.Getwd()
 	absoluteFilePath := filepath.Join(projectDir, pathName)
 	assert.FileExists(t, absoluteFilePath)
@@ -347,7 +357,12 @@ func TestSaveMetricsPeriodically(t *testing.T) {
 
 func TestPingHandlerOk(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New(), true)
+	s := &Server{
+		router:   chi.NewRouter(),
+		storage:  stg,
+		logger:   slog.New(),
+		dbIsOpen: true,
+	}
 	r := chi.NewRouter()
 	r.Get("/ping", s.postgersPingHandler)
 
@@ -356,7 +371,11 @@ func TestPingHandlerOk(t *testing.T) {
 
 func TestPingHandlerFail(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New(), false)
+	s := &Server{
+		router:  chi.NewRouter(),
+		storage: stg,
+		logger:  slog.New(),
+	}
 	r := chi.NewRouter()
 	r.Get("/ping", s.postgersPingHandler)
 
@@ -374,7 +393,11 @@ func TestErrorReadDBHandlerFail(t *testing.T) {
 
 	stg.AddMetric("gauge", mockEntity)
 
-	s := New(stg, slog.New(), false)
+	s := &Server{
+		router:  chi.NewRouter(),
+		storage: stg,
+		logger:  slog.New(),
+	}
 	r := chi.NewRouter()
 	r.With(s.JSONContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)
 	r.Get("/", s.showAllMetricHandler)
@@ -395,7 +418,11 @@ func TestErrorReadDBHandlerFail(t *testing.T) {
 
 func TestErrorWriteMassiveHandler(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New(), false)
+	s := &Server{
+		router:  chi.NewRouter(),
+		storage: stg,
+		logger:  slog.New(),
+	}
 	r := chi.NewRouter()
 	r.Post("/updates", s.writeMassPostMetricHandler)
 
@@ -424,7 +451,11 @@ func TestErrorWriteMassiveHandler(t *testing.T) {
 
 func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New(), false)
+	s := &Server{
+		router:  chi.NewRouter(),
+		storage: stg,
+		logger:  slog.New(),
+	}
 	r := chi.NewRouter()
 	r.Post("/updates", s.writeMassPostMetricHandler)
 	ctrl := gomock.NewController(t)
@@ -436,4 +467,10 @@ func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
 	stg.AddMetric("gauge", mockEntity)
 	stg.AddMetric("counter", mockEntity)
 	testHandler(t, r, http.MethodPost, "/updates", http.StatusInternalServerError, "skip", []byte(`[{"id":"CounterBatchZip215","type":"counter","delta":1890208871},{"id":"GaugeBatchZip241","type":"gauge","value":504963.8348398412},{"id":"CounterBatchZip215","type":"counter","delta":769036543},{"id":"GaugeBatchZip241","type":"gauge","value":576160.9397215487}]`), nil)
+}
+
+func getMockConf(t *testing.T) *mocks.MockConfig {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	return mocks.NewMockConfig(ctrl)
 }

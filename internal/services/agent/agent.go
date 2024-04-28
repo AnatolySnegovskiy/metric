@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/AnatolySnegovskiy/metric/internal/services/interfase"
 	"net/http"
 )
 
@@ -10,7 +11,7 @@ type HTTPClient interface {
 
 type Agent struct {
 	client         HTTPClient
-	storage        Storage
+	storage        interfase.Storage
 	pollInterval   int
 	reportInterval int
 	sendAddr       string
@@ -20,7 +21,7 @@ type Agent struct {
 
 type Options struct {
 	Client         HTTPClient
-	Storage        Storage
+	Storage        interfase.Storage
 	PollInterval   int
 	ReportInterval int
 	SendAddr       string

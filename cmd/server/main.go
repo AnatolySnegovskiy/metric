@@ -32,7 +32,7 @@ func main() {
 
 	go func() {
 		<-quit
-		serv.SaveMetricsToFile()
+		serv.ShotDown()
 		logger.Info("server stopped")
 		os.Exit(0)
 	}()
