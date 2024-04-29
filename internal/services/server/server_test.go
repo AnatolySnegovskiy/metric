@@ -524,6 +524,20 @@ func getMockConf(t *testing.T) *mocks.MockConfig {
 	return mocks.NewMockConfig(ctrl)
 }
 
+func TestNew(t *testing.T) {
+	conf := getMockConf(t)
+	conf.EXPECT().GetMigrationsDir().Return(`test.txt`).AnyTimes()
+	conf.EXPECT().GetDataBaseDSN().Return(os.Getenv("MIGRATE_TEST_CONN_STRING")).AnyTimes()
+	conf.EXPECT().GetServerAddress().Return(":8080").AnyTimes()
+	conf.EXPECT().GetFileStoragePath().Return(`test.txt`).AnyTimes()
+	conf.EXPECT().GetShaKey().Return(`test`).AnyTimes()
+	conf.EXPECT().GetRestore().Return(false).AnyTimes()
+	conf.EXPECT().GetStoreInterval().Return(10).AnyTimes()
+
+	_, err := New(context.Background(), conf, slog.New())
+	assert.Nil(t, err)
+}
+
 func TestBDConnect(t *testing.T) {
 	conf := getMockConf(t)
 	conf.EXPECT().GetDataBaseDSN().Return("postgres://user:password@localhost/dbname").AnyTimes()
@@ -577,18 +591,4 @@ func TestUpMigrate(t *testing.T) {
 
 	conn, _ := pgx.Connect(context.Background(), os.Getenv("MIGRATE_TEST_CONN_STRING"))
 	assert.Nil(t, s.upMigrate(context.Background(), conn))
-}
-
-func TestNew(t *testing.T) {
-	conf := getMockConf(t)
-	conf.EXPECT().GetMigrationsDir().Return(`test.txt`).AnyTimes()
-	conf.EXPECT().GetDataBaseDSN().Return(os.Getenv("MIGRATE_TEST_CONN_STRING")).AnyTimes()
-	conf.EXPECT().GetServerAddress().Return(":8080").AnyTimes()
-	conf.EXPECT().GetFileStoragePath().Return(`test.txt`).AnyTimes()
-	conf.EXPECT().GetShaKey().Return(`test`).AnyTimes()
-	conf.EXPECT().GetRestore().Return(false).AnyTimes()
-	conf.EXPECT().GetStoreInterval().Return(10).AnyTimes()
-
-	_, err := New(context.Background(), conf, slog.New())
-	assert.Nil(t, err)
 }
