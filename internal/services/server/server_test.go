@@ -563,3 +563,18 @@ func TestUpStorageWithDB(t *testing.T) {
 	db := s.BDConnect()
 	assert.Nil(t, s.upStorage(db))
 }
+
+func TestUpMigrate(t *testing.T) {
+	conf := getMockConf(t)
+	conf.EXPECT().GetMigrationsDir().Return(`test.txt`).AnyTimes()
+	conf.EXPECT().GetDataBaseDSN().Return("postgres://user:password@localhost/dbname").AnyTimes()
+	s := &Server{
+		conf:   conf,
+		logger: slog.New(),
+	}
+
+	assert.Nil(t, s.upMigrate(context.Background(), nil))
+
+	conn, _ := pgx.Connect(context.Background(), os.Getenv("MIGRATE_TEST_CONN_STRING"))
+	assert.Nil(t, s.upMigrate(context.Background(), conn))
+}

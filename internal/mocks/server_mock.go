@@ -66,6 +66,20 @@ func (mr *MockConfigMockRecorder) GetFileStoragePath() *gomock.Call {
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetFileStoragePath", reflect.TypeOf((*MockConfig)(nil).GetFileStoragePath))
 }
 
+// GetMigrationsDir mocks base method.
+func (m *MockConfig) GetMigrationsDir() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetMigrationsDir")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetMigrationsDir indicates an expected call of GetMigrationsDir.
+func (mr *MockConfigMockRecorder) GetMigrationsDir() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMigrationsDir", reflect.TypeOf((*MockConfig)(nil).GetMigrationsDir))
+}
+
 // GetRestore mocks base method.
 func (m *MockConfig) GetRestore() bool {
 	m.ctrl.T.Helper()

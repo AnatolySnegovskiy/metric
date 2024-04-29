@@ -28,6 +28,7 @@ type Config interface {
 	GetRestore() bool
 	GetDataBaseDSN() string
 	GetShaKey() string
+	GetMigrationsDir() string
 }
 
 type Server struct {
@@ -148,9 +149,7 @@ func (s *Server) upMigrate(ctx context.Context, db *pgx.Conn) error {
 	}
 
 	migration, _ := migrate.NewMigrator(ctx, db, "public.schema_version")
-	projectDir, _ := os.Getwd()
-
-	if err := migration.LoadMigrations(os.DirFS(projectDir + "/internal/storages/migrations")); err != nil {
+	if err := migration.LoadMigrations(os.DirFS(s.conf.GetMigrationsDir())); err != nil {
 		return err
 	}
 

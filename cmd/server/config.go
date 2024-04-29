@@ -15,6 +15,7 @@ type Config struct {
 	restore         bool
 	dataBaseDSN     string
 	shaKey          string
+	migrationsDir   string
 }
 
 func NewConfig() (*Config, error) {
@@ -26,6 +27,9 @@ func NewConfig() (*Config, error) {
 		dataBaseDSN:     "postgres://postgres:root@localhost:5432",
 		shaKey:          "",
 	}
+
+	projectDir, _ := os.Getwd()
+	c.migrationsDir = projectDir + "/internal/storages/migrations"
 
 	if err := c.parseFlags(); err != nil {
 		return nil, err
@@ -109,4 +113,8 @@ func (c *Config) GetDataBaseDSN() string {
 
 func (c *Config) GetShaKey() string {
 	return c.shaKey
+}
+
+func (c *Config) GetMigrationsDir() string {
+	return c.migrationsDir
 }
