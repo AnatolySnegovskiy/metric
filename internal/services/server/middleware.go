@@ -152,7 +152,7 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
 		body, _ := io.ReadAll(r.Body)
 		hash.Write(body)
-		calculatedHashBytes := []byte(fmt.Sprintf("%x", hash.Sum(nil)))
+		calculatedHashBytes := hash.Sum(nil)
 		expectedHashBytes := []byte(expectedHash)
 
 		if hmac.Equal(expectedHashBytes, calculatedHashBytes) {
