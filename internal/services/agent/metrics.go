@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/hmac"
 	"crypto/sha256"
 	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
@@ -54,9 +55,9 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	req.Header.Set("Content-Type", "application/json")
 
 	if a.shaKey != "" {
-		h := sha256.New()
-		h.Write([]byte(a.shaKey))
-		req.Header.Set("HashSHA256", fmt.Sprintf("%x", h.Sum(nil)))
+		hash := hmac.New(sha256.New, []byte(a.shaKey))
+		hash.Write(buf.Bytes())
+		req.Header.Set("HashSHA256", fmt.Sprintf("%x", hash.Sum(nil)))
 	}
 
 	resp, err := a.client.Do(req)
