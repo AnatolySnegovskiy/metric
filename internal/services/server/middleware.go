@@ -7,7 +7,6 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"strings"
 	"time"
@@ -159,9 +158,6 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 		calculatedHashBytes := []byte(fmt.Sprintf("%x", calculatedHash))
 
 		if !hmac.Equal(expectedHashBytes, calculatedHashBytes) {
-			log.Println(string(body))
-			log.Println(expectedHash)
-			log.Printf("%x", calculatedHash)
 			http.Error(w, "bad hash value", http.StatusBadRequest)
 			return
 		}

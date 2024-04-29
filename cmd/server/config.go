@@ -78,6 +78,12 @@ func (c *Config) parseFlags() error {
 		return fmt.Errorf("%s", flag.Arg(0))
 	}
 	log.Println("server: " + c.shaKey)
+	log.Println("server: " + c.dataBaseDSN)
+	log.Println("server: " + c.fileStoragePath)
+	log.Println("server: " + c.serverAddress)
+	log.Println("server: " + strconv.Itoa(c.storeInterval))
+	log.Println("server: " + strconv.FormatBool(c.restore))
+
 	return nil
 }
 
