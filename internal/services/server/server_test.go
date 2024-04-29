@@ -493,14 +493,27 @@ func TestHashMiddleware(t *testing.T) {
 	hash := hmac.New(sha256.New, []byte("secret"))
 	hash.Write(body)
 	headers := map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", hash.Sum(nil))}
-
 	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
 
 	hash = hmac.New(sha256.New, []byte("secretError"))
 	hash.Write(body)
 	headers = map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", hash.Sum(nil))}
-
 	testHandler(t, r, http.MethodPost, "/update", http.StatusBadRequest, "skip", body, headers)
+
+	headers = map[string]string{"Content-Type": "application/json"}
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+
+	conf.EXPECT().GetShaKey().Return("").AnyTimes()
+	s = &Server{
+		storage: stg,
+		logger:  slog.New(),
+		conf:    conf,
+	}
+	r = chi.NewRouter()
+	r.Use(s.hashCheckMiddleware, s.hashResponseMiddleware, s.JSONContentTypeMiddleware)
+	r.Post("/update", s.writePostMetricHandler)
+	headers = map[string]string{"Content-Type": "application/json"}
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
 }
 
 func getMockConf(t *testing.T) *mocks.MockConfig {
