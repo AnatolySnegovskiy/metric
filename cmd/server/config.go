@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 )
@@ -76,7 +77,7 @@ func (c *Config) parseFlags() error {
 		flag.PrintDefaults()
 		return fmt.Errorf("%s", flag.Arg(0))
 	}
-
+	log.Println("server: " + c.shaKey)
 	return nil
 }
 

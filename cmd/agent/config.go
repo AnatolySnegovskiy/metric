@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 )
@@ -54,13 +55,13 @@ func (c *Config) parseFlags() error {
 	flag.StringVar(&c.flagSendAddr, "a", c.flagSendAddr, "address and port to run server")
 	flag.IntVar(&c.reportInterval, "r", c.reportInterval, "reportInterval description")
 	flag.IntVar(&c.pollInterval, "p", c.pollInterval, "pollInterval description")
-	flag.StringVar(&c.shaKey, "k", c.shaKey, "pollInterval description")
+	flag.StringVar(&c.shaKey, "k", c.shaKey, "key description")
 	flag.Parse()
 
 	if flag.NArg() > 0 {
 		flag.PrintDefaults()
 		return fmt.Errorf("%s", flag.Arg(0))
 	}
-
+	log.Println("agent: " + c.shaKey)
 	return nil
 }
