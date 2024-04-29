@@ -143,19 +143,12 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 		}
 
 		expectedHash := r.Header.Get("HashSHA256")
-
-		if expectedHash == "" {
-			next.ServeHTTP(w, r)
-			return
-		}
-
 		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
 		body, _ := io.ReadAll(r.Body)
-
 		hash.Write(body)
-		calculatedHash := hash.Sum(nil)
+
+		calculatedHashBytes := []byte(fmt.Sprintf("%x", hash.Sum(nil)))
 		expectedHashBytes := []byte(expectedHash)
-		calculatedHashBytes := []byte(fmt.Sprintf("%x", calculatedHash))
 
 		if !hmac.Equal(expectedHashBytes, calculatedHashBytes) {
 			http.Error(w, "bad hash value", http.StatusBadRequest)
