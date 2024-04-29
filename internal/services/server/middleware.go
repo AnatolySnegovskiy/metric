@@ -159,8 +159,10 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 
 		hash.Write(body)
 		calculatedHash := hash.Sum(nil)
+		expectedHashBytes := []byte(expectedHash)
+		calculatedHashBytes := []byte(fmt.Sprintf("%x", calculatedHash))
 
-		if hmac.Equal([]byte(expectedHash), calculatedHash) {
+		if !hmac.Equal(expectedHashBytes, calculatedHashBytes) {
 			log.Println(expectedHash)
 			log.Printf("%x", calculatedHash)
 			http.Error(w, "bad hash value", http.StatusBadRequest)

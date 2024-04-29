@@ -4,8 +4,11 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
@@ -451,13 +454,6 @@ func TestErrorWriteMassiveHandler(t *testing.T) {
 
 func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := &Server{
-		router:  chi.NewRouter(),
-		storage: stg,
-		logger:  slog.New(),
-	}
-	r := chi.NewRouter()
-	r.Post("/updates", s.writeMassPostMetricHandler)
 	ctrl := gomock.NewController(t)
 	mockEntity := mocks.NewMockEntityMetric(ctrl)
 	mockEntity.EXPECT().ProcessMassive(gomock.Any(), gomock.Any()).Return(
@@ -466,7 +462,45 @@ func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
 
 	stg.AddMetric("gauge", mockEntity)
 	stg.AddMetric("counter", mockEntity)
+
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+	}
+	r := chi.NewRouter()
+	r.Post("/updates", s.writeMassPostMetricHandler)
+
 	testHandler(t, r, http.MethodPost, "/updates", http.StatusInternalServerError, "skip", []byte(`[{"id":"CounterBatchZip215","type":"counter","delta":1890208871},{"id":"GaugeBatchZip241","type":"gauge","value":504963.8348398412},{"id":"CounterBatchZip215","type":"counter","delta":769036543},{"id":"GaugeBatchZip241","type":"gauge","value":576160.9397215487}]`), nil)
+}
+
+func TestHashMiddleware(t *testing.T) {
+	conf := getMockConf(t)
+	conf.EXPECT().GetShaKey().Return("secret").AnyTimes()
+	stg := storages.NewMemStorage()
+	stg.AddMetric("gauge", metrics.NewGauge(nil))
+	stg.AddMetric("counter", metrics.NewCounter(nil))
+
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+		conf:    conf,
+	}
+	r := chi.NewRouter()
+	r.Use(s.hashCheckMiddleware, s.hashResponseMiddleware, s.JSONContentTypeMiddleware)
+	r.Post("/update", s.writePostMetricHandler)
+
+	body := []byte(`{"id":"test","type":"counter","delta":10}`)
+	hash := hmac.New(sha256.New, []byte("secret"))
+	hash.Write(body)
+	headers := map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", hash.Sum(nil))}
+
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+
+	hash = hmac.New(sha256.New, []byte("secretError"))
+	hash.Write(body)
+	headers = map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", hash.Sum(nil))}
+
+	testHandler(t, r, http.MethodPost, "/update", http.StatusBadRequest, "skip", body, headers)
 }
 
 func getMockConf(t *testing.T) *mocks.MockConfig {
