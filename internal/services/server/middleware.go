@@ -162,7 +162,7 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 
 		if hmac.Equal([]byte(expectedHash), calculatedHash) {
 			log.Println(expectedHash)
-			log.Println(fmt.Sprintf("%x", calculatedHash))
+			log.Printf("%x", calculatedHash)
 			log.Printf("%x", calculatedHash)
 			http.Error(w, "bad hash value", http.StatusBadRequest)
 			return
