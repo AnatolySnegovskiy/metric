@@ -143,10 +143,15 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 		}
 
 		expectedHash := r.Header.Get("HashSHA256")
+
+		if expectedHash == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
 		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
 		body, _ := io.ReadAll(r.Body)
 		hash.Write(body)
-
 		calculatedHashBytes := []byte(fmt.Sprintf("%x", hash.Sum(nil)))
 		expectedHashBytes := []byte(expectedHash)
 
