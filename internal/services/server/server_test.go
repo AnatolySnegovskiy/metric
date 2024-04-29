@@ -503,6 +503,7 @@ func TestHashMiddleware(t *testing.T) {
 	headers = map[string]string{"Content-Type": "application/json"}
 	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
 
+	conf = getMockConf(t)
 	conf.EXPECT().GetShaKey().Return("").AnyTimes()
 	s = &Server{
 		storage: stg,
