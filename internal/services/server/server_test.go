@@ -531,10 +531,12 @@ func TestNew(t *testing.T) {
 	conf.EXPECT().GetServerAddress().Return(":8080").AnyTimes()
 	conf.EXPECT().GetFileStoragePath().Return(`test.txt`).AnyTimes()
 	conf.EXPECT().GetShaKey().Return(`test`).AnyTimes()
-	conf.EXPECT().GetRestore().Return(false).AnyTimes()
+	conf.EXPECT().GetRestore().Return(true).AnyTimes()
 	conf.EXPECT().GetStoreInterval().Return(10).AnyTimes()
 
-	_, err := New(context.Background(), conf, slog.New())
+	s, err := New(context.Background(), conf, slog.New())
+	s.ShotDown()
+	_ = os.RemoveAll(`test.txt`)
 	assert.Nil(t, err)
 }
 
