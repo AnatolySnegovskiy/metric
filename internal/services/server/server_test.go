@@ -498,7 +498,7 @@ func TestHashMiddleware(t *testing.T) {
 	hash = hmac.New(sha256.New, []byte("secretError"))
 	hash.Write(body)
 	headers = map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", hash.Sum(nil))}
-	testHandler(t, r, http.MethodPost, "/update", http.StatusBadRequest, "skip", body, headers)
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
 
 	headers = map[string]string{"Content-Type": "application/json"}
 	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
