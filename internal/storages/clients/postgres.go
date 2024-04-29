@@ -17,10 +17,10 @@ type Postgres struct {
 	conn PgxIface
 }
 
-func NewPostgres(conn PgxIface) (*Postgres, error) {
+func NewPostgres(conn PgxIface) *Postgres {
 	return &Postgres{
 		conn: conn,
-	}, nil
+	}
 }
 
 func (db *Postgres) Query(ctx context.Context, query string, args ...interface{}) (pgx.Rows, error) {

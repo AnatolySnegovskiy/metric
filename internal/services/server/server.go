@@ -19,6 +19,8 @@ import (
 	"time"
 )
 
+var pgxConnect = pgx.Connect
+
 type Config interface {
 	GetServerAddress() string
 	GetStoreInterval() int
@@ -113,7 +115,7 @@ func (s *Server) saveMetricsToFile(filePath string) {
 }
 
 func (s *Server) BDConnect() *pgx.Conn {
-	db, err := pgx.Connect(context.Background(), s.conf.GetDataBaseDSN())
+	db, err := pgxConnect(context.Background(), s.conf.GetDataBaseDSN())
 
 	if err != nil {
 		s.logger.Error(err)
@@ -127,11 +129,7 @@ func (s *Server) upStorage(db *pgx.Conn) error {
 	var counterRepo *repositories.CounterRepo
 
 	if db != nil {
-		pg, err := clients.NewPostgres(db)
-		if err != nil {
-			return err
-		}
-
+		pg := clients.NewPostgres(db)
 		gaugeRepo = repositories.NewGaugeRepo(pg)
 		counterRepo = repositories.NewCounterRepo(pg)
 	}

@@ -63,7 +63,7 @@ func TestPostgres_Test(t *testing.T) {
 			defer mock.Close()
 
 			testCase.expect(mock)
-			mockDB, _ := NewPostgres(mock)
+			mockDB := NewPostgres(mock)
 			testCase.check(mockDB)
 		})
 	}

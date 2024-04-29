@@ -15,6 +15,7 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/go-chi/chi/v5"
 	"github.com/gookit/slog"
+	"github.com/jackc/pgx/v5"
 	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -521,4 +522,44 @@ func getMockConf(t *testing.T) *mocks.MockConfig {
 	ctrl := gomock.NewController(t)
 	defer ctrl.Finish()
 	return mocks.NewMockConfig(ctrl)
+}
+
+func TestBDConnect(t *testing.T) {
+	conf := getMockConf(t)
+	conf.EXPECT().GetDataBaseDSN().Return("postgres://user:password@localhost/dbname").AnyTimes()
+	s := &Server{
+		conf:   conf,
+		logger: slog.New(),
+	}
+
+	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+		return &pgx.Conn{}, nil
+	}
+
+	db := s.BDConnect()
+	assert.NotNil(t, db)
+
+	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+		return nil, errors.New("some error")
+	}
+
+	db = s.BDConnect()
+	assert.Nil(t, db)
+}
+
+func TestUpStorageWithDB(t *testing.T) {
+	conf := getMockConf(t)
+	conf.EXPECT().GetDataBaseDSN().Return("postgres://user:password@localhost/dbname").AnyTimes()
+	s := &Server{
+		conf:   conf,
+		logger: slog.New(),
+	}
+
+	assert.Nil(t, s.upStorage(nil))
+	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+		return &pgx.Conn{}, nil
+	}
+
+	db := s.BDConnect()
+	assert.Nil(t, s.upStorage(db))
 }
