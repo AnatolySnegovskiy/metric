@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"crypto/hmac"
 	"crypto/sha256"
 	"encoding/json"
 	"errors"
@@ -490,14 +489,14 @@ func TestHashMiddleware(t *testing.T) {
 	r.Post("/update", s.writePostMetricHandler)
 
 	body := []byte(`{"id":"test","type":"counter","delta":10}`)
-	hash := hmac.New(sha256.New, []byte("secret"))
-	hash.Write(body)
-	headers := map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", hash.Sum(nil))}
+	h := sha256.New()
+	h.Write([]byte("secret"))
+	headers := map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", h.Sum(nil))}
 	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
 
-	hash = hmac.New(sha256.New, []byte("secretError"))
-	hash.Write(body)
-	headers = map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", hash.Sum(nil))}
+	h = sha256.New()
+	h.Write([]byte("secretError"))
+	headers = map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", h.Sum(nil))}
 	testHandler(t, r, http.MethodPost, "/update", http.StatusBadRequest, "skip", body, headers)
 
 	headers = map[string]string{"Content-Type": "application/json"}
