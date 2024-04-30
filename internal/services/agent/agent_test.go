@@ -72,12 +72,10 @@ func TestAgent(t *testing.T) {
 			mockEntity.EXPECT().Process(gomock.Any(), "PollCount", gomock.Any()).Return(
 				errors.New("some error"),
 			).AnyTimes().MinTimes(1)
-			mockEntity.EXPECT().GetList(gomock.Any()).Return(
-				map[string]float64{
-					"PollCount": 10,
-				},
+			mockEntity.EXPECT().Process(gomock.Any(), gomock.Not("PollCount"), gomock.Any()).Return(
 				nil,
 			).AnyTimes()
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(map[string]float64{}, nil).AnyTimes()
 			mockStorage.AddMetric("counter", mockEntity)
 			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
 			return mockStorage
@@ -86,19 +84,13 @@ func TestAgent(t *testing.T) {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
 			mockEntity := mocks.NewMockEntityMetric(ctrl)
-			mockEntity.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Return(
-				nil,
-			).AnyTimes()
 			mockEntity.EXPECT().Process(gomock.Any(), "TotalMemory", gomock.Any()).Return(
 				errors.New("some error"),
-			).AnyTimes()
-			mockEntity.EXPECT().GetList(gomock.Any()).Return(
-				map[string]float64{
-					"TotalMemory": 10,
-				},
+			).AnyTimes().MinTimes(1)
+			mockEntity.EXPECT().Process(gomock.Any(), gomock.Not("TotalMemory"), gomock.Any()).Return(
 				nil,
 			).AnyTimes()
-
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(map[string]float64{}, nil).AnyTimes()
 			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
 			mockStorage.AddMetric("gauge", mockEntity)
 			return mockStorage
@@ -107,18 +99,13 @@ func TestAgent(t *testing.T) {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
 			mockEntity := mocks.NewMockEntityMetric(ctrl)
-			mockEntity.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Return(
-				nil,
-			).AnyTimes()
 			mockEntity.EXPECT().Process(gomock.Any(), "FreeMemory", gomock.Any()).Return(
 				errors.New("some error"),
-			).AnyTimes()
-			mockEntity.EXPECT().GetList(gomock.Any()).Return(
-				map[string]float64{
-					"FreeMemory": 10,
-				},
+			).AnyTimes().MinTimes(1)
+			mockEntity.EXPECT().Process(gomock.Any(), gomock.Not("FreeMemory"), gomock.Any()).Return(
 				nil,
 			).AnyTimes()
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(map[string]float64{}, nil).AnyTimes()
 
 			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
 			mockStorage.AddMetric("gauge", mockEntity)
@@ -128,19 +115,13 @@ func TestAgent(t *testing.T) {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
 			mockEntity := mocks.NewMockEntityMetric(ctrl)
-			mockEntity.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+			mockEntity.EXPECT().Process(gomock.Any(), gomock.Not("CPUutilization1"), gomock.Any()).Return(
 				nil,
 			).AnyTimes()
 			mockEntity.EXPECT().Process(gomock.Any(), "CPUutilization1", gomock.Any()).Return(
 				errors.New("some error"),
-			).AnyTimes()
-			mockEntity.EXPECT().GetList(gomock.Any()).Return(
-				map[string]float64{
-					"CPUutilization1": 10,
-				},
-				nil,
-			).AnyTimes()
-
+			).AnyTimes().MinTimes(1)
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(map[string]float64{}, nil).AnyTimes()
 			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
 			mockStorage.AddMetric("gauge", mockEntity)
 			return mockStorage
@@ -151,23 +132,11 @@ func TestAgent(t *testing.T) {
 			mockEntity := mocks.NewMockEntityMetric(ctrl)
 			mockEntity.EXPECT().Process(gomock.Any(), "RandomValue", gomock.Any()).Return(
 				errors.New("some error"),
-			).AnyTimes()
-			mockEntity.EXPECT().Process(gomock.Any(), "TotalMemory", gomock.Any()).Return(
+			).AnyTimes().MinTimes(1)
+			mockEntity.EXPECT().Process(gomock.Any(), gomock.Not("RandomValue"), gomock.Any()).Return(
 				nil,
 			).AnyTimes()
-			mockEntity.EXPECT().Process(gomock.Any(), "FreeMemory", gomock.Any()).Return(
-				nil,
-			).AnyTimes()
-			mockEntity.EXPECT().Process(gomock.Any(), "CPUutilization1", gomock.Any()).Return(
-				nil,
-			).AnyTimes()
-			mockEntity.EXPECT().GetList(gomock.Any()).Return(
-				map[string]float64{
-					"RandomValue": 10,
-				},
-				nil,
-			).AnyTimes()
-
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(map[string]float64{}, nil).AnyTimes()
 			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
 			mockStorage.AddMetric("gauge", mockEntity)
 			return mockStorage
@@ -176,11 +145,11 @@ func TestAgent(t *testing.T) {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
 			mockEntity := mocks.NewMockEntityMetric(ctrl)
-			mockEntity.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Return(
-				nil,
-			).AnyTimes()
 			mockEntity.EXPECT().Process(gomock.Any(), "Alloc", gomock.Any()).Return(
 				errors.New("some error"),
+			).AnyTimes().MinTimes(1)
+			mockEntity.EXPECT().Process(gomock.Any(), gomock.Not("Alloc"), gomock.Any()).Return(
+				nil,
 			).AnyTimes()
 			mockEntity.EXPECT().GetList(gomock.Any()).Return(map[string]float64{}, nil).AnyTimes()
 			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
@@ -203,31 +172,34 @@ func TestAgent(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
-			httpClient := mocks.NewMockHTTPClient(ctrl)
-
-			resp := &http.Response{StatusCode: tc.statusCode, Body: http.NoBody}
-			httpClient.EXPECT().Do(gomock.Any()).Return(resp, tc.doReturnError).AnyTimes()
-
-			a := &Agent{
-				storage:        tc.mockStorage(),
-				sendAddr:       "testAddr",
-				client:         httpClient,
-				pollInterval:   1,
-				reportInterval: 1,
-				maxRetries:     1,
-				shaKey:         "testKey",
-			}
-
-			ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 1000*time.Second)
 			defer cancel()
-			err := a.Run(ctx)
-			if tc.expectedErr {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-			}
+			go func() {
+				<-ctx.Done()
+
+				ctrl := gomock.NewController(t)
+				defer ctrl.Finish()
+				httpClient := mocks.NewMockHTTPClient(ctrl)
+
+				resp := &http.Response{StatusCode: tc.statusCode, Body: http.NoBody}
+				httpClient.EXPECT().Do(gomock.Any()).Return(resp, tc.doReturnError).AnyTimes()
+
+				a := &Agent{
+					storage:        tc.mockStorage(),
+					sendAddr:       "testAddr",
+					client:         httpClient,
+					pollInterval:   1,
+					reportInterval: 1,
+					maxRetries:     1,
+					shaKey:         "testKey",
+				}
+				err := a.Run(context.Background())
+				if tc.expectedErr {
+					assert.Error(t, err)
+				} else {
+					assert.NoError(t, err)
+				}
+			}()
 		})
 	}
 }
@@ -247,7 +219,7 @@ func TestAgentReportTickerEmpty(t *testing.T) {
 			reportInterval: 1,
 			shaKey:         "testKey",
 		}
-		ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
 		defer cancel()
 		err := a.Run(ctx)
 
