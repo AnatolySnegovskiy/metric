@@ -74,13 +74,75 @@ func TestAgent(t *testing.T) {
 			).AnyTimes().MinTimes(1)
 			mockEntity.EXPECT().GetList(gomock.Any()).Return(
 				map[string]float64{
-					"RandomValue": 10,
+					"PollCount": 10,
+				},
+				nil,
+			).AnyTimes()
+			mockStorage.AddMetric("counter", mockEntity)
+			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
+			return mockStorage
+		}},
+		{"ErrorTotalMemory", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
+			mockStorage := storages.NewMemStorage()
+			ctrl := gomock.NewController(t)
+			mockEntity := mocks.NewMockEntityMetric(ctrl)
+			mockEntity.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				nil,
+			).AnyTimes()
+			mockEntity.EXPECT().Process(gomock.Any(), "TotalMemory", gomock.Any()).Return(
+				errors.New("some error"),
+			).AnyTimes()
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(
+				map[string]float64{
+					"TotalMemory": 10,
 				},
 				nil,
 			).AnyTimes()
 
-			mockStorage.AddMetric("counter", mockEntity)
-			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
+			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
+			mockStorage.AddMetric("gauge", mockEntity)
+			return mockStorage
+		}},
+		{"ErrorFreeMemory", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
+			mockStorage := storages.NewMemStorage()
+			ctrl := gomock.NewController(t)
+			mockEntity := mocks.NewMockEntityMetric(ctrl)
+			mockEntity.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				nil,
+			).AnyTimes()
+			mockEntity.EXPECT().Process(gomock.Any(), "FreeMemory", gomock.Any()).Return(
+				errors.New("some error"),
+			).AnyTimes()
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(
+				map[string]float64{
+					"FreeMemory": 10,
+				},
+				nil,
+			).AnyTimes()
+
+			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
+			mockStorage.AddMetric("gauge", mockEntity)
+			return mockStorage
+		}},
+		{"ErrorCPUutilization1", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
+			mockStorage := storages.NewMemStorage()
+			ctrl := gomock.NewController(t)
+			mockEntity := mocks.NewMockEntityMetric(ctrl)
+			mockEntity.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Return(
+				nil,
+			).AnyTimes()
+			mockEntity.EXPECT().Process(gomock.Any(), "CPUutilization1", gomock.Any()).Return(
+				errors.New("some error"),
+			).AnyTimes()
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(
+				map[string]float64{
+					"CPUutilization1": 10,
+				},
+				nil,
+			).AnyTimes()
+
+			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
+			mockStorage.AddMetric("gauge", mockEntity)
 			return mockStorage
 		}},
 		{"ErrorPollRandomValue", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
@@ -114,23 +176,13 @@ func TestAgent(t *testing.T) {
 			mockStorage := storages.NewMemStorage()
 			ctrl := gomock.NewController(t)
 			mockEntity := mocks.NewMockEntityMetric(ctrl)
-			mockEntity.EXPECT().Process(gomock.Any(), "RandomValue", gomock.Any()).Return(
-				nil,
-			).AnyTimes().MinTimes(1)
-			mockEntity.EXPECT().Process(gomock.Any(), "TotalMemory", gomock.Any()).Return(
-				nil,
-			).AnyTimes()
-			mockEntity.EXPECT().Process(gomock.Any(), "FreeMemory", gomock.Any()).Return(
-				nil,
-			).AnyTimes()
-			mockEntity.EXPECT().Process(gomock.Any(), "CPUutilization1", gomock.Any()).Return(
+			mockEntity.EXPECT().Process(gomock.Any(), gomock.Any(), gomock.Any()).Return(
 				nil,
 			).AnyTimes()
 			mockEntity.EXPECT().Process(gomock.Any(), "Alloc", gomock.Any()).Return(
 				errors.New("some error"),
-			).AnyTimes().MinTimes(1)
+			).AnyTimes()
 			mockEntity.EXPECT().GetList(gomock.Any()).Return(map[string]float64{}, nil).AnyTimes()
-
 			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
 			mockStorage.AddMetric("gauge", mockEntity)
 			return mockStorage
