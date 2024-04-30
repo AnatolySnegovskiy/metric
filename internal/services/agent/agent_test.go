@@ -169,13 +169,12 @@ func TestAgent(t *testing.T) {
 			return mockStorage
 		}},
 	}
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			ctrl := gomock.NewController(t)
-			defer ctrl.Finish()
 			httpClient := mocks.NewMockHTTPClient(ctrl)
-
 			resp := http.Response{StatusCode: tc.statusCode, Body: http.NoBody}
 			httpClient.EXPECT().Do(gomock.Any()).Return(&resp, tc.doReturnError).AnyTimes()
 
@@ -185,13 +184,13 @@ func TestAgent(t *testing.T) {
 				client:         httpClient,
 				pollInterval:   1,
 				reportInterval: 1,
-				maxRetries:     1,
+				maxRetries:     2,
 				shaKey:         "testKey",
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
 			defer cancel()
-			
+
 			err := a.Run(ctx)
 			if tc.expectedErr {
 				assert.Error(t, err)
