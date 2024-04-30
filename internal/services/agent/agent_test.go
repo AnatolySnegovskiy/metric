@@ -90,6 +90,15 @@ func TestAgent(t *testing.T) {
 			mockEntity.EXPECT().Process(gomock.Any(), "RandomValue", gomock.Any()).Return(
 				errors.New("some error"),
 			).AnyTimes()
+			mockEntity.EXPECT().Process(gomock.Any(), "TotalMemory", gomock.Any()).Return(
+				errors.New("some error"),
+			).AnyTimes()
+			mockEntity.EXPECT().Process(gomock.Any(), "FreeMemory", gomock.Any()).Return(
+				errors.New("some error"),
+			).AnyTimes()
+			mockEntity.EXPECT().Process(gomock.Any(), "CPUutilization1", gomock.Any()).Return(
+				errors.New("some error"),
+			).AnyTimes()
 			mockEntity.EXPECT().GetList(gomock.Any()).Return(
 				map[string]float64{
 					"RandomValue": 10,
