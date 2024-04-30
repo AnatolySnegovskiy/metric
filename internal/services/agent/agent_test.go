@@ -91,13 +91,13 @@ func TestAgent(t *testing.T) {
 				errors.New("some error"),
 			).AnyTimes()
 			mockEntity.EXPECT().Process(gomock.Any(), "TotalMemory", gomock.Any()).Return(
-				errors.New("some error"),
+				nil,
 			).AnyTimes()
 			mockEntity.EXPECT().Process(gomock.Any(), "FreeMemory", gomock.Any()).Return(
-				errors.New("some error"),
+				nil,
 			).AnyTimes()
 			mockEntity.EXPECT().Process(gomock.Any(), "CPUutilization1", gomock.Any()).Return(
-				errors.New("some error"),
+				nil,
 			).AnyTimes()
 			mockEntity.EXPECT().GetList(gomock.Any()).Return(
 				map[string]float64{
@@ -117,7 +117,15 @@ func TestAgent(t *testing.T) {
 			mockEntity.EXPECT().Process(gomock.Any(), "RandomValue", gomock.Any()).Return(
 				nil,
 			).AnyTimes().MinTimes(1)
-
+			mockEntity.EXPECT().Process(gomock.Any(), "TotalMemory", gomock.Any()).Return(
+				nil,
+			).AnyTimes()
+			mockEntity.EXPECT().Process(gomock.Any(), "FreeMemory", gomock.Any()).Return(
+				nil,
+			).AnyTimes()
+			mockEntity.EXPECT().Process(gomock.Any(), "CPUutilization1", gomock.Any()).Return(
+				nil,
+			).AnyTimes()
 			mockEntity.EXPECT().Process(gomock.Any(), "Alloc", gomock.Any()).Return(
 				errors.New("some error"),
 			).AnyTimes().MinTimes(1)
