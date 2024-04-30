@@ -129,6 +129,7 @@ func TestAgent(t *testing.T) {
 			mockEntity.EXPECT().Process(gomock.Any(), "Alloc", gomock.Any()).Return(
 				errors.New("some error"),
 			).AnyTimes().MinTimes(1)
+			mockEntity.EXPECT().GetList(gomock.Any()).Return(map[string]float64{}, nil).AnyTimes()
 
 			mockStorage.AddMetric("counter", metrics.NewGauge(nil))
 			mockStorage.AddMetric("gauge", mockEntity)
