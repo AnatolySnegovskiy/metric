@@ -50,9 +50,17 @@ func (a *Agent) updateGopsutil(ctx context.Context) error {
 	}
 	v, _ := mem.VirtualMemory()
 
-	err = gauge.Process(ctx, "TotalMemory", fmt.Sprintf("%v", v.Total))
-	err = gauge.Process(ctx, "FreeMemory", fmt.Sprintf("%v", v.Free))
-	err = gauge.Process(ctx, "CPUutilization1", fmt.Sprintf("%v", v.UsedPercent))
+	if err := gauge.Process(ctx, "TotalMemory", fmt.Sprintf("%v", v.Total)); err != nil {
+		return err
+	}
+
+	if err := gauge.Process(ctx, "FreeMemory", fmt.Sprintf("%v", v.Free)); err != nil {
+		return err
+	}
+
+	if err := gauge.Process(ctx, "CPUutilization1", fmt.Sprintf("%v", v.UsedPercent)); err != nil {
+		return err
+	}
 
 	return err
 }
