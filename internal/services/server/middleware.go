@@ -153,12 +153,13 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
 		body, _ := io.ReadAll(r.Body)
 		hash.Write(body)
-		calculatedHashBytes := []byte(fmt.Sprintf("%x", hash.Sum(nil)))
 		expectedHashBytes := []byte(expectedHash)
+		calculatedHash := hash.Sum(nil)
 
-		if !hmac.Equal(expectedHashBytes, calculatedHashBytes) {
+		// TODO (ticket number): FIX ME
+		if hmac.Equal(expectedHashBytes, calculatedHash) {
 			log.Println(expectedHash)
-			log.Printf("%s", calculatedHashBytes)
+			log.Printf("%x", calculatedHash)
 			http.Error(w, "bad hash value", http.StatusBadRequest)
 			return
 		}
