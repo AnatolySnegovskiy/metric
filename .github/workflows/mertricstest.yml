@@ -11,6 +11,11 @@ jobs:
   branchtest:
     runs-on: ubuntu-latest
 
+    steps:
+      - name: Check branch name
+        run: |
+          echo "Your branch is $GITHUB_HEAD_REF and github.ref is ${{ github.ref }}";
+
   metricstest:
     runs-on: ubuntu-latest
     container: golang:1.21
