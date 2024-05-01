@@ -3,6 +3,7 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 )
@@ -67,6 +68,12 @@ func (c *Config) parseFlags() error {
 		flag.PrintDefaults()
 		return fmt.Errorf("%s", flag.Arg(0))
 	}
+
+	log.Println("agent: " + c.shaKey)
+	log.Println("agent: " + c.flagSendAddr)
+	log.Println("agent: " + strconv.Itoa(c.reportInterval))
+	log.Println("agent: " + strconv.Itoa(c.pollInterval))
+	log.Println("agent: " + strconv.Itoa(c.maxRetries))
 
 	return nil
 }
