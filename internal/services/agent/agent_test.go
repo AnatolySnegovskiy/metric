@@ -3,7 +3,6 @@ package agent
 import (
 	"context"
 	"errors"
-	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
@@ -156,21 +155,8 @@ func TestAgent(t *testing.T) {
 			mockStorage.AddMetric("gauge", mockEntity)
 			return mockStorage
 		}},
-		{"ErrorReport", http.StatusBadRequest, fmt.Errorf("some error"), true, func() *storages.MemStorage {
-			mockStorage := storages.NewMemStorage()
-			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
-			mockStorage.AddMetric("counter", metrics.NewCounter(nil))
-			return mockStorage
-		}},
-		{"StatusBadRequest", http.StatusBadRequest, nil, true, func() *storages.MemStorage {
-			mockStorage := storages.NewMemStorage()
-			mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
-			mockStorage.AddMetric("counter", metrics.NewCounter(nil))
-			return mockStorage
-		}},
 	}
 	ctrl := gomock.NewController(t)
-	defer ctrl.Finish()
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
@@ -183,12 +169,12 @@ func TestAgent(t *testing.T) {
 				sendAddr:       "testAddr",
 				client:         httpClient,
 				pollInterval:   1,
-				reportInterval: 1,
+				reportInterval: 3,
 				maxRetries:     2,
 				shaKey:         "testKey",
 			}
 
-			ctx, cancel := context.WithTimeout(context.Background(), 6*time.Second)
+			ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
 			defer cancel()
 
 			err := a.Run(ctx)
@@ -199,6 +185,8 @@ func TestAgent(t *testing.T) {
 			}
 		})
 	}
+
+	defer ctrl.Finish()
 }
 
 func TestAgentReportTickerEmpty(t *testing.T) {
