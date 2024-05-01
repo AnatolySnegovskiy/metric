@@ -156,7 +156,7 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 		expectedHashBytes := []byte(expectedHash)
 		calculatedHash := hash.Sum(nil)
 
-		// TODO (ticket number): FIX ME
+		// TODO (https://github.com/AnatolySnegovskiy/metric/issues/16): FIX ME
 		if hmac.Equal(expectedHashBytes, calculatedHash) {
 			log.Println(expectedHash)
 			log.Printf("%x", calculatedHash)
