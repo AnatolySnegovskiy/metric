@@ -109,7 +109,7 @@ func TestCounterRepo_Test(t *testing.T) {
 			defer mock.Close()
 
 			testCase.expect(mock)
-			mockDB, _ := clients.NewPostgres(mock)
+			mockDB := clients.NewPostgres(mock)
 			testCase.check(mockDB)
 		})
 	}
@@ -215,7 +215,7 @@ func TestGaugeRepo_Test(t *testing.T) {
 			defer mock.Close()
 
 			testCase.expect(mock)
-			mockDB, _ := clients.NewPostgres(mock)
+			mockDB := clients.NewPostgres(mock)
 			testCase.check(mockDB)
 		})
 	}

@@ -4,14 +4,18 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
+	"crypto/hmac"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/go-chi/chi/v5"
 	"github.com/gookit/slog"
+	"github.com/jackc/pgx/v5"
 	"github.com/mailru/easyjson"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
@@ -57,7 +61,10 @@ func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int
 
 func TestClearStorage(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New(), true)
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+	}
 	r := chi.NewRouter()
 	r.NotFound(s.notFoundHandler)
 	r.Post("/update/{metricType}/{metricName}/{metricValue}", s.writeGetMetricHandler)
@@ -79,7 +86,10 @@ func TestServerHandlers(t *testing.T) {
 	stg.AddMetric("typePostData", metrics.NewCounter(nil))
 	stg.AddMetric("gaugeValue", metrics.NewGauge(nil))
 	stg.AddMetric("zero", metrics.NewGauge(nil))
-	s := New(stg, slog.New(), true)
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+	}
 
 	r := chi.NewRouter()
 	r.Use(s.logMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware)
@@ -215,13 +225,17 @@ func TestServerHandlers(t *testing.T) {
 }
 
 func TestServer_Run(t *testing.T) {
+
+	conf := getMockConf(t)
+	conf.EXPECT().GetServerAddress().Return(":8080")
 	s := &Server{
 		router: chi.NewRouter(),
+		conf:   conf,
 	}
 	quit := make(chan struct{})
 	go func() {
 		defer close(quit)
-		err := s.Run(":8080")
+		err := s.Run()
 		time.Sleep(1 * time.Millisecond)
 		assert.NoError(t, err, "unexpected error")
 	}()
@@ -266,7 +280,7 @@ func TestSaveMetricsToFile(t *testing.T) {
 	}
 
 	pathName := "/tmp/path.json"
-	s.SaveMetricsToFile(pathName)
+	s.saveMetricsToFile(pathName)
 	projectDir, _ := os.Getwd()
 	absoluteFilePath := filepath.Join(projectDir, pathName)
 
@@ -312,7 +326,7 @@ func TestLoadMetricsOnStart(t *testing.T) {
 		logger:  logger.Sugar(),
 	}
 
-	s.LoadMetricsOnStart(filePath)
+	s.loadMetricsOnStart(filePath)
 
 	m, _ := str.GetMetricType("gauge")
 
@@ -335,9 +349,9 @@ func TestSaveMetricsPeriodically(t *testing.T) {
 	pathName := "/tmp/path.json"
 	ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
 	defer cancel()
-	s.SaveMetricsPeriodically(ctx, 1, pathName)
+	s.saveMetricsPeriodically(ctx, 1, pathName)
 
-	s.SaveMetricsToFile(pathName)
+	s.saveMetricsToFile(pathName)
 	projectDir, _ := os.Getwd()
 	absoluteFilePath := filepath.Join(projectDir, pathName)
 	assert.FileExists(t, absoluteFilePath)
@@ -347,7 +361,12 @@ func TestSaveMetricsPeriodically(t *testing.T) {
 
 func TestPingHandlerOk(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New(), true)
+	s := &Server{
+		router:   chi.NewRouter(),
+		storage:  stg,
+		logger:   slog.New(),
+		dbIsOpen: true,
+	}
 	r := chi.NewRouter()
 	r.Get("/ping", s.postgersPingHandler)
 
@@ -356,7 +375,11 @@ func TestPingHandlerOk(t *testing.T) {
 
 func TestPingHandlerFail(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New(), false)
+	s := &Server{
+		router:  chi.NewRouter(),
+		storage: stg,
+		logger:  slog.New(),
+	}
 	r := chi.NewRouter()
 	r.Get("/ping", s.postgersPingHandler)
 
@@ -374,7 +397,11 @@ func TestErrorReadDBHandlerFail(t *testing.T) {
 
 	stg.AddMetric("gauge", mockEntity)
 
-	s := New(stg, slog.New(), false)
+	s := &Server{
+		router:  chi.NewRouter(),
+		storage: stg,
+		logger:  slog.New(),
+	}
 	r := chi.NewRouter()
 	r.With(s.JSONContentTypeMiddleware).Post("/value/", s.showPostMetricHandler)
 	r.Get("/", s.showAllMetricHandler)
@@ -395,7 +422,11 @@ func TestErrorReadDBHandlerFail(t *testing.T) {
 
 func TestErrorWriteMassiveHandler(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New(), false)
+	s := &Server{
+		router:  chi.NewRouter(),
+		storage: stg,
+		logger:  slog.New(),
+	}
 	r := chi.NewRouter()
 	r.Post("/updates", s.writeMassPostMetricHandler)
 
@@ -424,9 +455,6 @@ func TestErrorWriteMassiveHandler(t *testing.T) {
 
 func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
 	stg := storages.NewMemStorage()
-	s := New(stg, slog.New(), false)
-	r := chi.NewRouter()
-	r.Post("/updates", s.writeMassPostMetricHandler)
 	ctrl := gomock.NewController(t)
 	mockEntity := mocks.NewMockEntityMetric(ctrl)
 	mockEntity.EXPECT().ProcessMassive(gomock.Any(), gomock.Any()).Return(
@@ -435,5 +463,134 @@ func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
 
 	stg.AddMetric("gauge", mockEntity)
 	stg.AddMetric("counter", mockEntity)
+
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+	}
+	r := chi.NewRouter()
+	r.Post("/updates", s.writeMassPostMetricHandler)
+
 	testHandler(t, r, http.MethodPost, "/updates", http.StatusInternalServerError, "skip", []byte(`[{"id":"CounterBatchZip215","type":"counter","delta":1890208871},{"id":"GaugeBatchZip241","type":"gauge","value":504963.8348398412},{"id":"CounterBatchZip215","type":"counter","delta":769036543},{"id":"GaugeBatchZip241","type":"gauge","value":576160.9397215487}]`), nil)
+}
+
+func TestHashMiddleware(t *testing.T) {
+	conf := getMockConf(t)
+	conf.EXPECT().GetShaKey().Return("secret").AnyTimes()
+	stg := storages.NewMemStorage()
+	stg.AddMetric("gauge", metrics.NewGauge(nil))
+	stg.AddMetric("counter", metrics.NewCounter(nil))
+
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+		conf:    conf,
+	}
+	r := chi.NewRouter()
+	r.Use(s.hashCheckMiddleware, s.hashResponseMiddleware, s.JSONContentTypeMiddleware)
+	r.Post("/update", s.writePostMetricHandler)
+
+	body := []byte(`{"id":"test","type":"counter","delta":10}`)
+	hash := hmac.New(sha256.New, []byte("secret"))
+	hash.Write(body)
+	headers := map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", hash.Sum(nil))}
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+
+	hash = hmac.New(sha256.New, []byte("secretError"))
+	hash.Write(body)
+	headers = map[string]string{"Content-Type": "application/json", "HashSHA256": fmt.Sprintf("%x", hash.Sum(nil))}
+	testHandler(t, r, http.MethodPost, "/update", http.StatusBadRequest, "skip", body, headers)
+
+	headers = map[string]string{"Content-Type": "application/json"}
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+
+	conf = getMockConf(t)
+	conf.EXPECT().GetShaKey().Return("").AnyTimes()
+	s = &Server{
+		storage: stg,
+		logger:  slog.New(),
+		conf:    conf,
+	}
+	r = chi.NewRouter()
+	r.Use(s.hashCheckMiddleware, s.hashResponseMiddleware, s.JSONContentTypeMiddleware)
+	r.Post("/update", s.writePostMetricHandler)
+	headers = map[string]string{"Content-Type": "application/json"}
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+}
+
+func getMockConf(t *testing.T) *mocks.MockConfig {
+	ctrl := gomock.NewController(t)
+	defer ctrl.Finish()
+	return mocks.NewMockConfig(ctrl)
+}
+
+func TestNew(t *testing.T) {
+	conf := getMockConf(t)
+	conf.EXPECT().GetMigrationsDir().Return(`test.txt`).AnyTimes()
+	conf.EXPECT().GetDataBaseDSN().Return(os.Getenv("MIGRATE_TEST_CONN_STRING")).AnyTimes()
+	conf.EXPECT().GetServerAddress().Return(":8080").AnyTimes()
+	conf.EXPECT().GetFileStoragePath().Return(`test.txt`).AnyTimes()
+	conf.EXPECT().GetShaKey().Return(`test`).AnyTimes()
+	conf.EXPECT().GetRestore().Return(true).AnyTimes()
+	conf.EXPECT().GetStoreInterval().Return(10).AnyTimes()
+
+	s, err := New(context.Background(), conf, slog.New())
+	s.ShotDown()
+	_ = os.RemoveAll(`test.txt`)
+	assert.Nil(t, err)
+}
+
+func TestBDConnect(t *testing.T) {
+	conf := getMockConf(t)
+	conf.EXPECT().GetDataBaseDSN().Return("postgres://user:password@localhost/dbname").AnyTimes()
+	s := &Server{
+		conf:   conf,
+		logger: slog.New(),
+	}
+
+	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+		return &pgx.Conn{}, nil
+	}
+
+	db := s.BDConnect()
+	assert.NotNil(t, db)
+
+	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+		return nil, errors.New("some error")
+	}
+
+	db = s.BDConnect()
+	assert.Nil(t, db)
+}
+
+func TestUpStorageWithDB(t *testing.T) {
+	conf := getMockConf(t)
+	conf.EXPECT().GetDataBaseDSN().Return("postgres://user:password@localhost/dbname").AnyTimes()
+	s := &Server{
+		conf:   conf,
+		logger: slog.New(),
+	}
+
+	assert.Nil(t, s.upStorage(nil))
+	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+		return &pgx.Conn{}, nil
+	}
+
+	db := s.BDConnect()
+	assert.Nil(t, s.upStorage(db))
+}
+
+func TestUpMigrate(t *testing.T) {
+	conf := getMockConf(t)
+	conf.EXPECT().GetMigrationsDir().Return(`test.txt`).AnyTimes()
+	conf.EXPECT().GetDataBaseDSN().Return("postgres://user:password@localhost/dbname").AnyTimes()
+	s := &Server{
+		conf:   conf,
+		logger: slog.New(),
+	}
+
+	assert.Nil(t, s.upMigrate(context.Background(), nil))
+
+	conn, _ := pgx.Connect(context.Background(), os.Getenv("MIGRATE_TEST_CONN_STRING"))
+	assert.Nil(t, s.upMigrate(context.Background(), conn))
 }

@@ -3,11 +3,39 @@ package server
 import (
 	"bytes"
 	"compress/gzip"
+	"crypto/hmac"
+	"crypto/sha256"
+	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"strings"
 	"time"
 )
+
+type gzipResponseWriter struct {
+	http.ResponseWriter
+	io.Writer
+}
+
+func (w *gzipResponseWriter) Write(data []byte) (int, error) {
+	return w.Writer.Write(data)
+}
+
+type sha256ResponseWriter struct {
+	http.ResponseWriter
+	key string
+}
+
+func (w *sha256ResponseWriter) Write(data []byte) (int, error) {
+	var buf bytes.Buffer
+	buf.Write(data)
+	hash := hmac.New(sha256.New, []byte(w.key))
+	calculatedHash := fmt.Sprintf("%x", hash.Sum(buf.Bytes()))
+	w.ResponseWriter.Header().Set("HashSHA256", calculatedHash)
+
+	return w.ResponseWriter.Write(data)
+}
 
 type responseData struct {
 	status int
@@ -19,15 +47,15 @@ type loggingResponseWriter struct {
 	responseData *responseData
 }
 
-func (r *loggingResponseWriter) Write(b []byte) (int, error) {
-	size, err := r.ResponseWriter.Write(b)
-	r.responseData.size += size
+func (w *loggingResponseWriter) Write(b []byte) (int, error) {
+	size, err := w.ResponseWriter.Write(b)
+	w.responseData.size += size
 	return size, err
 }
 
-func (r *loggingResponseWriter) WriteHeader(statusCode int) {
-	r.ResponseWriter.WriteHeader(statusCode)
-	r.responseData.status = statusCode
+func (w *loggingResponseWriter) WriteHeader(statusCode int) {
+	w.ResponseWriter.WriteHeader(statusCode)
+	w.responseData.status = statusCode
 }
 
 func (s *Server) logMiddleware(next http.Handler) http.Handler {
@@ -74,7 +102,7 @@ func (s *Server) gzipCompressMiddleware(next http.Handler) http.Handler {
 		defer gz.Close()
 		w.Header().Set("Content-Encoding", "gzip")
 		w.Header().Del("Content-Length")
-		w = &gzipResponseWriter{ResponseWriter: w, Writer: gz}
+		w = &gzipResponseWriter{w, gz}
 
 		next.ServeHTTP(w, r)
 	})
@@ -98,21 +126,56 @@ func (s *Server) gzipDecompressMiddleware(next http.Handler) http.Handler {
 	})
 }
 
-type gzipResponseWriter struct {
-	http.ResponseWriter
-	io.Writer
-}
-
-func (w *gzipResponseWriter) Write(data []byte) (int, error) {
-	return w.Writer.Write(data)
-}
-
 func (s *Server) JSONContentTypeMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Header.Get("Content-Type") != "application/json" {
 			http.Error(w, "bad request", http.StatusBadRequest)
 			return
 		}
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.conf.GetShaKey() == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		expectedHash := r.Header.Get("HashSHA256")
+
+		if expectedHash == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
+		body, _ := io.ReadAll(r.Body)
+		hash.Write(body)
+		calculatedHashBytes := []byte(fmt.Sprintf("%x", hash.Sum(nil)))
+		expectedHashBytes := []byte(expectedHash)
+
+		if !hmac.Equal(expectedHashBytes, calculatedHashBytes) {
+			log.Println(expectedHash)
+			log.Printf("%x", calculatedHashBytes)
+			http.Error(w, "bad hash value", http.StatusBadRequest)
+			return
+		}
+
+		r.Body = io.NopCloser(bytes.NewBuffer(body))
+		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) hashResponseMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if s.conf.GetShaKey() == "" {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		w = &sha256ResponseWriter{w, s.conf.GetShaKey()}
 		next.ServeHTTP(w, r)
 	})
 }

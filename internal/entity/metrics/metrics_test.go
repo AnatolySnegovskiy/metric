@@ -79,7 +79,7 @@ func TestGauge_getListErrorDB(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM gauge")).
 		WillReturnError(errors.New("db error"))
-	mockDB, _ := clients.NewPostgres(mock)
+	mockDB := clients.NewPostgres(mock)
 	cr := repositories.NewGaugeRepo(mockDB)
 	gauge := NewGauge(cr)
 	_, err = gauge.GetList(context.Background())
@@ -95,7 +95,7 @@ func TestCounter_getListErrorDB(t *testing.T) {
 
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM counter")).
 		WillReturnError(errors.New("db error"))
-	mockDB, _ := clients.NewPostgres(mock)
+	mockDB := clients.NewPostgres(mock)
 	cr := repositories.NewCounterRepo(mockDB)
 	counter := NewCounter(cr)
 	_, err = counter.GetList(context.Background())
@@ -115,7 +115,7 @@ func TestGauge_ProcessDB(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM gauge")).
 		WillReturnRows(pgxmock.NewRows([]string{"name", "value"}).AddRow("test", float64(100)))
 
-	mockDB, _ := clients.NewPostgres(mock)
+	mockDB := clients.NewPostgres(mock)
 	cr := repositories.NewGaugeRepo(mockDB)
 	gauge := NewGauge(cr)
 	err = gauge.Process(context.Background(), "test", "100")
@@ -138,7 +138,7 @@ func TestCounter_ProcessDB(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM counter")).
 		WillReturnRows(pgxmock.NewRows([]string{"name", "value"}).AddRow("test", 100))
 
-	mockDB, _ := clients.NewPostgres(mock)
+	mockDB := clients.NewPostgres(mock)
 	cr := repositories.NewCounterRepo(mockDB)
 	counter := NewCounter(cr)
 	err = counter.Process(context.Background(), "test", "100")
@@ -161,7 +161,7 @@ func TestGauge_ProcessMassiveDB(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM gauge")).
 		WillReturnRows(pgxmock.NewRows([]string{"name", "value"}).AddRow("test", float64(500)))
 
-	mockDB, _ := clients.NewPostgres(mock)
+	mockDB := clients.NewPostgres(mock)
 	cr := repositories.NewGaugeRepo(mockDB)
 	gauge := NewGauge(cr)
 	err = gauge.ProcessMassive(context.Background(), map[string]float64{"test": 500})
@@ -184,7 +184,7 @@ func TestCounter_ProcessMassiveDB(t *testing.T) {
 	mock.ExpectQuery(regexp.QuoteMeta("SELECT * FROM counter")).
 		WillReturnRows(pgxmock.NewRows([]string{"name", "value"}).AddRow("test", 500))
 
-	mockDB, _ := clients.NewPostgres(mock)
+	mockDB := clients.NewPostgres(mock)
 	cr := repositories.NewCounterRepo(mockDB)
 	counter := NewCounter(cr)
 	err = counter.ProcessMassive(context.Background(), map[string]float64{"test": 500})

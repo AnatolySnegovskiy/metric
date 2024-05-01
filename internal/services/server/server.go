@@ -3,9 +3,15 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
+	"github.com/AnatolySnegovskiy/metric/internal/repositories"
+	"github.com/AnatolySnegovskiy/metric/internal/services/interfase"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
+	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 	"github.com/go-chi/chi/v5"
 	"github.com/gookit/gsr"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/tern/v2/migrate"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -13,33 +19,38 @@ import (
 	"time"
 )
 
-type Storage interface {
-	GetMetricType(metricType string) (storages.EntityMetric, error)
-	AddMetric(metricType string, metric storages.EntityMetric)
-	GetList() map[string]storages.EntityMetric
+var pgxConnect = pgx.Connect
+
+type Config interface {
+	GetServerAddress() string
+	GetStoreInterval() int
+	GetFileStoragePath() string
+	GetRestore() bool
+	GetDataBaseDSN() string
+	GetShaKey() string
+	GetMigrationsDir() string
 }
 
 type Server struct {
-	storage  Storage
+	storage  interfase.Storage
 	router   *chi.Mux
 	logger   gsr.GenLogger
 	dbIsOpen bool
+	conf     Config
 }
 
-func New(s Storage, l gsr.GenLogger, dbIsOpen bool) *Server {
+func New(ctx context.Context, c Config, l gsr.GenLogger) (*Server, error) {
 	server := &Server{
-		storage:  s,
-		router:   chi.NewRouter(),
-		logger:   l,
-		dbIsOpen: dbIsOpen,
+		router: chi.NewRouter(),
+		logger: l,
+		conf:   c,
 	}
 
-	server.setupRoutes()
-	return server
+	return server.upServer(ctx)
 }
 
 func (s *Server) setupRoutes() {
-	s.router.Use(s.gzipCompressMiddleware, s.gzipDecompressMiddleware, s.logMiddleware)
+	s.router.Use(s.hashCheckMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware, s.logMiddleware, s.hashResponseMiddleware)
 	s.router.NotFound(s.notFoundHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/updates/", s.writeMassPostMetricHandler)
@@ -52,24 +63,23 @@ func (s *Server) setupRoutes() {
 	s.router.Get("/ping", s.postgersPingHandler)
 }
 
-func (s *Server) Run(addr string) error {
-	return http.ListenAndServe(addr, s.router)
+func (s *Server) Run() error {
+	return http.ListenAndServe(s.conf.GetServerAddress(), s.router)
 }
 
-func (s *Server) SaveMetricsPeriodically(ctx context.Context, interval int, filePath string) {
+func (s *Server) saveMetricsPeriodically(ctx context.Context, interval int, filePath string) {
 	ticker := time.NewTicker(time.Second * time.Duration(interval))
 	for {
 		select {
 		case <-ctx.Done():
 			return
 		case <-ticker.C:
-
-			s.SaveMetricsToFile(filePath)
+			s.saveMetricsToFile(filePath)
 		}
 	}
 }
 
-func (s *Server) LoadMetricsOnStart(filePath string) {
+func (s *Server) loadMetricsOnStart(filePath string) {
 	savedMetrics := loadMetricsFromFile(filePath)
 
 	for metricType, metricValues := range savedMetrics {
@@ -90,7 +100,7 @@ func (s *Server) LoadMetricsOnStart(filePath string) {
 	s.logger.Info("Metrics loaded: " + filePath)
 }
 
-func (s *Server) SaveMetricsToFile(filePath string) {
+func (s *Server) saveMetricsToFile(filePath string) {
 	projectDir, _ := os.Getwd()
 	absoluteFilePath := filepath.Join(projectDir, filePath)
 
@@ -103,6 +113,79 @@ func (s *Server) SaveMetricsToFile(filePath string) {
 
 	_, _ = file.Write(jsonData)
 	s.logger.Info("Metrics saved: " + absoluteFilePath)
+}
+
+func (s *Server) BDConnect() *pgx.Conn {
+	db, err := pgxConnect(context.Background(), s.conf.GetDataBaseDSN())
+
+	if err != nil {
+		s.logger.Error(err)
+	}
+
+	return db
+}
+
+func (s *Server) upStorage(db *pgx.Conn) error {
+	var gaugeRepo *repositories.GaugeRepo
+	var counterRepo *repositories.CounterRepo
+
+	if db != nil {
+		pg := clients.NewPostgres(db)
+		gaugeRepo = repositories.NewGaugeRepo(pg)
+		counterRepo = repositories.NewCounterRepo(pg)
+	}
+
+	stg := storages.NewMemStorage()
+	stg.AddMetric("gauge", metrics.NewGauge(gaugeRepo))
+	stg.AddMetric("counter", metrics.NewCounter(counterRepo))
+	s.storage = stg
+
+	return nil
+}
+
+func (s *Server) upMigrate(ctx context.Context, db *pgx.Conn) error {
+	if db == nil {
+		return nil
+	}
+
+	migration, _ := migrate.NewMigrator(ctx, db, "public.schema_version")
+	if err := migration.LoadMigrations(os.DirFS(s.conf.GetMigrationsDir())); err != nil {
+		return err
+	}
+
+	if err := migration.Migrate(ctx); err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (s *Server) upServer(ctx context.Context) (*Server, error) {
+	db := s.BDConnect()
+	s.dbIsOpen = db != nil
+
+	if err := s.upMigrate(ctx, db); err != nil {
+		return nil, err
+	}
+	if err := s.upStorage(db); err != nil {
+		return nil, err
+	}
+
+	fileStorage := s.conf.GetFileStoragePath()
+
+	if s.conf.GetRestore() {
+		s.loadMetricsOnStart(fileStorage)
+	}
+
+	go s.saveMetricsPeriodically(ctx, s.conf.GetStoreInterval(), s.conf.GetFileStoragePath())
+
+	s.setupRoutes()
+
+	return s, nil
+}
+
+func (s *Server) ShotDown() {
+	s.saveMetricsToFile(s.conf.GetFileStoragePath())
 }
 
 func loadMetricsFromFile(filePath string) map[string]map[string]map[string]float64 {

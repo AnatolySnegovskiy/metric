@@ -1,6 +1,7 @@
 package agent
 
 import (
+	"github.com/AnatolySnegovskiy/metric/internal/services/interfase"
 	"net/http"
 )
 
@@ -10,20 +11,22 @@ type HTTPClient interface {
 
 type Agent struct {
 	client         HTTPClient
-	storage        Storage
+	storage        interfase.Storage
 	pollInterval   int
 	reportInterval int
 	sendAddr       string
 	maxRetries     int
+	shaKey         string
 }
 
 type Options struct {
 	Client         HTTPClient
-	Storage        Storage
+	Storage        interfase.Storage
 	PollInterval   int
 	ReportInterval int
 	SendAddr       string
 	MaxRetries     int
+	ShaKey         string
 }
 
 func New(options Options) *Agent {
@@ -34,5 +37,6 @@ func New(options Options) *Agent {
 		reportInterval: options.ReportInterval,
 		sendAddr:       options.SendAddr,
 		maxRetries:     options.MaxRetries,
+		shaKey:         options.ShaKey,
 	}
 }

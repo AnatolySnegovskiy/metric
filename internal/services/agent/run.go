@@ -17,7 +17,13 @@ func (a *Agent) Run(ctx context.Context) error {
 		case <-ctx.Done():
 			return nil
 		case <-pollTicker.C:
-			err := a.updateStoragePeriodically()
+			err := a.updateStoragePeriodically(ctx)
+			if err != nil {
+				return fmt.Errorf("error occurred while updating storage: %w", err)
+			}
+			log.Println("storage updated")
+		case <-pollTicker.C:
+			err := a.updateGopsutil(ctx)
 			if err != nil {
 				return fmt.Errorf("error occurred while updating storage: %w", err)
 			}
