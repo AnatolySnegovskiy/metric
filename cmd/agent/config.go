@@ -3,12 +3,14 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 )
 
 type Config struct {
 	flagSendAddr   string
+	shaKey         string
 	reportInterval int
 	pollInterval   int
 	maxRetries     int
@@ -20,6 +22,7 @@ func NewConfig() (*Config, error) {
 		reportInterval: 10,
 		pollInterval:   2,
 		maxRetries:     5,
+		shaKey:         "",
 	}
 
 	if err := c.parseFlags(); err != nil {
@@ -30,8 +33,8 @@ func NewConfig() (*Config, error) {
 }
 
 func (c *Config) parseFlags() error {
-	if val, ok := os.LookupEnv("ADDRESS"); val != "" && ok {
-		c.flagSendAddr = val
+	if v, ok := os.LookupEnv("ADDRESS"); v != "" && ok {
+		c.flagSendAddr = v
 	}
 
 	var err error
@@ -45,16 +48,24 @@ func (c *Config) parseFlags() error {
 			return fmt.Errorf("ENV POLL_INTERVAL: %s", err)
 		}
 	}
+	if v, ok := os.LookupEnv("KEY"); v != "" && ok {
+		c.shaKey = v
+	}
 
 	flag.StringVar(&c.flagSendAddr, "a", c.flagSendAddr, "address and port to run server")
 	flag.IntVar(&c.reportInterval, "r", c.reportInterval, "reportInterval description")
 	flag.IntVar(&c.pollInterval, "p", c.pollInterval, "pollInterval description")
+	flag.StringVar(&c.shaKey, "k", c.shaKey, "key description")
 	flag.Parse()
 
 	if flag.NArg() > 0 {
 		flag.PrintDefaults()
 		return fmt.Errorf("%s", flag.Arg(0))
 	}
-
+	log.Println("agent: " + c.shaKey)
+	log.Println("agent: " + c.flagSendAddr)
+	log.Println("agent: " + strconv.Itoa(c.reportInterval))
+	log.Println("agent: " + strconv.Itoa(c.pollInterval))
+	log.Println("agent: " + strconv.Itoa(c.maxRetries))
 	return nil
 }

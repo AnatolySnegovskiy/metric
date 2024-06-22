@@ -1,4 +1,4 @@
-package agent
+package interfase
 
 import "github.com/AnatolySnegovskiy/metric/internal/storages"
 

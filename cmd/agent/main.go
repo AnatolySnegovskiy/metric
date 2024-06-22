@@ -47,6 +47,7 @@ func main() {
 				ReportInterval: c.reportInterval,
 				SendAddr:       c.flagSendAddr,
 				MaxRetries:     c.maxRetries,
+				ShaKey:         c.shaKey,
 			},
 		).Run(context.Background()))
 }
