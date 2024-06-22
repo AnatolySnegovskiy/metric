@@ -9,6 +9,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"runtime"
+	"runtime/pprof"
+	"testing"
+	"time"
+
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
@@ -20,14 +29,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
-	"runtime"
-	"runtime/pprof"
-	"testing"
-	"time"
 )
 
 func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int, response string, requestBody []byte, headers map[string]string) {

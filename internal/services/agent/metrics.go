@@ -7,10 +7,11 @@ import (
 	"crypto/hmac"
 	"crypto/sha256"
 	"fmt"
-	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
-	"github.com/mailru/easyjson"
 	"io"
 	"net/http"
+
+	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
+	"github.com/mailru/easyjson"
 )
 
 func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {

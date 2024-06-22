@@ -3,12 +3,13 @@ package metrics
 import (
 	"context"
 	"errors"
+	"regexp"
+	"testing"
+
 	"github.com/AnatolySnegovskiy/metric/internal/repositories"
 	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 	"github.com/pashagolub/pgxmock/v3"
 	"github.com/stretchr/testify/assert"
-	"regexp"
-	"testing"
 )
 
 var counterProcessTests = []struct {

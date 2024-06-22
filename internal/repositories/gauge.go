@@ -3,8 +3,9 @@ package repositories
 import (
 	"context"
 	"fmt"
-	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 	"strings"
+
+	"github.com/AnatolySnegovskiy/metric/internal/storages/clients"
 )
 
 type GaugeRepo struct {

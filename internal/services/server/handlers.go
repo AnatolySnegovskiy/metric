@@ -2,12 +2,13 @@ package server
 
 import (
 	"fmt"
-	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
-	"github.com/go-chi/chi/v5"
-	"github.com/mailru/easyjson"
 	"io"
 	"net/http"
 	"strconv"
+
+	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
+	"github.com/go-chi/chi/v5"
+	"github.com/mailru/easyjson"
 )
 
 func (s *Server) writeGetMetricHandler(rw http.ResponseWriter, req *http.Request) {

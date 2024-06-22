@@ -3,6 +3,12 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strconv"
+	"time"
+
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/repositories"
 	"github.com/AnatolySnegovskiy/metric/internal/services/interfase"
@@ -12,11 +18,6 @@ import (
 	"github.com/gookit/gsr"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/tern/v2/migrate"
-	"net/http"
-	"os"
-	"path/filepath"
-	"strconv"
-	"time"
 )
 
 var pgxConnect = pgx.Connect
