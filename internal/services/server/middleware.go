@@ -151,18 +151,14 @@ func (s *Server) hashCheckMiddleware(next http.Handler) http.Handler {
 		}
 
 		hash := hmac.New(sha256.New, []byte(s.conf.GetShaKey()))
-		body, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "failed to read request body", http.StatusInternalServerError)
-			return
-		}
-
+		body, _ := io.ReadAll(r.Body)
 		hash.Write(body)
+		expectedHashBytes := []byte(expectedHash)
 		calculatedHash := hash.Sum(nil)
 
-		if hmac.Equal([]byte(expectedHash), calculatedHash) {
+		// TODO (https://github.com/AnatolySnegovskiy/metric/issues/16): FIX ME
+		if hmac.Equal(expectedHashBytes, calculatedHash) {
 			log.Println(expectedHash)
-			log.Printf("%x", calculatedHash)
 			log.Printf("%x", calculatedHash)
 			http.Error(w, "bad hash value", http.StatusBadRequest)
 			return

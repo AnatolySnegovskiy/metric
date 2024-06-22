@@ -48,6 +48,11 @@ func (c *Config) parseFlags() error {
 			return fmt.Errorf("ENV POLL_INTERVAL: %s", err)
 		}
 	}
+	if v, ok := os.LookupEnv("RATE_LIMIT"); v != "" && ok {
+		if c.maxRetries, err = strconv.Atoi(v); err != nil {
+			return fmt.Errorf("ENV RATE_LIMIT: %s", err)
+		}
+	}
 	if v, ok := os.LookupEnv("KEY"); v != "" && ok {
 		c.shaKey = v
 	}
@@ -55,6 +60,7 @@ func (c *Config) parseFlags() error {
 	flag.StringVar(&c.flagSendAddr, "a", c.flagSendAddr, "address and port to run server")
 	flag.IntVar(&c.reportInterval, "r", c.reportInterval, "reportInterval description")
 	flag.IntVar(&c.pollInterval, "p", c.pollInterval, "pollInterval description")
+	flag.IntVar(&c.maxRetries, "i", c.maxRetries, "maxRetries description")
 	flag.StringVar(&c.shaKey, "k", c.shaKey, "key description")
 	flag.Parse()
 
@@ -62,10 +68,12 @@ func (c *Config) parseFlags() error {
 		flag.PrintDefaults()
 		return fmt.Errorf("%s", flag.Arg(0))
 	}
+
 	log.Println("agent: " + c.shaKey)
 	log.Println("agent: " + c.flagSendAddr)
 	log.Println("agent: " + strconv.Itoa(c.reportInterval))
 	log.Println("agent: " + strconv.Itoa(c.pollInterval))
 	log.Println("agent: " + strconv.Itoa(c.maxRetries))
+
 	return nil
 }
