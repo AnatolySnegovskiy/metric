@@ -22,16 +22,25 @@ import (
 
 var pgxConnect = pgx.Connect
 
+// Config defines the configuration interface for the server.
 type Config interface {
+	// GetServerAddress returns the server address.
 	GetServerAddress() string
+	// GetStoreInterval returns the interval for storing metrics.
 	GetStoreInterval() int
+	// GetFileStoragePath returns the file storage path.
 	GetFileStoragePath() string
+	// GetRestore returns a boolean indicating whether to restore metrics on start.
 	GetRestore() bool
+	// GetDataBaseDSN returns the database DSN.
 	GetDataBaseDSN() string
+	// GetShaKey returns the SHA key.
 	GetShaKey() string
+	// GetMigrationsDir returns the directory path for database migrations.
 	GetMigrationsDir() string
 }
 
+// Server represents the main server struct.
 type Server struct {
 	storage  interfase.Storage
 	router   *chi.Mux
@@ -40,6 +49,7 @@ type Server struct {
 	conf     Config
 }
 
+// New creates a new server instance with the provided configuration and logger.
 func New(ctx context.Context, c Config, l gsr.GenLogger) (*Server, error) {
 	server := &Server{
 		router: chi.NewRouter(),
@@ -50,7 +60,29 @@ func New(ctx context.Context, c Config, l gsr.GenLogger) (*Server, error) {
 	return server.upServer(ctx)
 }
 
+// setupRoutes sets up the routes for handling different HTTP endpoints.
 func (s *Server) setupRoutes() {
+	// Middleware functions and handlers for routing in the server.
+	// Middleware functions:
+	// - hashCheckMiddleware checks the hash of the request.
+	// - gzipCompressMiddleware compresses the response using gzip.
+	// - gzipDecompressMiddleware decompresses the request body using gzip.
+	// - logMiddleware logs request information.
+	// - hashResponseMiddleware hashes the response before sending.
+
+	// NotFoundHandler handles requests for routes that are not found.
+	// PostMetricHandler handles POST requests to update metrics.
+	// MassPostMetricHandler handles POST requests to update multiple metrics.
+	// ShowPostMetricHandler handles POST requests to display metrics.
+	// WriteGetMetricHandler handles GET requests to update a specific metric.
+	// ShowAllMetricHandler handles GET requests to show all metrics.
+	// ShowMetricTypeHandler handles GET requests to show metrics of a specific type.
+	// ShowMetricNameHandlers handles GET requests to show metrics of a specific name.
+
+	// PostgresPingHandler handles GET requests to ping the PostgreSQL database.
+
+	// Note: The router uses JSONContentTypeMiddleware for handling JSON content type in POST requests.
+
 	s.router.Use(s.hashCheckMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware, s.logMiddleware, s.hashResponseMiddleware)
 	s.router.NotFound(s.notFoundHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
@@ -64,10 +96,12 @@ func (s *Server) setupRoutes() {
 	s.router.Get("/ping", s.postgersPingHandler)
 }
 
+// Run starts the server and listens on the configured server address.
 func (s *Server) Run() error {
 	return http.ListenAndServe(s.conf.GetServerAddress(), s.router)
 }
 
+// saveMetricsPeriodically saves metrics to a file periodically based on the interval.
 func (s *Server) saveMetricsPeriodically(ctx context.Context, interval int, filePath string) {
 	ticker := time.NewTicker(time.Second * time.Duration(interval))
 	for {
@@ -80,6 +114,7 @@ func (s *Server) saveMetricsPeriodically(ctx context.Context, interval int, file
 	}
 }
 
+// loadMetricsOnStart loads metrics from a file on server start.
 func (s *Server) loadMetricsOnStart(filePath string) {
 	savedMetrics := loadMetricsFromFile(filePath)
 
@@ -101,6 +136,7 @@ func (s *Server) loadMetricsOnStart(filePath string) {
 	s.logger.Info("Metrics loaded: " + filePath)
 }
 
+// saveMetricsToFile saves metrics to a file at a specified path.
 func (s *Server) saveMetricsToFile(filePath string) {
 	projectDir, _ := os.Getwd()
 	absoluteFilePath := filepath.Join(projectDir, filePath)
@@ -116,6 +152,7 @@ func (s *Server) saveMetricsToFile(filePath string) {
 	s.logger.Info("Metrics saved: " + absoluteFilePath)
 }
 
+// BDConnect establishes a connection to the database.
 func (s *Server) BDConnect() *pgx.Conn {
 	db, err := pgxConnect(context.Background(), s.conf.GetDataBaseDSN())
 
@@ -126,6 +163,7 @@ func (s *Server) BDConnect() *pgx.Conn {
 	return db
 }
 
+// upStorage sets up the storage for metrics based on the database connection.
 func (s *Server) upStorage(db *pgx.Conn) error {
 	var gaugeRepo *repositories.GaugeRepo
 	var counterRepo *repositories.CounterRepo
@@ -144,6 +182,7 @@ func (s *Server) upStorage(db *pgx.Conn) error {
 	return nil
 }
 
+// upMigrate runs database migrations for the connected database.
 func (s *Server) upMigrate(ctx context.Context, db *pgx.Conn) error {
 	if db == nil {
 		return nil
@@ -161,6 +200,7 @@ func (s *Server) upMigrate(ctx context.Context, db *pgx.Conn) error {
 	return nil
 }
 
+// upServer initializes the server by connecting to the database, setting up migrations, storage, and routes.
 func (s *Server) upServer(ctx context.Context) (*Server, error) {
 	db := s.BDConnect()
 	s.dbIsOpen = db != nil
@@ -185,10 +225,12 @@ func (s *Server) upServer(ctx context.Context) (*Server, error) {
 	return s, nil
 }
 
+// ShotDown saves metrics to a file before shutting down the server.
 func (s *Server) ShotDown() {
 	s.saveMetricsToFile(s.conf.GetFileStoragePath())
 }
 
+// loadMetricsFromFile loads metrics from a file at the specified path and returns them as a map.
 func loadMetricsFromFile(filePath string) map[string]map[string]map[string]float64 {
 	projectDir, _ := os.Getwd()
 	absoluteFilePath := filepath.Join(projectDir, filePath)
