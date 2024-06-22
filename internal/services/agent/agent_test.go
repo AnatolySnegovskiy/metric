@@ -16,7 +16,7 @@ import (
 
 func TestNew(t *testing.T) {
 	options := Options{
-		Storage:        mocks.NewMockStorage(gomock.NewController(t)),
+		Storage:        storages.NewMemStorage(),
 		PollInterval:   10,
 		ReportInterval: 20,
 		SendAddr:       "example.com:1234",
