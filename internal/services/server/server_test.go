@@ -24,6 +24,8 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"runtime"
+	"runtime/pprof"
 	"testing"
 	"time"
 )
@@ -216,11 +218,21 @@ func TestServerHandlers(t *testing.T) {
 		{"methodNotAllowedHandler", r, http.MethodDelete, "/", http.StatusMethodNotAllowed, "", nil, nil},
 		{"writeGetMetricHandler", r, http.MethodHead, "/", http.StatusMethodNotAllowed, "", nil, nil},
 	}
+	fmem, err := os.Create(`./../../../profiles/result.pprof`)
+	if err != nil {
+		panic(err)
+	}
+	defer fmem.Close()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testHandler(t, tt.router, tt.method, tt.path, tt.statusCode, tt.response, tt.requestBody, tt.headers)
 		})
+	}
+
+	runtime.GC()
+	if err := pprof.WriteHeapProfile(fmem); err != nil {
+		panic(err)
 	}
 }
 

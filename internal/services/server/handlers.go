@@ -219,37 +219,41 @@ func (s *Server) writeMassPostMetricHandler(rw http.ResponseWriter, req *http.Re
 		return
 	}
 
-	list := make(map[string]map[string]float64)
-
-	for _, metricDTO := range *metricDTOCollection {
-		if list[metricDTO.MType] == nil {
-			list[metricDTO.MType] = make(map[string]float64)
-		}
-
-		if metricDTO.Delta != nil {
-			list[metricDTO.MType][metricDTO.ID] += float64(*metricDTO.Delta)
-		} else if metricDTO.Value != nil {
-			list[metricDTO.MType][metricDTO.ID] = *metricDTO.Value
-		}
-	}
-
 	storage := s.storage
 
-	for metricType, metric := range list {
-		matric, err := storage.GetMetricType(metricType)
+	for _, metricDTO := range *metricDTOCollection {
+		if metricDTO.Delta != nil {
+			matric, err := storage.GetMetricType(metricDTO.MType)
+			if err != nil {
+				rw.WriteHeader(http.StatusNotFound)
+				fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"metric type %s not found"}`, metricDTO.MType))
+				return
+			}
 
-		if err != nil {
-			rw.WriteHeader(http.StatusNotFound)
-			fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"metric type %s not found"}`, metricType))
-			return
-		}
+			metricValue := *metricDTO.Delta
+			if metricValue != 0 {
+				if err := matric.ProcessMassive(req.Context(), map[string]float64{metricDTO.ID: float64(metricValue)}); err != nil {
+					rw.WriteHeader(http.StatusInternalServerError)
+					fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"%s"}`, err.Error()))
+					return
+				}
+			}
+		} else if metricDTO.Value != nil {
+			matric, err := storage.GetMetricType(metricDTO.MType)
+			if err != nil {
+				rw.WriteHeader(http.StatusNotFound)
+				fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"metric type %s not found"}`, metricDTO.MType))
+				return
+			}
 
-		err = matric.ProcessMassive(req.Context(), metric)
-
-		if err != nil {
-			rw.WriteHeader(http.StatusInternalServerError)
-			fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"%s"}`, err.Error()))
-			return
+			metricValue := *metricDTO.Value
+			if metricValue != 0 {
+				if err := matric.ProcessMassive(req.Context(), map[string]float64{metricDTO.ID: float64(metricValue)}); err != nil {
+					rw.WriteHeader(http.StatusInternalServerError)
+					fmt.Fprintf(rw, "%v", fmt.Sprintf(`{"error":"%s"}`, err.Error()))
+					return
+				}
+			}
 		}
 	}
 
