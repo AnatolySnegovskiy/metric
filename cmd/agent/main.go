@@ -3,14 +3,15 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
-	"github.com/AnatolySnegovskiy/metric/internal/services/agent"
-	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"log"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
+	"github.com/AnatolySnegovskiy/metric/internal/services/agent"
+	"github.com/AnatolySnegovskiy/metric/internal/storages"
 )
 
 func handleError(err error) {

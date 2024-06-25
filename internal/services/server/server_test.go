@@ -9,6 +9,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
+	"net/http/httptest"
+	"os"
+	"path/filepath"
+	"runtime"
+	"runtime/pprof"
+	"testing"
+	"time"
+
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
@@ -20,12 +29,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
 	"go.uber.org/zap"
-	"net/http"
-	"net/http/httptest"
-	"os"
-	"path/filepath"
-	"testing"
-	"time"
 )
 
 func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int, response string, requestBody []byte, headers map[string]string) {
@@ -216,11 +219,21 @@ func TestServerHandlers(t *testing.T) {
 		{"methodNotAllowedHandler", r, http.MethodDelete, "/", http.StatusMethodNotAllowed, "", nil, nil},
 		{"writeGetMetricHandler", r, http.MethodHead, "/", http.StatusMethodNotAllowed, "", nil, nil},
 	}
+	fmem, err := os.Create(`./../../../profiles/result.pprof`)
+	if err != nil {
+		panic(err)
+	}
+	defer fmem.Close()
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			testHandler(t, tt.router, tt.method, tt.path, tt.statusCode, tt.response, tt.requestBody, tt.headers)
 		})
+	}
+
+	runtime.GC()
+	if err := pprof.WriteHeapProfile(fmem); err != nil {
+		panic(err)
 	}
 }
 

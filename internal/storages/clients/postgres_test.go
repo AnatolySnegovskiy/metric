@@ -2,10 +2,11 @@ package clients
 
 import (
 	"context"
-	"github.com/pashagolub/pgxmock/v3"
-	"github.com/stretchr/testify/assert"
 	"regexp"
 	"testing"
+
+	"github.com/pashagolub/pgxmock/v3"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestPostgres_Test(t *testing.T) {

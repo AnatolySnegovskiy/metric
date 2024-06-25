@@ -3,11 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
-	"github.com/AnatolySnegovskiy/metric/internal/services/server"
-	"go.uber.org/zap"
 	"os"
 	"os/signal"
 	"syscall"
+
+	"github.com/AnatolySnegovskiy/metric/internal/services/server"
+	"go.uber.org/zap"
 )
 
 func handleError(err error) {

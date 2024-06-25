@@ -1,16 +1,17 @@
 package main
 
 import (
-	"bou.ke/monkey"
 	"bytes"
 	"errors"
-	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
-	"github.com/AnatolySnegovskiy/metric/internal/storages"
-	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
 	"testing"
 	"time"
+
+	"bou.ke/monkey"
+	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
+	"github.com/AnatolySnegovskiy/metric/internal/storages"
+	"github.com/stretchr/testify/assert"
 )
 
 func Test_Main(t *testing.T) {

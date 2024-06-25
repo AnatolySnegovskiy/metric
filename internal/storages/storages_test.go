@@ -1,11 +1,12 @@
 package storages_test
 
 import (
+	"testing"
+
 	"github.com/AnatolySnegovskiy/metric/internal/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"testing"
 )
 
 func TestMemStorage(t *testing.T) {

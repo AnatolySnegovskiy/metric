@@ -1,8 +1,9 @@
 package agent
 
 import (
-	"github.com/AnatolySnegovskiy/metric/internal/services/interfase"
 	"net/http"
+
+	"github.com/AnatolySnegovskiy/metric/internal/services/interfase"
 )
 
 type HTTPClient interface {

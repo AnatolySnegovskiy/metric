@@ -3,10 +3,11 @@ package agent
 import (
 	"context"
 	"fmt"
-	"github.com/shirou/gopsutil/mem"
 	"reflect"
 	"runtime"
 	"time"
+
+	"github.com/shirou/gopsutil/mem"
 )
 
 var m runtime.MemStats

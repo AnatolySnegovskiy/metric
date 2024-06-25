@@ -3,8 +3,9 @@ package metrics
 import (
 	"context"
 	"errors"
-	"github.com/AnatolySnegovskiy/metric/internal/repositories"
 	"strconv"
+
+	"github.com/AnatolySnegovskiy/metric/internal/repositories"
 )
 
 type Gauge struct {
