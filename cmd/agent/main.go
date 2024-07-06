@@ -32,9 +32,9 @@ func handleShutdownSignal(quit chan os.Signal) {
 }
 
 func main() {
-	fmt.Printf("Build version: %s (или \"N/A\" при отсутствии значения)\n", buildVersion)
-	fmt.Printf("Build date: %s (или \"N/A\" при отсутствии значения)\n", buildDate)
-	fmt.Printf("Build commit: %s (или \"N/A\" при отсутствии значения)\n", buildCommit)
+	fmt.Printf("Build version: %s\n", setDefaultValue(buildVersion, "N/A"))
+	fmt.Printf("Build date: %s\n", setDefaultValue(buildDate, "N/A"))
+	fmt.Printf("Build commit: %s\n", setDefaultValue(buildCommit, "N/A"))
 
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(nil))
