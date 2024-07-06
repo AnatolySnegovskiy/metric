@@ -61,3 +61,15 @@ func TestHandleErrorWithNil(t *testing.T) {
 	handleError(nil)
 	assert.Empty(t, logOutput.String())
 }
+
+func TestSetDefaultValue(t *testing.T) {
+	val := "test"
+	val = setDefaultValue(val, "TEST2")
+	assert.Equal(t, val, "test")
+}
+
+func TestSetDefaultValueEmpty(t *testing.T) {
+	val := ""
+	val = setDefaultValue(val, "TEST2")
+	assert.Equal(t, val, "TEST2")
+}
