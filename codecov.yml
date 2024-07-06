@@ -1,0 +1,3 @@
+ignore:
+  - "./cmd/staticlint/.*"
+  - "./internal/mocks/.*"
