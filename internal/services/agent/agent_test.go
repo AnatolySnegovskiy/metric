@@ -3,19 +3,20 @@ package agent
 import (
 	"context"
 	"errors"
+	"net/http"
+	"testing"
+	"time"
+
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
 	"github.com/AnatolySnegovskiy/metric/internal/mocks"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/stretchr/testify/assert"
 	"go.uber.org/mock/gomock"
-	"net/http"
-	"testing"
-	"time"
 )
 
 func TestNew(t *testing.T) {
 	options := Options{
-		Storage:        mocks.NewMockStorage(gomock.NewController(t)),
+		Storage:        storages.NewMemStorage(),
 		PollInterval:   10,
 		ReportInterval: 20,
 		SendAddr:       "example.com:1234",
