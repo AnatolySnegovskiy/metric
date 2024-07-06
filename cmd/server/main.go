@@ -11,6 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
+var buildVersion string
+var buildDate string
+var buildCommit string
+
 func handleError(err error) {
 	if err != nil {
 		fmt.Println(err.Error())
@@ -19,6 +23,9 @@ func handleError(err error) {
 }
 
 func main() {
+	fmt.Printf("Build version: %s (или \"N/A\" при отсутствии значения)\n", buildVersion)
+	fmt.Printf("Build date: %s (или \"N/A\" при отсутствии значения)\n", buildDate)
+	fmt.Printf("Build commit: %s (или \"N/A\" при отсутствии значения)\n", buildCommit)
 	logger, err := zap.NewProduction()
 	handleError(err)
 

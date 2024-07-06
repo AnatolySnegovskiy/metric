@@ -14,6 +14,10 @@ import (
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 )
 
+var buildVersion string
+var buildDate string
+var buildCommit string
+
 func handleError(err error) {
 	if err != nil {
 		log.Println(err.Error())
@@ -28,6 +32,10 @@ func handleShutdownSignal(quit chan os.Signal) {
 }
 
 func main() {
+	fmt.Printf("Build version: %s (или \"N/A\" при отсутствии значения)\n", buildVersion)
+	fmt.Printf("Build date: %s (или \"N/A\" при отсутствии значения)\n", buildDate)
+	fmt.Printf("Build commit: %s (или \"N/A\" при отсутствии значения)\n", buildCommit)
+
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(nil))
 	s.AddMetric("counter", metrics.NewCounter(nil))
