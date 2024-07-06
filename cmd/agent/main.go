@@ -60,3 +60,10 @@ func main() {
 			},
 		).Run(context.Background()))
 }
+
+func setDefaultValue(value, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+	return value
+}
