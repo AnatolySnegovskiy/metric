@@ -11,6 +11,10 @@ import (
 	"go.uber.org/zap"
 )
 
+var buildVersion string
+var buildDate string
+var buildCommit string
+
 func handleError(err error) {
 	if err != nil {
 		fmt.Println(err.Error())
@@ -19,6 +23,9 @@ func handleError(err error) {
 }
 
 func main() {
+	fmt.Printf("Build version: %s\n", setDefaultValue(buildVersion, "N/A"))
+	fmt.Printf("Build date: %s\n", setDefaultValue(buildDate, "N/A"))
+	fmt.Printf("Build commit: %s\n", setDefaultValue(buildCommit, "N/A"))
 	logger, err := zap.NewProduction()
 	handleError(err)
 
@@ -40,4 +47,11 @@ func main() {
 
 	logger.Info("server started on " + conf.GetServerAddress())
 	handleError(serv.Run())
+}
+
+func setDefaultValue(value, defaultValue string) string {
+	if value == "" {
+		return defaultValue
+	}
+	return value
 }
