@@ -190,7 +190,7 @@ func (s *Server) DecryptMessageMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		cryptoKey := s.conf.GetCryptoKey()
 		if cryptoKey == "" {
-			http.Error(w, "Crypto key not found", http.StatusInternalServerError)
+			next.ServeHTTP(w, r)
 			return
 		}
 
