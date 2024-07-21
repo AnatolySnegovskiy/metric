@@ -4,11 +4,15 @@ import (
 	"bytes"
 	"compress/gzip"
 	"crypto/hmac"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"log"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 )
@@ -179,6 +183,52 @@ func (s *Server) hashResponseMiddleware(next http.Handler) http.Handler {
 		w = &sha256ResponseWriter{w, s.conf.GetShaKey()}
 		next.ServeHTTP(w, r)
 	})
+}
+
+// DecryptMessageMiddleware is a middleware function to decrypt the message before passing it to the next handler.
+func (s *Server) DecryptMessageMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		cryptoKey := s.conf.GetCryptoKey()
+		if cryptoKey == "" {
+			http.Error(w, "Crypto key not found", http.StatusInternalServerError)
+			return
+		}
+
+		bodyData, err := io.ReadAll(r.Body)
+		if err != nil {
+			http.Error(w, "Failed to read request body", http.StatusInternalServerError)
+			return
+		}
+
+		decryptedBody, err := DecryptionFunction(bodyData, cryptoKey)
+		if err != nil {
+			http.Error(w, "Failed to decrypt message", http.StatusInternalServerError)
+			return
+		}
+
+		r.Body = io.NopCloser(bytes.NewBuffer(decryptedBody))
+		next.ServeHTTP(w, r)
+	})
+}
+
+// DecryptionFunction is a function to decrypt the message before passing it to the next handler.
+func DecryptionFunction(data []byte, privateKeyPath string) ([]byte, error) {
+	privateKeyData, err := os.ReadFile(privateKeyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	privateKey, err := x509.ParsePKCS1PrivateKey(privateKeyData)
+	if err != nil {
+		return nil, err
+	}
+
+	decryptedMessage, err := rsa.DecryptPKCS1v15(rand.Reader, privateKey, data)
+	if err != nil {
+		return nil, err
+	}
+
+	return decryptedMessage, nil
 }
 
 func isContentTypeAllowed(contentType string) bool {

@@ -18,6 +18,7 @@ type Agent struct {
 	sendAddr       string
 	maxRetries     int
 	shaKey         string
+	cryptoKey      string
 }
 
 type Options struct {
@@ -28,6 +29,7 @@ type Options struct {
 	SendAddr       string
 	MaxRetries     int
 	ShaKey         string
+	CryptoKey      string
 }
 
 func New(options Options) *Agent {
@@ -39,5 +41,6 @@ func New(options Options) *Agent {
 		sendAddr:       options.SendAddr,
 		maxRetries:     options.MaxRetries,
 		shaKey:         options.ShaKey,
+		cryptoKey:      options.CryptoKey,
 	}
 }

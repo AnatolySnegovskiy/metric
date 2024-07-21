@@ -5,10 +5,14 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/hmac"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/mailru/easyjson"
@@ -43,11 +47,16 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			metricDtoCollection = append(metricDtoCollection, metricDto)
 		}
 	}
+	body, _ := easyjson.Marshal(metricDtoCollection)
+	encryptedData, err := encryptMessage(body, "path/to/public_key.pem")
+
+	if err != nil {
+		return err
+	}
 
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
-	body, _ := easyjson.Marshal(metricDtoCollection)
-	_, _ = gw.Write(body)
+	_, _ = gw.Write(encryptedData)
 	_ = gw.Close()
 
 	url := fmt.Sprintf("http://%s/updates/", a.sendAddr)
@@ -72,4 +81,23 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	}
 
 	return err
+}
+
+func encryptMessage(message []byte, publicKeyPath string) ([]byte, error) {
+	publicKeyData, err := os.ReadFile(publicKeyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	publicKey, err := x509.ParsePKCS1PublicKey(publicKeyData)
+	if err != nil {
+		return nil, err
+	}
+
+	encryptedMessage, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, message)
+	if err != nil {
+		return nil, err
+	}
+
+	return encryptedMessage, nil
 }

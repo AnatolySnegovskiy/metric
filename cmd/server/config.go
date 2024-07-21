@@ -16,6 +16,7 @@ type Config struct {
 	dataBaseDSN     string
 	shaKey          string
 	migrationsDir   string
+	cryptoKey       string
 }
 
 func NewConfig() (*Config, error) {
@@ -26,6 +27,7 @@ func NewConfig() (*Config, error) {
 		restore:         true,
 		dataBaseDSN:     "postgres://postgres:root@localhost:5432",
 		shaKey:          "",
+		cryptoKey:       "",
 	}
 
 	projectDir, _ := os.Getwd()
@@ -68,12 +70,18 @@ func (c *Config) parseFlags() error {
 		c.shaKey = v
 	}
 
+	if v, ok := os.LookupEnv("CRYPTO_KEY"); v != "" && ok {
+		c.cryptoKey = v
+	}
+
 	flag.StringVar(&c.serverAddress, "a", c.serverAddress, "address and port to run server")
 	flag.IntVar(&c.storeInterval, "i", c.storeInterval, "storeInterval")
 	flag.StringVar(&c.fileStoragePath, "f", c.fileStoragePath, "fileStoragePath")
 	flag.BoolVar(&c.restore, "r", c.restore, "restore")
 	flag.StringVar(&c.dataBaseDSN, "d", c.dataBaseDSN, "databaseDSN")
 	flag.StringVar(&c.shaKey, "k", c.shaKey, "shaKey")
+	flag.StringVar(&c.cryptoKey, "crypto-key", c.cryptoKey, "path to the private key file")
+
 	flag.Parse()
 
 	if flag.NArg() > 0 {
@@ -117,4 +125,8 @@ func (c *Config) GetShaKey() string {
 
 func (c *Config) GetMigrationsDir() string {
 	return c.migrationsDir
+}
+
+func (c *Config) GetCryptoKey() string {
+	return c.cryptoKey
 }
