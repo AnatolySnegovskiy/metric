@@ -48,15 +48,20 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 		}
 	}
 	body, _ := easyjson.Marshal(metricDtoCollection)
-	encryptedData, err := encryptMessage(body, "path/to/public_key.pem")
 
-	if err != nil {
-		return err
+	if a.cryptoKey != "" {
+		bodyEncrypted, err := encryptMessage(body, a.cryptoKey)
+
+		if err != nil {
+			return err
+		}
+
+		body = bodyEncrypted
 	}
 
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
-	_, _ = gw.Write(encryptedData)
+	_, _ = gw.Write(body)
 	_ = gw.Close()
 
 	url := fmt.Sprintf("http://%s/updates/", a.sendAddr)
