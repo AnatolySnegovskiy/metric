@@ -173,10 +173,10 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, "/path/to/key.pem", config.CryptoKey, "expected default poll interval")
 
 		resetVars()
-		os.Args = []string{"cmd", "-config=config.json"}
+		os.Args = []string{"cmd", "-config=config.json", "-a=127.0.10.1:8080"}
 		config, err = NewConfig()
 		assert.NoError(t, err)
-		assert.Equal(t, "localhost:8080", config.FlagSendAddr, "expected default address")
+		assert.Equal(t, "127.0.10.1:8080", config.FlagSendAddr, "expected default address")
 		assert.Equal(t, 1, config.ReportInterval, "expected default report interval")
 		assert.Equal(t, 1, config.PollInterval, "expected default poll interval")
 		assert.Equal(t, "/path/to/key.pem", config.CryptoKey, "expected default poll interval")

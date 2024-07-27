@@ -225,10 +225,10 @@ func TestNewConfig(t *testing.T) {
 			}`), 0644)
 
 		resetVars()
-		os.Args = []string{"cmd", "-config=config2.json"}
+		os.Args = []string{"cmd", "-config=config2.json", "-a=localhost:1111"}
 		config, err = NewConfig()
 		assert.NoError(t, err)
-		assert.Equal(t, "localhost:1234", config.GetServerAddress(), "expected restore to be false")
+		assert.Equal(t, "localhost:1111", config.GetServerAddress(), "expected restore to be false")
 		assert.Equal(t, false, config.GetRestore(), "expected restore to be false")
 		assert.Equal(t, 10, config.GetStoreInterval(), "expected restore to be false")
 		assert.Equal(t, "/path/to/file2.db", config.GetFileStoragePath(), "expected restore to be false")

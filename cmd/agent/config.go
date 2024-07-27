@@ -19,6 +19,7 @@ type Config struct {
 }
 
 func NewConfig() (*Config, error) {
+	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	c := &Config{
 		FlagSendAddr:   "localhost:8080",
 		ReportInterval: 10,
