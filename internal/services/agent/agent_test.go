@@ -291,9 +291,17 @@ func TestEncryptMessage(t *testing.T) {
 		assert.Nil(t, encryptedMessage)
 	})
 
+	monkey.UnpatchAll()
+	monkey.Patch(os.ReadFile, func(filename string) ([]byte, error) {
+		return mockPublicKeyData, nil
+	})
+	monkey.Patch(pem.Decode, func(data []byte) (*pem.Block, []byte) {
+		return mockPublicKeyBlock, nil
+	})
 	monkey.Patch(x509.ParsePKIXPublicKey, func(data []byte) (interface{}, error) {
 		return nil, errors.New("mocked parse error")
 	})
+	defer monkey.UnpatchAll()
 
 	t.Run("Error Parsing Public Key", func(t *testing.T) {
 		encryptedMessage, err := encryptMessage([]byte("test_message"), "mocked_public_key_path")
