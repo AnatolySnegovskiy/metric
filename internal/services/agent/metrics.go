@@ -91,8 +91,16 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 
 func encryptMessage(message []byte, publicKeyPath string) ([]byte, error) {
 	publicKeyData, err := os.ReadFile(publicKeyPath)
+	if err != nil {
+		return nil, err
+	}
+
 	block, _ := pem.Decode(publicKeyData)
 	publicKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
 	rsaPubKey, _ := publicKey.(*rsa.PublicKey)
 	encryptedMessage, err := rsa.EncryptPKCS1v15(rand.Reader, rsaPubKey, message)
 
