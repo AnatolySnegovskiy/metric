@@ -53,6 +53,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	gw := gzip.NewWriter(&buf)
 	_, _ = gw.Write(body)
 	_ = gw.Close()
+	body = buf.Bytes()
 
 	if a.cryptoKey != "" {
 		bodyEncrypted, err := encryptMessage(buf.Bytes(), a.cryptoKey)
