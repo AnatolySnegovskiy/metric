@@ -138,7 +138,7 @@ func TestNewConfig(t *testing.T) {
 	})
 
 	t.Run("ENV_FILE_PATH", func(t *testing.T) {
-		os.WriteFile("config.json", []byte(`{
+		_ = os.WriteFile("config.json", []byte(`{
 			"address": "localhost:8080",
 			"report_interval":1,
 			"poll_interval": 1,
@@ -153,11 +153,11 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, 1, config.ReportInterval, "expected default report interval")
 		assert.Equal(t, 1, config.PollInterval, "expected default poll interval")
 		assert.Equal(t, "/path/to/key.pem", config.CryptoKey, "expected default poll interval")
-		os.Remove("config.json")
+		_ = os.Remove("config.json")
 	})
 
 	t.Run("CMD_FILE_PATH_ERROR", func(t *testing.T) {
-		os.WriteFile("config.json", []byte(`{
+		_ = os.WriteFile("config.json", []byte(`{
 			"address": "localhost:8080",
 			"report_interval":1,
 			"poll_interval": 1,
@@ -180,7 +180,7 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, 1, config.ReportInterval, "expected default report interval")
 		assert.Equal(t, 1, config.PollInterval, "expected default poll interval")
 		assert.Equal(t, "/path/to/key.pem", config.CryptoKey, "expected default poll interval")
-		os.Remove("config.json")
+		_ = os.Remove("config.json")
 	})
 }
 

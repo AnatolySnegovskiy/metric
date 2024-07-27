@@ -211,7 +211,7 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, "/path/to/file.db", config.GetFileStoragePath(), "expected restore to be false")
 		assert.Equal(t, "", config.GetDataBaseDSN(), "expected restore to be false")
 		assert.Equal(t, "/path/to/key.pem", config.GetCryptoKey(), "expected restore to be false")
-		os.Remove("config.json")
+		_ = os.Remove("config.json")
 
 		_ = os.WriteFile(
 			"config2.json",
@@ -234,7 +234,7 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, "/path/to/file2.db", config.GetFileStoragePath(), "expected restore to be false")
 		assert.Equal(t, "123111", config.GetDataBaseDSN(), "expected restore to be false")
 		assert.Equal(t, "/path/to/key2.pem", config.GetCryptoKey(), "expected restore to be false")
-		os.Remove("config2.json")
+		_ = os.Remove("config2.json")
 	})
 }
 
