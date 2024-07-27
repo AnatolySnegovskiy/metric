@@ -86,13 +86,13 @@ func (c *Config) parseFlags() error {
 	if configFile != "" {
 		file, err := os.Open(configFile)
 		if err != nil {
-			log.Fatalf("Error opening config file: %v", err)
+			return err
 		}
 		defer file.Close()
 
 		decoder := json.NewDecoder(file)
 		if err := decoder.Decode(&c); err != nil {
-			log.Fatalf("Error decoding config file: %v", err)
+			return err
 		}
 	}
 
