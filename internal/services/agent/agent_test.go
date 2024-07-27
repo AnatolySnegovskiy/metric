@@ -181,7 +181,6 @@ func TestAgent(t *testing.T) {
 				reportInterval: 3,
 				maxRetries:     2,
 				shaKey:         "testKey",
-				cryptoKey:      publicKey,
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
