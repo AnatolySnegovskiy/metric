@@ -225,7 +225,7 @@ func TestNewConfig(t *testing.T) {
 			}`), 0644)
 
 		resetVars()
-		os.Args = []string{"cmd", "-config=config2.json", "-a=localhost:1111"}
+		os.Args = []string{"cmd", "-a=localhost:1111", "-config=config2.json"}
 		config, err = NewConfig()
 		assert.NoError(t, err)
 		assert.Equal(t, "localhost:1111", config.GetServerAddress(), "expected restore to be false")

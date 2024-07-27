@@ -43,31 +43,9 @@ func NewConfig() (*Config, error) {
 }
 
 func (c *Config) parseFlags() error {
-	configFile := flag.String("c", "", "Path to the JSON config file")
-	flag.Parse()
-
-	if *configFile == "" {
-		configFile = flag.String("config", "", "Path to the JSON config file")
-		flag.Parse()
-	}
-
-	if *configFile == "" {
-		if v, ok := os.LookupEnv("CONFIG"); v != "" && ok {
-			configFile = &v
-		}
-	}
-
-	if *configFile != "" {
-		file, err := os.Open(*configFile)
-		if err != nil {
-			log.Fatalf("Error opening config file: %v", err)
-		}
-		defer file.Close()
-
-		decoder := json.NewDecoder(file)
-		if err := decoder.Decode(&c); err != nil {
-			log.Fatalf("Error decoding config file: %v", err)
-		}
+	configFile := ""
+	if v, ok := os.LookupEnv("CONFIG"); v != "" && ok {
+		configFile = v
 	}
 
 	if v, ok := os.LookupEnv("ADDRESS"); v != "" && ok {
@@ -103,6 +81,8 @@ func (c *Config) parseFlags() error {
 		c.CryptoKey = v
 	}
 
+	flag.StringVar(&configFile, "c", configFile, "Path to the JSON config file")
+	flag.StringVar(&configFile, "config", configFile, "Path to the JSON config file")
 	flag.StringVar(&c.ServerAddress, "a", c.ServerAddress, "address and port to run server")
 	flag.IntVar(&c.StoreInterval, "i", c.StoreInterval, "storeInterval")
 	flag.StringVar(&c.FileStoragePath, "f", c.FileStoragePath, "fileStoragePath")
@@ -110,14 +90,28 @@ func (c *Config) parseFlags() error {
 	flag.StringVar(&c.DataBaseDSN, "d", c.DataBaseDSN, "databaseDSN")
 	flag.StringVar(&c.shaKey, "k", c.shaKey, "shaKey")
 	flag.StringVar(&c.CryptoKey, "crypto-key", c.CryptoKey, "path to the private key file")
-
 	flag.Parse()
 
 	if flag.NArg() > 0 {
-
 		flag.PrintDefaults()
 		return fmt.Errorf("%s", flag.Arg(0))
 	}
+
+	if configFile != "" {
+		file, err := os.Open(configFile)
+		if err != nil {
+			log.Fatalf("Error opening config file: %v", err)
+		}
+		defer file.Close()
+
+		decoder := json.NewDecoder(file)
+		if err := decoder.Decode(&c); err != nil {
+			log.Fatalf("Error decoding config file: %v", err)
+		}
+	}
+
+	flag.Parse()
+
 	log.Println("server: " + c.shaKey)
 	log.Println("server: " + c.DataBaseDSN)
 	log.Println("server: " + c.FileStoragePath)

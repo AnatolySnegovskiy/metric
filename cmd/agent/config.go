@@ -37,33 +37,10 @@ func NewConfig() (*Config, error) {
 }
 
 func (c *Config) parseFlags() error {
-	configFile := flag.String("c", "", "Path to the JSON config file")
-	flag.Parse()
-
-	if *configFile == "" {
-		configFile = flag.String("config", "", "Path to the JSON config file")
-		flag.Parse()
+	configFile := ""
+	if v, ok := os.LookupEnv("CONFIG"); v != "" && ok {
+		configFile = v
 	}
-
-	if *configFile == "" {
-		if v, ok := os.LookupEnv("CONFIG"); v != "" && ok {
-			configFile = &v
-		}
-	}
-
-	if *configFile != "" {
-		file, err := os.Open(*configFile)
-		if err != nil {
-			log.Fatalf("Error opening config file: %v", err)
-		}
-		defer file.Close()
-
-		decoder := json.NewDecoder(file)
-		if err := decoder.Decode(c); err != nil {
-			return fmt.Errorf("JSON: %s", err)
-		}
-	}
-
 	if v, ok := os.LookupEnv("ADDRESS"); v != "" && ok {
 		c.FlagSendAddr = v
 	}
@@ -91,6 +68,8 @@ func (c *Config) parseFlags() error {
 		c.CryptoKey = v
 	}
 
+	flag.StringVar(&configFile, "c", configFile, "Path to the JSON config file")
+	flag.StringVar(&configFile, "config", configFile, "Path to the JSON config file")
 	flag.StringVar(&c.CryptoKey, "crypto-key", c.CryptoKey, "path to the public key file")
 	flag.StringVar(&c.FlagSendAddr, "a", c.FlagSendAddr, "address and port to run server")
 	flag.IntVar(&c.ReportInterval, "r", c.ReportInterval, "reportInterval description")
@@ -103,6 +82,21 @@ func (c *Config) parseFlags() error {
 		flag.PrintDefaults()
 		return fmt.Errorf("%s", flag.Arg(0))
 	}
+
+	if configFile != "" {
+		file, err := os.Open(configFile)
+		if err != nil {
+			log.Fatalf("Error opening config file: %v", err)
+		}
+		defer file.Close()
+
+		decoder := json.NewDecoder(file)
+		if err := decoder.Decode(&c); err != nil {
+			log.Fatalf("Error decoding config file: %v", err)
+		}
+	}
+
+	flag.Parse()
 
 	log.Println("agent: " + c.shaKey)
 	log.Println("agent: " + c.FlagSendAddr)
