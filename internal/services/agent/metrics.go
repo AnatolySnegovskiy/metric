@@ -9,6 +9,7 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
@@ -90,19 +91,10 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 
 func encryptMessage(message []byte, publicKeyPath string) ([]byte, error) {
 	publicKeyData, err := os.ReadFile(publicKeyPath)
-	if err != nil {
-		return nil, err
-	}
+	block, _ := pem.Decode(publicKeyData)
+	publicKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	rsaPubKey, _ := publicKey.(*rsa.PublicKey)
+	encryptedMessage, err := rsa.EncryptPKCS1v15(rand.Reader, rsaPubKey, message)
 
-	publicKey, err := x509.ParsePKCS1PublicKey(publicKeyData)
-	if err != nil {
-		return nil, err
-	}
-
-	encryptedMessage, err := rsa.EncryptPKCS1v15(rand.Reader, publicKey, message)
-	if err != nil {
-		return nil, err
-	}
-
-	return encryptedMessage, nil
+	return encryptedMessage, err
 }

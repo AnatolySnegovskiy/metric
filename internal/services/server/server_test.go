@@ -5,10 +5,15 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/hmac"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
 	"encoding/json"
+	"encoding/pem"
 	"errors"
 	"fmt"
+	"log"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -54,6 +59,7 @@ func testHandler(t *testing.T, r chi.Router, method, path string, statusCode int
 	if rr.Code != statusCode {
 		t.Errorf("handler returned wrong status code: got %v want %v",
 			rr.Code, statusCode)
+		log.Println(rr.Body.String())
 	}
 
 	if response != "skip" && rr.Body.String() != response {
@@ -606,4 +612,140 @@ func TestUpMigrate(t *testing.T) {
 
 	conn, _ := pgx.Connect(context.Background(), os.Getenv("MIGRATE_TEST_CONN_STRING"))
 	assert.Nil(t, s.upMigrate(context.Background(), conn))
+}
+
+func TestDecryptMessageMiddleware(t *testing.T) {
+	headers := map[string]string{"Content-Type": "application/json"}
+	privateKey, publicKey := generateRSAKeys()
+	conf := getMockConf(t)
+	conf.EXPECT().GetCryptoKey().Return(privateKey).AnyTimes()
+	stg := storages.NewMemStorage()
+	stg.AddMetric("gauge", metrics.NewGauge(nil))
+	stg.AddMetric("counter", metrics.NewCounter(nil))
+
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+		conf:    conf,
+	}
+	r := chi.NewRouter()
+	r.Use(s.JSONContentTypeMiddleware, s.DecryptMessageMiddleware)
+	r.Post("/update", s.writePostMetricHandler)
+
+	body := []byte(`{"id":"test","type":"counter","delta":10}`)
+	body = encryptMessage(body, publicKey)
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+
+	conf = getMockConf(t)
+	conf.EXPECT().GetCryptoKey().Return("").AnyTimes()
+	s = &Server{
+		storage: stg,
+		logger:  slog.New(),
+		conf:    conf,
+	}
+
+	body = []byte(`{"id":"test","type":"counter","delta":10}`)
+	r = chi.NewRouter()
+	r.Use(s.JSONContentTypeMiddleware, s.DecryptMessageMiddleware)
+	r.Post("/update", s.writePostMetricHandler)
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+	os.Remove(privateKey)
+	os.Remove(publicKey)
+
+	conf = getMockConf(t)
+	conf.EXPECT().GetCryptoKey().Return(privateKey).AnyTimes()
+	s = &Server{
+		storage: stg,
+		logger:  slog.New(),
+		conf:    conf,
+	}
+
+	body = []byte(`{"id":"test","type":"counter","delta":10}`)
+	r = chi.NewRouter()
+	r.Use(s.JSONContentTypeMiddleware, s.DecryptMessageMiddleware)
+	r.Post("/update", s.writePostMetricHandler)
+	testHandler(t, r, http.MethodPost, "/update", http.StatusInternalServerError, "skip", body, headers)
+}
+
+func generateRSAKeys() (string, string) {
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		panic(err)
+	}
+
+	privateKeyFile, err := os.Create("private_key.pem")
+	if err != nil {
+		panic(err)
+	}
+
+	defer privateKeyFile.Close()
+	privateKeyPEM := &pem.Block{Type: "RSA PRIVATE KEY", Bytes: x509.MarshalPKCS1PrivateKey(privateKey)}
+	if err := pem.Encode(privateKeyFile, privateKeyPEM); err != nil {
+		panic(err)
+	}
+
+	publicKey := privateKey.PublicKey
+	publicKeyBytes, err := x509.MarshalPKIXPublicKey(&publicKey)
+	if err != nil {
+		panic(err)
+	}
+	publicKeyPEM := &pem.Block{Type: "PUBLIC KEY", Bytes: publicKeyBytes}
+	publicKeyFile, err := os.Create("public_key.pem")
+	if err != nil {
+		panic(err)
+	}
+	defer publicKeyFile.Close()
+	if err := pem.Encode(publicKeyFile, publicKeyPEM); err != nil {
+		panic(err)
+	}
+
+	privateKeyPath, _ := filepath.Abs(privateKeyFile.Name())
+	publicKeyPath, _ := filepath.Abs(publicKeyFile.Name())
+	return privateKeyPath, publicKeyPath
+}
+
+func encryptMessage(message []byte, publicKeyPath string) []byte {
+	publicKeyData, _ := os.ReadFile(publicKeyPath)
+	block, _ := pem.Decode(publicKeyData)
+	publicKey, _ := x509.ParsePKIXPublicKey(block.Bytes)
+	rsaPubKey, _ := publicKey.(*rsa.PublicKey)
+	encryptedMessage, _ := rsa.EncryptPKCS1v15(rand.Reader, rsaPubKey, message)
+
+	return encryptedMessage
+}
+
+func TestDecryptionFunction(t *testing.T) {
+	data := []byte{1, 2, 3, 4, 5}
+	privateKeyPath := "test_private_key.pem"
+	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	if err != nil {
+		t.Fatal("Failed to generate test private key")
+	}
+
+	privateKeyPEM := &pem.Block{
+		Type:  "RSA PRIVATE KEY",
+		Bytes: x509.MarshalPKCS1PrivateKey(privateKey),
+	}
+	privateKeyPEMBytes := pem.EncodeToMemory(privateKeyPEM)
+	err = os.WriteFile(privateKeyPath, privateKeyPEMBytes, 0644)
+	if err != nil {
+		t.Fatal("Failed to write test private key to file")
+	}
+
+	encryptedData, err := rsa.EncryptPKCS1v15(rand.Reader, &privateKey.PublicKey, data)
+	if err != nil {
+		t.Fatal("Failed to encrypt test data")
+	}
+
+	decryptedData, err := DecryptionFunction(encryptedData, privateKeyPath)
+
+	assert.NoError(t, err)
+	assert.Equal(t, data, decryptedData)
+
+	err = os.WriteFile(privateKeyPath, []byte(""), 0644)
+	if err != nil {
+		t.Fatal("Failed to clean up test private key file")
+	}
+
+	os.Remove(privateKeyPath)
 }

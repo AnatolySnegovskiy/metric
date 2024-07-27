@@ -8,6 +8,8 @@ import (
 	"crypto/rsa"
 	"crypto/sha256"
 	"crypto/x509"
+	"encoding/pem"
+	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -194,15 +196,11 @@ func (s *Server) DecryptMessageMiddleware(next http.Handler) http.Handler {
 			return
 		}
 
-		bodyData, err := io.ReadAll(r.Body)
-		if err != nil {
-			http.Error(w, "Failed to read request body", http.StatusInternalServerError)
-			return
-		}
-
+		bodyData, _ := io.ReadAll(r.Body)
 		decryptedBody, err := DecryptionFunction(bodyData, cryptoKey)
+
 		if err != nil {
-			http.Error(w, "Failed to decrypt message", http.StatusInternalServerError)
+			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
 
@@ -218,7 +216,12 @@ func DecryptionFunction(data []byte, privateKeyPath string) ([]byte, error) {
 		return nil, err
 	}
 
-	privateKey, err := x509.ParsePKCS1PrivateKey(privateKeyData)
+	block, _ := pem.Decode(privateKeyData)
+	if block == nil {
+		return nil, errors.New("failed to decode PEM block")
+	}
+
+	privateKey, err := x509.ParsePKCS1PrivateKey(block.Bytes)
 	if err != nil {
 		return nil, err
 	}
