@@ -1,6 +1,7 @@
 package server
 
 import (
+	"bou.ke/monkey"
 	"bytes"
 	"compress/gzip"
 	"context"
@@ -13,6 +14,7 @@ import (
 	"encoding/pem"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net/http"
 	"net/http/httptest"
@@ -742,16 +744,12 @@ func TestDecryptionFunction(t *testing.T) {
 	assert.NoError(t, err)
 	assert.Equal(t, data, decryptedData)
 
-	err = os.WriteFile(privateKeyPath, []byte(""), 0644)
-	if err != nil {
-		t.Fatal("Failed to clean up test private key file")
-	}
-
+	privateKeyPathFail := "test_private_key_fail.pem"
 	// Test with nil block
 	block := []byte("invalid PEM block")
-	_ = os.WriteFile(privateKeyPath, block, 0644)
+	_ = os.WriteFile(privateKeyPathFail, block, 0644)
 
-	_, err = DecryptionFunction(encryptedData, privateKeyPath)
+	_, err = DecryptionFunction(encryptedData, privateKeyPathFail)
 	assert.Error(t, err, "Expected error for invalid PEM block")
 
 	// Test with invalid private key format
@@ -761,10 +759,19 @@ func TestDecryptionFunction(t *testing.T) {
 		Bytes:   []byte("invalid private key format"),
 	}
 	privateKeyPEMBytes = pem.EncodeToMemory(pemBlock)
-	_ = os.WriteFile(privateKeyPath, privateKeyPEMBytes, 0644)
+	_ = os.WriteFile(privateKeyPathFail, privateKeyPEMBytes, 0644)
 
-	_, err = DecryptionFunction(encryptedData, privateKeyPath)
+	_, err = DecryptionFunction(encryptedData, privateKeyPathFail)
 	assert.Error(t, err, "Expected error for invalid private key format")
 
+	monkey.Patch(rsa.DecryptPKCS1v15, func(rand io.Reader, priv *rsa.PrivateKey, ciphertext []byte) ([]byte, error) {
+		return nil, errors.New("mocked error")
+	})
+	defer monkey.Unpatch(rsa.DecryptPKCS1v15)
+
+	_, err = DecryptionFunction(encryptedData, privateKeyPath)
+	assert.Error(t, err)
+
 	os.Remove(privateKeyPath)
+	os.Remove(privateKeyPathFail)
 }
