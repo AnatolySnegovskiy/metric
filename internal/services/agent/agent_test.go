@@ -167,6 +167,7 @@ func TestAgent(t *testing.T) {
 	}
 	ctrl := gomock.NewController(t)
 	privateKey, publicKey := generateRSAKeys()
+
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			httpClient := mocks.NewMockHTTPClient(ctrl)
@@ -181,6 +182,7 @@ func TestAgent(t *testing.T) {
 				reportInterval: 3,
 				maxRetries:     2,
 				shaKey:         "testKey",
+				cryptoKey:      publicKey,
 			}
 
 			ctx, cancel := context.WithTimeout(context.Background(), 7*time.Second)
@@ -301,7 +303,7 @@ func TestEncryptMessage(t *testing.T) {
 }
 
 func generateRSAKeys() (string, string) {
-	privateKey, err := rsa.GenerateKey(rand.Reader, 2048)
+	privateKey, err := rsa.GenerateKey(rand.Reader, 4096)
 	if err != nil {
 		panic(err)
 	}

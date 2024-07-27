@@ -49,9 +49,13 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 		}
 	}
 	body, _ := easyjson.Marshal(metricDtoCollection)
+	var buf bytes.Buffer
+	gw := gzip.NewWriter(&buf)
+	_, _ = gw.Write(body)
+	_ = gw.Close()
 
 	if a.cryptoKey != "" {
-		bodyEncrypted, err := encryptMessage(body, a.cryptoKey)
+		bodyEncrypted, err := encryptMessage(buf.Bytes(), a.cryptoKey)
 
 		if err != nil {
 			return err
@@ -60,13 +64,8 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 		body = bodyEncrypted
 	}
 
-	var buf bytes.Buffer
-	gw := gzip.NewWriter(&buf)
-	_, _ = gw.Write(body)
-	_ = gw.Close()
-
 	url := fmt.Sprintf("http://%s/updates/", a.sendAddr)
-	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Content-Type", "application/json")
 
