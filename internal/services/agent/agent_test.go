@@ -1,9 +1,15 @@
 package agent
 
 import (
+	"bou.ke/monkey"
 	"context"
+	"crypto/rsa"
+	"crypto/x509"
+	"encoding/pem"
 	"errors"
+	"io"
 	"net/http"
+	"os"
 	"testing"
 	"time"
 
@@ -210,5 +216,45 @@ func TestAgentReportTickerEmpty(t *testing.T) {
 		err := a.Run(ctx)
 
 		assert.Error(t, err)
+	})
+}
+
+func TestEncryptMessage(t *testing.T) {
+	mockPublicKeyData := []byte("mocked_public_key_data")
+	mockPublicKeyBlock := &pem.Block{Bytes: []byte("mocked_public_key_block")}
+	mockRSAPublicKey, _ := x509.ParsePKIXPublicKey([]byte("mocked_rsa_public_key"))
+	mockEncryptedMessage := []byte("mocked_encrypted_message")
+
+	// Mocking functions
+	monkey.Patch(os.ReadFile, func(filename string) ([]byte, error) {
+		return mockPublicKeyData, nil
+	})
+	monkey.Patch(pem.Decode, func(data []byte) (*pem.Block, []byte) {
+		return mockPublicKeyBlock, nil
+	})
+	monkey.Patch(x509.ParsePKIXPublicKey, func(data []byte) (interface{}, error) {
+		return mockRSAPublicKey, nil
+	})
+	monkey.Patch(rsa.EncryptPKCS1v15, func(rand io.Reader, pub *rsa.PublicKey, msg []byte) ([]byte, error) {
+		return mockEncryptedMessage, nil
+	})
+	defer monkey.UnpatchAll()
+
+	// Test cases
+	t.Run("Successful Encryption", func(t *testing.T) {
+		encryptedMessage, err := encryptMessage([]byte("test_message"), "mocked_public_key_path")
+		assert.NoError(t, err)
+		assert.Equal(t, mockEncryptedMessage, encryptedMessage)
+	})
+
+	t.Run("Error Reading Public Key File", func(t *testing.T) {
+		monkey.Patch(os.ReadFile, func(filename string) ([]byte, error) {
+			return nil, errors.New("mocked read file error")
+		})
+		defer monkey.Unpatch(os.ReadFile)
+
+		encryptedMessage, err := encryptMessage([]byte("test_message"), "invalid_public_key_path")
+		assert.Error(t, err)
+		assert.Nil(t, encryptedMessage)
 	})
 }
