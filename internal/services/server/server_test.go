@@ -747,5 +747,21 @@ func TestDecryptionFunction(t *testing.T) {
 		t.Fatal("Failed to clean up test private key file")
 	}
 
+	// Test with nil block
+	block := []byte("invalid PEM block")
+	err = os.WriteFile(privateKeyPath, block, 0644)
+	if err != nil {
+		t.Fatal("Failed to write invalid PEM block to file")
+	}
+
+	_, err = DecryptionFunction(encryptedData, privateKeyPath)
+	assert.Error(t, err, "Expected error for invalid PEM block")
+
+	// Clean up test private key file
+	err = os.WriteFile(privateKeyPath, []byte(""), 0644)
+	if err != nil {
+		t.Fatal("Failed to clean up test private key file")
+	}
+
 	os.Remove(privateKeyPath)
 }
