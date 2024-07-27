@@ -1,6 +1,7 @@
 package main
 
 import (
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -9,25 +10,25 @@ import (
 )
 
 type Config struct {
-	serverAddress   string
-	storeInterval   int
-	fileStoragePath string
-	restore         bool
-	dataBaseDSN     string
+	ServerAddress   string `json:"address"`
+	StoreInterval   int    `json:"store_interval"`
+	FileStoragePath string `json:"store_file"`
+	Restore         bool   `json:"restore"`
+	DataBaseDSN     string `json:"database_dsn"`
 	shaKey          string
 	migrationsDir   string
-	cryptoKey       string
+	CryptoKey       string `json:"crypto_key"`
 }
 
 func NewConfig() (*Config, error) {
 	c := &Config{
-		serverAddress:   "localhost:8080",
-		storeInterval:   300,
-		fileStoragePath: "/tmp/metrics-db.json",
-		restore:         true,
-		dataBaseDSN:     "postgres://postgres:root@localhost:5432",
+		ServerAddress:   "localhost:8080",
+		StoreInterval:   300,
+		FileStoragePath: "/tmp/metrics-db.json",
+		Restore:         true,
+		DataBaseDSN:     "postgres://postgres:root@localhost:5432",
 		shaKey:          "",
-		cryptoKey:       "",
+		CryptoKey:       "",
 	}
 
 	projectDir, _ := os.Getwd()
@@ -41,29 +42,56 @@ func NewConfig() (*Config, error) {
 }
 
 func (c *Config) parseFlags() error {
+	configFile := flag.String("c", "", "Path to the JSON config file")
+	flag.Parse()
+
+	if *configFile == "" {
+		configFile = flag.String("config", "", "Path to the JSON config file")
+		flag.Parse()
+	}
+
+	if *configFile == "" {
+		if v, ok := os.LookupEnv("CONFIG"); v != "" && ok {
+			configFile = &v
+		}
+	}
+
+	if *configFile != "" {
+		file, err := os.Open(*configFile)
+		if err != nil {
+			log.Fatalf("Error opening config file: %v", err)
+		}
+		defer file.Close()
+
+		decoder := json.NewDecoder(file)
+		if err := decoder.Decode(&c); err != nil {
+			log.Fatalf("Error decoding config file: %v", err)
+		}
+	}
+
 	if v, ok := os.LookupEnv("ADDRESS"); v != "" && ok {
-		c.serverAddress = v
+		c.ServerAddress = v
 	}
 
 	var err error
 	if v, ok := os.LookupEnv("STORE_INTERVAL"); v != "" && ok {
-		if c.storeInterval, err = strconv.Atoi(v); err != nil {
+		if c.StoreInterval, err = strconv.Atoi(v); err != nil {
 			return fmt.Errorf("ENV STORE_INTERVAL: %s", err)
 		}
 	}
 
 	if v, ok := os.LookupEnv("FILE_STORAGE_PATH"); v != "" && ok {
-		c.fileStoragePath = v
+		c.FileStoragePath = v
 	}
 
 	if v, ok := os.LookupEnv("RESTORE"); v != "" && ok {
-		if c.restore, err = strconv.ParseBool(v); err != nil {
+		if c.Restore, err = strconv.ParseBool(v); err != nil {
 			return fmt.Errorf("ENV RESTORE: %s", err)
 		}
 	}
 
 	if v, ok := os.LookupEnv("DATABASE_DSN"); v != "" && ok {
-		c.dataBaseDSN = v
+		c.DataBaseDSN = v
 	}
 
 	if v, ok := os.LookupEnv("KEY"); v != "" && ok {
@@ -71,16 +99,16 @@ func (c *Config) parseFlags() error {
 	}
 
 	if v, ok := os.LookupEnv("CRYPTO_KEY"); v != "" && ok {
-		c.cryptoKey = v
+		c.CryptoKey = v
 	}
 
-	flag.StringVar(&c.serverAddress, "a", c.serverAddress, "address and port to run server")
-	flag.IntVar(&c.storeInterval, "i", c.storeInterval, "storeInterval")
-	flag.StringVar(&c.fileStoragePath, "f", c.fileStoragePath, "fileStoragePath")
-	flag.BoolVar(&c.restore, "r", c.restore, "restore")
-	flag.StringVar(&c.dataBaseDSN, "d", c.dataBaseDSN, "databaseDSN")
+	flag.StringVar(&c.ServerAddress, "a", c.ServerAddress, "address and port to run server")
+	flag.IntVar(&c.StoreInterval, "i", c.StoreInterval, "storeInterval")
+	flag.StringVar(&c.FileStoragePath, "f", c.FileStoragePath, "fileStoragePath")
+	flag.BoolVar(&c.Restore, "r", c.Restore, "restore")
+	flag.StringVar(&c.DataBaseDSN, "d", c.DataBaseDSN, "databaseDSN")
 	flag.StringVar(&c.shaKey, "k", c.shaKey, "shaKey")
-	flag.StringVar(&c.cryptoKey, "crypto-key", c.cryptoKey, "path to the private key file")
+	flag.StringVar(&c.CryptoKey, "crypto-key", c.CryptoKey, "path to the private key file")
 
 	flag.Parse()
 
@@ -90,33 +118,33 @@ func (c *Config) parseFlags() error {
 		return fmt.Errorf("%s", flag.Arg(0))
 	}
 	log.Println("server: " + c.shaKey)
-	log.Println("server: " + c.dataBaseDSN)
-	log.Println("server: " + c.fileStoragePath)
-	log.Println("server: " + c.serverAddress)
-	log.Println("server: " + strconv.Itoa(c.storeInterval))
-	log.Println("server: " + strconv.FormatBool(c.restore))
+	log.Println("server: " + c.DataBaseDSN)
+	log.Println("server: " + c.FileStoragePath)
+	log.Println("server: " + c.ServerAddress)
+	log.Println("server: " + strconv.Itoa(c.StoreInterval))
+	log.Println("server: " + strconv.FormatBool(c.Restore))
 
 	return nil
 }
 
 func (c *Config) GetServerAddress() string {
-	return c.serverAddress
+	return c.ServerAddress
 }
 
 func (c *Config) GetStoreInterval() int {
-	return c.storeInterval
+	return c.StoreInterval
 }
 
 func (c *Config) GetFileStoragePath() string {
-	return c.fileStoragePath
+	return c.FileStoragePath
 }
 
 func (c *Config) GetRestore() bool {
-	return c.restore
+	return c.Restore
 }
 
 func (c *Config) GetDataBaseDSN() string {
-	return c.dataBaseDSN
+	return c.DataBaseDSN
 }
 
 func (c *Config) GetShaKey() string {
@@ -128,5 +156,5 @@ func (c *Config) GetMigrationsDir() string {
 }
 
 func (c *Config) GetCryptoKey() string {
-	return c.cryptoKey
+	return c.CryptoKey
 }

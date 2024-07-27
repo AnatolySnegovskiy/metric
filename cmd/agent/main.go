@@ -52,12 +52,12 @@ func main() {
 			agent.Options{
 				Storage:        s,
 				Client:         &http.Client{},
-				PollInterval:   c.pollInterval,
-				ReportInterval: c.reportInterval,
-				SendAddr:       c.flagSendAddr,
+				PollInterval:   c.PollInterval,
+				ReportInterval: c.ReportInterval,
+				SendAddr:       c.FlagSendAddr,
 				MaxRetries:     c.maxRetries,
 				ShaKey:         c.shaKey,
-				CryptoKey:      c.cryptoKey,
+				CryptoKey:      c.CryptoKey,
 			},
 		).Run(context.Background()))
 }
