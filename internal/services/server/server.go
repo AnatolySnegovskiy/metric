@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -40,6 +41,8 @@ type Config interface {
 	GetMigrationsDir() string
 	// GetCryptoKey returns the path to the private key file.
 	GetCryptoKey() string
+	// GetTrustedSubnet returns the trusted subnet.
+	GetTrustedSubnet() net.IPNet
 }
 
 // Server represents the main server struct.
