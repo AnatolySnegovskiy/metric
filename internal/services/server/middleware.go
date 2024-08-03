@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"strings"
@@ -206,6 +207,24 @@ func (s *Server) DecryptMessageMiddleware(next http.Handler) http.Handler {
 
 		r.Body = io.NopCloser(bytes.NewBuffer(decryptedBody))
 		next.ServeHTTP(w, r)
+	})
+}
+
+func (s *Server) TrustedSubnetMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		agentIP := r.Header.Get("X-Real-IP")
+		subNet := s.conf.GetTrustedSubnet()
+
+		if subNet == nil {
+			next.ServeHTTP(w, r)
+			return
+		}
+
+		if subNet.Contains(net.ParseIP(agentIP)) {
+			next.ServeHTTP(w, r)
+		} else {
+			http.Error(w, "Forbidden", http.StatusForbidden)
+		}
 	})
 }
 

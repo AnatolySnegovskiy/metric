@@ -17,8 +17,8 @@ type Config struct {
 	DataBaseDSN     string `json:"database_dsn"`
 	shaKey          string
 	migrationsDir   string
-	CryptoKey       string    `json:"crypto_key"`
-	TrustedSubnet   net.IPNet `json:"trusted_subnet"`
+	CryptoKey       string     `json:"crypto_key"`
+	TrustedSubnet   *net.IPNet `json:"trusted_subnet"`
 }
 
 func NewConfig() (*Config, error) {
@@ -182,7 +182,7 @@ func (c *Config) parseTrustedSubnet(ip string) error {
 		return err
 	}
 
-	c.TrustedSubnet = *trustedSubnet
+	c.TrustedSubnet = trustedSubnet
 	return nil
 }
 
@@ -218,6 +218,6 @@ func (c *Config) GetCryptoKey() string {
 	return c.CryptoKey
 }
 
-func (c *Config) GetTrustedSubnet() net.IPNet {
+func (c *Config) GetTrustedSubnet() *net.IPNet {
 	return c.TrustedSubnet
 }

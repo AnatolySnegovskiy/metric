@@ -152,10 +152,10 @@ func (mr *MockConfigMockRecorder) GetStoreInterval() *gomock.Call {
 }
 
 // GetTrustedSubnet mocks base method.
-func (m *MockConfig) GetTrustedSubnet() net.IPNet {
+func (m *MockConfig) GetTrustedSubnet() *net.IPNet {
 	m.ctrl.T.Helper()
 	ret := m.ctrl.Call(m, "GetTrustedSubnet")
-	ret0, _ := ret[0].(net.IPNet)
+	ret0, _ := ret[0].(*net.IPNet)
 	return ret0
 }
 

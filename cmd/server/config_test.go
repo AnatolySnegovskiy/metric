@@ -125,7 +125,7 @@ func TestNewConfig(t *testing.T) {
 		config, err := NewConfig()
 		assert.NoError(t, err)
 		_, trustedSubnet, _ := net.ParseCIDR("127.0.0.1/24")
-		assert.Equal(t, *trustedSubnet, config.GetTrustedSubnet(), "expected restore to be false")
+		assert.Equal(t, trustedSubnet, config.GetTrustedSubnet(), "expected restore to be false")
 	})
 
 	t.Run("ENV_TRUSTED_SUBNET_ERROR", func(t *testing.T) {
@@ -214,7 +214,7 @@ func TestNewConfig(t *testing.T) {
 		config, err := NewConfig()
 		assert.NoError(t, err)
 		_, trustedSubnet, _ := net.ParseCIDR("128.0.0.0/24")
-		assert.Equal(t, *trustedSubnet, config.GetTrustedSubnet(), "expected restore to be false")
+		assert.Equal(t, trustedSubnet, config.GetTrustedSubnet(), "expected restore to be false")
 	})
 
 	t.Run("CMD_TRUSTED_SUBNET_ERROR", func(t *testing.T) {
