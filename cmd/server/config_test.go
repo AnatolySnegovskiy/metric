@@ -294,6 +294,15 @@ func TestNewConfig(t *testing.T) {
 		_, err = NewConfig()
 		assert.Error(t, err)
 	})
+
+	t.Run("getMigrationDir", func(t *testing.T) {
+		resetVars()
+		conf, err := NewConfig()
+		assert.NoError(t, err)
+		projectDir, _ := os.Getwd()
+		dir := projectDir + "/internal/storages/migrations"
+		assert.Equal(t, dir, conf.GetMigrationsDir(), "expected default migration dir")
+	})
 }
 
 func resetVars() {
