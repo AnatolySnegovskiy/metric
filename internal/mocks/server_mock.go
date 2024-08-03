@@ -10,6 +10,7 @@
 package mocks
 
 import (
+	net "net"
 	reflect "reflect"
 
 	gomock "go.uber.org/mock/gomock"
@@ -148,4 +149,18 @@ func (m *MockConfig) GetStoreInterval() int {
 func (mr *MockConfigMockRecorder) GetStoreInterval() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetStoreInterval", reflect.TypeOf((*MockConfig)(nil).GetStoreInterval))
+}
+
+// GetTrustedSubnet mocks base method.
+func (m *MockConfig) GetTrustedSubnet() net.IPNet {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetTrustedSubnet")
+	ret0, _ := ret[0].(net.IPNet)
+	return ret0
+}
+
+// GetTrustedSubnet indicates an expected call of GetTrustedSubnet.
+func (mr *MockConfigMockRecorder) GetTrustedSubnet() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetTrustedSubnet", reflect.TypeOf((*MockConfig)(nil).GetTrustedSubnet))
 }
