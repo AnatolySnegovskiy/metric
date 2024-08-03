@@ -3,6 +3,7 @@ package server
 import (
 	"context"
 	"encoding/json"
+	"net"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -40,6 +41,8 @@ type Config interface {
 	GetMigrationsDir() string
 	// GetCryptoKey returns the path to the private key file.
 	GetCryptoKey() string
+	// GetTrustedSubnet returns the trusted subnet.
+	GetTrustedSubnet() *net.IPNet
 }
 
 // Server represents the main server struct.
@@ -85,7 +88,7 @@ func (s *Server) setupRoutes() {
 
 	// Note: The router uses JSONContentTypeMiddleware for handling JSON content type in POST requests.
 
-	s.router.Use(s.hashCheckMiddleware, s.DecryptMessageMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware, s.logMiddleware, s.hashResponseMiddleware)
+	s.router.Use(s.TrustedSubnetMiddleware, s.hashCheckMiddleware, s.DecryptMessageMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware, s.logMiddleware, s.hashResponseMiddleware)
 	s.router.NotFound(s.notFoundHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/updates/", s.writeMassPostMetricHandler)

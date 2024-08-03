@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -537,6 +538,33 @@ func TestHashMiddleware(t *testing.T) {
 	r.Post("/update", s.writePostMetricHandler)
 	headers = map[string]string{"Content-Type": "application/json"}
 	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+}
+
+func TestTrustedSubnetMiddleware(t *testing.T) {
+	_, trustedSubnet, _ := net.ParseCIDR("127.0.0.1/32")
+	conf := getMockConf(t)
+	conf.EXPECT().GetTrustedSubnet().Return(trustedSubnet).AnyTimes()
+	stg := storages.NewMemStorage()
+	stg.AddMetric("gauge", metrics.NewGauge(nil))
+	stg.AddMetric("counter", metrics.NewCounter(nil))
+
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+		conf:    conf,
+	}
+	r := chi.NewRouter()
+	r.Use(s.TrustedSubnetMiddleware, s.JSONContentTypeMiddleware)
+	r.Post("/update", s.writePostMetricHandler)
+
+	body := []byte(`{"id":"test","type":"counter","delta":10}`)
+	hash := hmac.New(sha256.New, []byte("secret"))
+	hash.Write(body)
+	headers := map[string]string{"Content-Type": "application/json", "X-Real-IP": "127.0.0.1"}
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+
+	headers = map[string]string{"Content-Type": "application/json", "X-Real-IP": "255.123.0.1"}
+	testHandler(t, r, http.MethodPost, "/update", http.StatusForbidden, "skip", body, headers)
 }
 
 func getMockConf(t *testing.T) *mocks.MockConfig {

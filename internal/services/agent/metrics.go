@@ -69,6 +69,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Real-IP", "127.0.0.1")
 
 	if a.shaKey != "" {
 		hash := hmac.New(sha256.New, []byte(a.shaKey))

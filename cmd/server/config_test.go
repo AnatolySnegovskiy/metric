@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"net"
 	"os"
 	"testing"
 
@@ -118,6 +119,22 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, "test", config.GetCryptoKey(), "expected default crypto key")
 	})
 
+	t.Run("ENV_TRUSTED_SUBNET", func(t *testing.T) {
+		resetVars()
+		_ = os.Setenv("TRUSTED_SUBNET", "127.0.0.1/24")
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		_, trustedSubnet, _ := net.ParseCIDR("127.0.0.1/24")
+		assert.Equal(t, trustedSubnet, config.GetTrustedSubnet(), "expected restore to be false")
+	})
+
+	t.Run("ENV_TRUSTED_SUBNET_ERROR", func(t *testing.T) {
+		resetVars()
+		_ = os.Setenv("TRUSTED_SUBNET", "127.0")
+		_, err := NewConfig()
+		assert.Error(t, err)
+	})
+
 	t.Run("ENV_CONFIG_FILE", func(t *testing.T) {
 		_ = os.WriteFile(
 			"config.json",
@@ -127,7 +144,8 @@ func TestNewConfig(t *testing.T) {
 				"store_interval": 1,
 				"store_file": "/path/to/file.db",
 				"database_dsn": "",
-				"crypto_key": "/path/to/key.pem"
+				"crypto_key": "/path/to/key.pem",
+				"trusted_subnet": ""
 			}`), 0644)
 		resetVars()
 		_ = os.Setenv("CONFIG", "config.json")
@@ -190,6 +208,22 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, "1234", config.GetCryptoKey(), "expected restore to be false")
 	})
 
+	t.Run("CMD_TRUSTED_SUBNET", func(t *testing.T) {
+		resetVars()
+		os.Args = []string{"cmd", "-t=128.0.0.0/24"}
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		_, trustedSubnet, _ := net.ParseCIDR("128.0.0.0/24")
+		assert.Equal(t, trustedSubnet, config.GetTrustedSubnet(), "expected restore to be false")
+	})
+
+	t.Run("CMD_TRUSTED_SUBNET_ERROR", func(t *testing.T) {
+		resetVars()
+		os.Args = []string{"cmd", "-t=1284"}
+		_, err := NewConfig()
+		assert.Error(t, err)
+	})
+
 	t.Run("CMD_CONFIG_FILE", func(t *testing.T) {
 		_ = os.WriteFile(
 			"config.json",
@@ -199,7 +233,8 @@ func TestNewConfig(t *testing.T) {
 				"store_interval": 1,
 				"store_file": "/path/to/file.db",
 				"database_dsn": "",
-				"crypto_key": "/path/to/key.pem"
+				"crypto_key": "/path/to/key.pem",
+				"trusted_subnet": "128.0.0.0/24"
 			}`), 0644)
 		resetVars()
 		os.Args = []string{"cmd", "-c=config.json"}
@@ -245,8 +280,7 @@ func TestNewConfig(t *testing.T) {
 				"restore": true,
 				"store_interval": 1,
 				"store_file": "/path/to/file.db",
-				"database_dsn": "",
-				"crypto_key": "/path/to/key.pem"
+				"database_dsn": ""
 			`), 0644)
 		resetVars()
 		os.Args = []string{"cmd", "-c=config.json"}
@@ -259,6 +293,15 @@ func TestNewConfig(t *testing.T) {
 		os.Args = []string{"cmd", "-c=config.json"}
 		_, err = NewConfig()
 		assert.Error(t, err)
+	})
+
+	t.Run("getMigrationDir", func(t *testing.T) {
+		resetVars()
+		conf, err := NewConfig()
+		assert.NoError(t, err)
+		projectDir, _ := os.Getwd()
+		dir := projectDir + "/internal/storages/migrations"
+		assert.Equal(t, dir, conf.GetMigrationsDir(), "expected default migration dir")
 	})
 }
 
