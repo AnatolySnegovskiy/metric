@@ -19,12 +19,12 @@ func TestNewConfig(t *testing.T) {
 		_ = os.Setenv("CRYPTO_KEY", "test")
 		config, err := NewConfig()
 		assert.NoError(t, err)
-		assert.Equal(t, "127.0.0.1:8080", config.flagSendAddr, "expected default address")
-		assert.Equal(t, 20, config.reportInterval, "expected default report interval")
-		assert.Equal(t, 5, config.pollInterval, "expected default poll interval")
+		assert.Equal(t, "127.0.0.1:8080", config.FlagSendAddr, "expected default address")
+		assert.Equal(t, 20, config.ReportInterval, "expected default report interval")
+		assert.Equal(t, 5, config.PollInterval, "expected default poll interval")
 		assert.Equal(t, "test", config.shaKey, "expected default poll interval")
 		assert.Equal(t, 222, config.maxRetries, "expected default poll interval")
-		assert.Equal(t, "test", config.cryptoKey, "expected default poll interval")
+		assert.Equal(t, "test", config.CryptoKey, "expected default poll interval")
 	})
 
 	t.Run("ENV_EMPTY", func(t *testing.T) {
@@ -37,12 +37,12 @@ func TestNewConfig(t *testing.T) {
 		_ = os.Setenv("CRYPTO_KEY", "")
 		config, err := NewConfig()
 		assert.NoError(t, err)
-		assert.Equal(t, "localhost:8080", config.flagSendAddr, "expected default address")
-		assert.Equal(t, 10, config.reportInterval, "expected default report interval")
-		assert.Equal(t, 2, config.pollInterval, "expected default poll interval")
+		assert.Equal(t, "localhost:8080", config.FlagSendAddr, "expected default address")
+		assert.Equal(t, 10, config.ReportInterval, "expected default report interval")
+		assert.Equal(t, 2, config.PollInterval, "expected default poll interval")
 		assert.Equal(t, "", config.shaKey, "expected default poll interval")
 		assert.Equal(t, 5, config.maxRetries, "expected default poll interval")
-		assert.Equal(t, "", config.cryptoKey, "expected default poll interval")
+		assert.Equal(t, "", config.CryptoKey, "expected default poll interval")
 	})
 
 	t.Run("ENV_ERROR_REPORT_INTERVAL", func(t *testing.T) {
@@ -77,12 +77,12 @@ func TestNewConfig(t *testing.T) {
 		os.Args = []string{"cmd", "-a=127.0.10.1:8080", "-r=15", "-p=66", "-k=1234", "-i=10", "-crypto-key=1234"}
 		config, err := NewConfig()
 		assert.NoError(t, err)
-		assert.Equal(t, "127.0.10.1:8080", config.flagSendAddr, "expected default address")
-		assert.Equal(t, 15, config.reportInterval, "expected default report interval")
-		assert.Equal(t, 66, config.pollInterval, "expected default poll interval")
+		assert.Equal(t, "127.0.10.1:8080", config.FlagSendAddr, "expected default address")
+		assert.Equal(t, 15, config.ReportInterval, "expected default report interval")
+		assert.Equal(t, 66, config.PollInterval, "expected default poll interval")
 		assert.Equal(t, "1234", config.shaKey, "expected default poll interval")
 		assert.Equal(t, 10, config.maxRetries, "expected default poll interval")
-		assert.Equal(t, "1234", config.cryptoKey, "expected default poll interval")
+		assert.Equal(t, "1234", config.CryptoKey, "expected default poll interval")
 	})
 
 	t.Run("CMD_OVERRIDE_ENV", func(t *testing.T) {
@@ -97,12 +97,12 @@ func TestNewConfig(t *testing.T) {
 		os.Args = []string{"cmd", "-a=127.21.10.1:8080", "-r=100", "-p=500", "-k=key", "-i=25", "-crypto-key=123111"}
 		config, err := NewConfig()
 		assert.NoError(t, err)
-		assert.Equal(t, "127.21.10.1:8080", config.flagSendAddr, "expected default address")
-		assert.Equal(t, 100, config.reportInterval, "expected default report interval")
-		assert.Equal(t, 500, config.pollInterval, "expected default poll interval")
+		assert.Equal(t, "127.21.10.1:8080", config.FlagSendAddr, "expected default address")
+		assert.Equal(t, 100, config.ReportInterval, "expected default report interval")
+		assert.Equal(t, 500, config.PollInterval, "expected default poll interval")
 		assert.Equal(t, "key", config.shaKey, "expected default poll interval")
 		assert.Equal(t, 25, config.maxRetries, "expected default poll interval")
-		assert.Equal(t, "123111", config.cryptoKey, "expected default poll interval")
+		assert.Equal(t, "123111", config.CryptoKey, "expected default poll interval")
 	})
 
 	t.Run("CMD_ERROR_FLAG", func(t *testing.T) {
@@ -130,11 +130,57 @@ func TestNewConfig(t *testing.T) {
 		resetVars()
 		config, err := NewConfig()
 		assert.NoError(t, err)
-		assert.Equal(t, "localhost:8080", config.flagSendAddr, "expected default address")
-		assert.Equal(t, 10, config.reportInterval, "expected default report interval")
-		assert.Equal(t, 2, config.pollInterval, "expected default poll interval")
+		assert.Equal(t, "localhost:8080", config.FlagSendAddr, "expected default address")
+		assert.Equal(t, 10, config.ReportInterval, "expected default report interval")
+		assert.Equal(t, 2, config.PollInterval, "expected default poll interval")
 		assert.Equal(t, "", config.shaKey, "expected default poll interval")
 		assert.Equal(t, 5, config.maxRetries, "expected default poll interval")
+	})
+
+	t.Run("ENV_FILE_PATH", func(t *testing.T) {
+		_ = os.WriteFile("config.json", []byte(`{
+			"address": "localhost:8080",
+			"report_interval":1,
+			"poll_interval": 1,
+			"crypto_key": "/path/to/key.pem"
+		}`), 0644)
+
+		resetVars()
+		_ = os.Setenv("CONFIG", "config.json")
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "localhost:8080", config.FlagSendAddr, "expected default address")
+		assert.Equal(t, 1, config.ReportInterval, "expected default report interval")
+		assert.Equal(t, 1, config.PollInterval, "expected default poll interval")
+		assert.Equal(t, "/path/to/key.pem", config.CryptoKey, "expected default poll interval")
+		_ = os.Remove("config.json")
+	})
+
+	t.Run("CMD_FILE_PATH_ERROR", func(t *testing.T) {
+		_ = os.WriteFile("config.json", []byte(`{
+			"address": "localhost:8080",
+			"report_interval":1,
+			"poll_interval": 1,
+			"crypto_key": "/path/to/key.pem"
+		}`), 0644)
+		resetVars()
+		os.Args = []string{"cmd", "-c=config.json"}
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "localhost:8080", config.FlagSendAddr, "expected default address")
+		assert.Equal(t, 1, config.ReportInterval, "expected default report interval")
+		assert.Equal(t, 1, config.PollInterval, "expected default poll interval")
+		assert.Equal(t, "/path/to/key.pem", config.CryptoKey, "expected default poll interval")
+
+		resetVars()
+		os.Args = []string{"cmd", "-a=127.0.10.1:8080", "-config=config.json"}
+		config, err = NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "127.0.10.1:8080", config.FlagSendAddr, "expected default address")
+		assert.Equal(t, 1, config.ReportInterval, "expected default report interval")
+		assert.Equal(t, 1, config.PollInterval, "expected default poll interval")
+		assert.Equal(t, "/path/to/key.pem", config.CryptoKey, "expected default poll interval")
+		_ = os.Remove("config.json")
 	})
 }
 

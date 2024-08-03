@@ -118,6 +118,30 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, "test", config.GetCryptoKey(), "expected default crypto key")
 	})
 
+	t.Run("ENV_CONFIG_FILE", func(t *testing.T) {
+		_ = os.WriteFile(
+			"config.json",
+			[]byte(`{
+				"address": "localhost:8080",
+				"restore": true,
+				"store_interval": 1,
+				"store_file": "/path/to/file.db",
+				"database_dsn": "",
+				"crypto_key": "/path/to/key.pem"
+			}`), 0644)
+		resetVars()
+		_ = os.Setenv("CONFIG", "config.json")
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "localhost:8080", config.GetServerAddress(), "expected default address")
+		assert.Equal(t, true, config.GetRestore(), "expected restore to be true")
+		assert.Equal(t, 1, config.GetStoreInterval(), "expected default store interval")
+		assert.Equal(t, "/path/to/file.db", config.GetFileStoragePath(), "expected default file storage path")
+		assert.Equal(t, "", config.GetDataBaseDSN(), "expected default database DSN")
+		assert.Equal(t, "/path/to/key.pem", config.GetCryptoKey(), "expected default crypto key")
+		os.Remove("config.json")
+	})
+
 	t.Run("CMD_STORE_INTERVAL", func(t *testing.T) {
 		resetVars()
 		os.Args = []string{"cmd", "-i=600"}
@@ -164,6 +188,53 @@ func TestNewConfig(t *testing.T) {
 		config, err := NewConfig()
 		assert.NoError(t, err)
 		assert.Equal(t, "1234", config.GetCryptoKey(), "expected restore to be false")
+	})
+
+	t.Run("CMD_CONFIG_FILE", func(t *testing.T) {
+		_ = os.WriteFile(
+			"config.json",
+			[]byte(`{
+				"address": "localhost:8080",
+				"restore": true,
+				"store_interval": 1,
+				"store_file": "/path/to/file.db",
+				"database_dsn": "",
+				"crypto_key": "/path/to/key.pem"
+			}`), 0644)
+		resetVars()
+		os.Args = []string{"cmd", "-c=config.json"}
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "localhost:8080", config.GetServerAddress(), "expected restore to be false")
+		assert.Equal(t, true, config.GetRestore(), "expected restore to be false")
+		assert.Equal(t, 1, config.GetStoreInterval(), "expected restore to be false")
+		assert.Equal(t, "/path/to/file.db", config.GetFileStoragePath(), "expected restore to be false")
+		assert.Equal(t, "", config.GetDataBaseDSN(), "expected restore to be false")
+		assert.Equal(t, "/path/to/key.pem", config.GetCryptoKey(), "expected restore to be false")
+		_ = os.Remove("config.json")
+
+		_ = os.WriteFile(
+			"config2.json",
+			[]byte(`{
+				"address": "localhost:1234",
+				"restore": false,
+				"store_interval": 10,
+				"store_file": "/path/to/file2.db",
+				"database_dsn": "123111",
+				"crypto_key": "/path/to/key2.pem"
+			}`), 0644)
+
+		resetVars()
+		os.Args = []string{"cmd", "-a=localhost:1111", "-config=config2.json"}
+		config, err = NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "localhost:1111", config.GetServerAddress(), "expected restore to be false")
+		assert.Equal(t, false, config.GetRestore(), "expected restore to be false")
+		assert.Equal(t, 10, config.GetStoreInterval(), "expected restore to be false")
+		assert.Equal(t, "/path/to/file2.db", config.GetFileStoragePath(), "expected restore to be false")
+		assert.Equal(t, "123111", config.GetDataBaseDSN(), "expected restore to be false")
+		assert.Equal(t, "/path/to/key2.pem", config.GetCryptoKey(), "expected restore to be false")
+		_ = os.Remove("config2.json")
 	})
 }
 
