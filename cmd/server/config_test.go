@@ -217,6 +217,13 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, *trustedSubnet, config.GetTrustedSubnet(), "expected restore to be false")
 	})
 
+	t.Run("CMD_TRUSTED_SUBNET_ERROR", func(t *testing.T) {
+		resetVars()
+		os.Args = []string{"cmd", "-t=1284"}
+		_, err := NewConfig()
+		assert.Error(t, err)
+	})
+
 	t.Run("CMD_CONFIG_FILE", func(t *testing.T) {
 		_ = os.WriteFile(
 			"config.json",
