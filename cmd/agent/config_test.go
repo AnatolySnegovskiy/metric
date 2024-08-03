@@ -182,6 +182,30 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, "/path/to/key.pem", config.CryptoKey, "expected default poll interval")
 		_ = os.Remove("config.json")
 	})
+
+	t.Run("FILE_ERROR", func(t *testing.T) {
+		_ = os.WriteFile(
+			"config.json",
+			[]byte(`
+				"address": "localhost:8080",
+				"restore": true,
+				"store_interval": 1,
+				"store_file": "/path/to/file.db",
+				"database_dsn": "",
+				"crypto_key": "/path/to/key.pem"
+			`), 0644)
+		resetVars()
+		os.Args = []string{"cmd", "-c=config.json"}
+		_, err := NewConfig()
+		assert.Error(t, err)
+
+		_ = os.Remove("config.json")
+
+		resetVars()
+		os.Args = []string{"cmd", "-c=config.json"}
+		_, err = NewConfig()
+		assert.Error(t, err)
+	})
 }
 
 func resetVars() {
