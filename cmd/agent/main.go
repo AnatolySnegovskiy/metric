@@ -57,6 +57,7 @@ func main() {
 				SendAddr:       c.flagSendAddr,
 				MaxRetries:     c.maxRetries,
 				ShaKey:         c.shaKey,
+				CryptoKey:      c.cryptoKey,
 			},
 		).Run(context.Background()))
 }

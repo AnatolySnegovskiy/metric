@@ -110,6 +110,14 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, "test", config.GetShaKey(), "expected default sha key")
 	})
 
+	t.Run("ENV_CRYPTO_KEY", func(t *testing.T) {
+		resetVars()
+		_ = os.Setenv("CRYPTO_KEY", "test")
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "test", config.GetCryptoKey(), "expected default crypto key")
+	})
+
 	t.Run("CMD_STORE_INTERVAL", func(t *testing.T) {
 		resetVars()
 		os.Args = []string{"cmd", "-i=600"}
@@ -148,6 +156,14 @@ func TestNewConfig(t *testing.T) {
 		config, err := NewConfig()
 		assert.NoError(t, err)
 		assert.Equal(t, "1234", config.GetShaKey(), "expected restore to be false")
+	})
+
+	t.Run("CMD_CRYPTO_KEY", func(t *testing.T) {
+		resetVars()
+		os.Args = []string{"cmd", "-crypto-key=1234"}
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "1234", config.GetCryptoKey(), "expected restore to be false")
 	})
 }
 

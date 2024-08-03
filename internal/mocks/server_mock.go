@@ -38,6 +38,20 @@ func (m *MockConfig) EXPECT() *MockConfigMockRecorder {
 	return m.recorder
 }
 
+// GetCryptoKey mocks base method.
+func (m *MockConfig) GetCryptoKey() string {
+	m.ctrl.T.Helper()
+	ret := m.ctrl.Call(m, "GetCryptoKey")
+	ret0, _ := ret[0].(string)
+	return ret0
+}
+
+// GetCryptoKey indicates an expected call of GetCryptoKey.
+func (mr *MockConfigMockRecorder) GetCryptoKey() *gomock.Call {
+	mr.mock.ctrl.T.Helper()
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetCryptoKey", reflect.TypeOf((*MockConfig)(nil).GetCryptoKey))
+}
+
 // GetDataBaseDSN mocks base method.
 func (m *MockConfig) GetDataBaseDSN() string {
 	m.ctrl.T.Helper()

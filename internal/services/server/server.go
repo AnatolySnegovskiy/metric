@@ -38,6 +38,8 @@ type Config interface {
 	GetShaKey() string
 	// GetMigrationsDir returns the directory path for database migrations.
 	GetMigrationsDir() string
+	// GetCryptoKey returns the path to the private key file.
+	GetCryptoKey() string
 }
 
 // Server represents the main server struct.
@@ -83,7 +85,7 @@ func (s *Server) setupRoutes() {
 
 	// Note: The router uses JSONContentTypeMiddleware for handling JSON content type in POST requests.
 
-	s.router.Use(s.hashCheckMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware, s.logMiddleware, s.hashResponseMiddleware)
+	s.router.Use(s.hashCheckMiddleware, s.DecryptMessageMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware, s.logMiddleware, s.hashResponseMiddleware)
 	s.router.NotFound(s.notFoundHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/updates/", s.writeMassPostMetricHandler)

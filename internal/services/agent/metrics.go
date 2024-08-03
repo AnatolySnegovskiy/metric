@@ -5,10 +5,15 @@ import (
 	"compress/gzip"
 	"context"
 	"crypto/hmac"
+	"crypto/rand"
+	"crypto/rsa"
 	"crypto/sha256"
+	"crypto/x509"
+	"encoding/pem"
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 
 	"github.com/AnatolySnegovskiy/metric/internal/services/dto"
 	"github.com/mailru/easyjson"
@@ -43,15 +48,25 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			metricDtoCollection = append(metricDtoCollection, metricDto)
 		}
 	}
-
+	body, _ := easyjson.Marshal(metricDtoCollection)
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
-	body, _ := easyjson.Marshal(metricDtoCollection)
 	_, _ = gw.Write(body)
 	_ = gw.Close()
+	body = buf.Bytes()
+
+	if a.cryptoKey != "" {
+		bodyEncrypted, err := encryptMessage(buf.Bytes(), a.cryptoKey)
+
+		if err != nil {
+			return err
+		}
+
+		body = bodyEncrypted
+	}
 
 	url := fmt.Sprintf("http://%s/updates/", a.sendAddr)
-	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, &buf)
+	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Content-Type", "application/json")
 
@@ -72,4 +87,22 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	}
 
 	return err
+}
+
+func encryptMessage(message []byte, publicKeyPath string) ([]byte, error) {
+	publicKeyData, err := os.ReadFile(publicKeyPath)
+	if err != nil {
+		return nil, err
+	}
+
+	block, _ := pem.Decode(publicKeyData)
+	publicKey, err := x509.ParsePKIXPublicKey(block.Bytes)
+	if err != nil {
+		return nil, err
+	}
+
+	rsaPubKey, _ := publicKey.(*rsa.PublicKey)
+	encryptedMessage, err := rsa.EncryptPKCS1v15(rand.Reader, rsaPubKey, message)
+
+	return encryptedMessage, err
 }
