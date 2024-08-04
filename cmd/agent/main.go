@@ -3,6 +3,9 @@ package main
 import (
 	"context"
 	"fmt"
+	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 	"log"
 	"net/http"
 	"os"
@@ -47,10 +50,19 @@ func main() {
 	fmt.Println("Agent started")
 	c, err := NewConfig()
 	handleError(err)
+
+	conn, err := grpc.NewClient(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	handleError(err)
+	defer func(conn *grpc.ClientConn) {
+		handleError(conn.Close())
+	}(conn)
+	grpcClient := pb.NewMetricServiceClient(conn)
+
 	handleError(
 		agent.New(
 			agent.Options{
 				Storage:        s,
+				Grpc:           grpcClient,
 				Client:         &http.Client{},
 				PollInterval:   c.PollInterval,
 				ReportInterval: c.ReportInterval,

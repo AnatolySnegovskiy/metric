@@ -87,7 +87,6 @@ func (s *Server) setupRoutes() {
 	// PostgresPingHandler handles GET requests to ping the PostgreSQL database.
 
 	// Note: The router uses JSONContentTypeMiddleware for handling JSON content type in POST requests.
-
 	s.router.Use(s.TrustedSubnetMiddleware, s.hashCheckMiddleware, s.DecryptMessageMiddleware, s.gzipCompressMiddleware, s.gzipDecompressMiddleware, s.logMiddleware, s.hashResponseMiddleware)
 	s.router.NotFound(s.notFoundHandler)
 	s.router.With(s.JSONContentTypeMiddleware).Post("/update/", s.writePostMetricHandler)
@@ -233,6 +232,11 @@ func (s *Server) upServer(ctx context.Context) (*Server, error) {
 // ShotDown saves metrics to a file before shutting down the server.
 func (s *Server) ShotDown() {
 	s.saveMetricsToFile(s.conf.GetFileStoragePath())
+}
+
+func (s *Server) UpGrpc() *GrpcServer {
+	grpcServer := NewGrpcServer(s.storage, s.logger, s.conf)
+	return grpcServer
 }
 
 // loadMetricsFromFile loads metrics from a file at the specified path and returns them as a map.

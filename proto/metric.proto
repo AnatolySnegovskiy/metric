@@ -1,0 +1,35 @@
+
+syntax = "proto3";
+
+package grpc.metric;
+
+option go_package = "github.com/AnatolySnegovskiy/metric/internal/services/grpc";
+
+service MetricService {
+  rpc Update(MetricRequest) returns (MetricResponse);
+  rpc UpdateMany(MetricRequestMany) returns (MetricResponseMany);
+  rpc Get(MetricRequest) returns (MetricResponse);
+  rpc GetAll(MetricRequest) returns (MetricResponseMany);
+}
+
+message MetricRequest {
+  string id = 1;
+  string type = 2;
+  int64 delta = 3;
+  float value = 4;
+}
+
+message MetricResponseMany {
+  repeated MetricResponse responses = 1;
+}
+
+message MetricRequestMany {
+  repeated MetricRequest requests = 1;
+}
+
+message MetricResponse {
+  string id = 1;
+  string type = 2;
+  int64 delta = 3;
+  float value = 4;
+}
