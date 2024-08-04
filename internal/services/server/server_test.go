@@ -499,6 +499,7 @@ func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
 func TestHashMiddleware(t *testing.T) {
 	conf := getMockConf(t)
 	conf.EXPECT().GetShaKey().Return("secret").AnyTimes()
+	conf.EXPECT().GetTrustedSubnet().Return(nil).AnyTimes()
 	stg := storages.NewMemStorage()
 	stg.AddMetric("gauge", metrics.NewGauge(nil))
 	stg.AddMetric("counter", metrics.NewCounter(nil))
@@ -509,7 +510,7 @@ func TestHashMiddleware(t *testing.T) {
 		conf:    conf,
 	}
 	r := chi.NewRouter()
-	r.Use(s.hashCheckMiddleware, s.hashResponseMiddleware, s.JSONContentTypeMiddleware)
+	r.Use(s.TrustedSubnetMiddleware, s.hashCheckMiddleware, s.hashResponseMiddleware, s.JSONContentTypeMiddleware)
 	r.Post("/update", s.writePostMetricHandler)
 
 	body := []byte(`{"id":"test","type":"counter","delta":10}`)
