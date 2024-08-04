@@ -5,6 +5,7 @@ import (
 	"fmt"
 	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc"
 	"google.golang.org/grpc"
+	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -73,7 +74,7 @@ func main() {
 			handleError(err)
 		}
 	}()
-
+	log.Println("server started on " + conf.GetServerAddress())
 	wg.Wait()
 }
 

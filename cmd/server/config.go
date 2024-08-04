@@ -26,7 +26,7 @@ func NewConfig() (*Config, error) {
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	c := &Config{
 		ServerAddress:   "localhost:8080",
-		grpcAddress:     "localhost:3200",
+		grpcAddress:     ":3200",
 		StoreInterval:   300,
 		FileStoragePath: "/tmp/metrics-db.json",
 		Restore:         true,

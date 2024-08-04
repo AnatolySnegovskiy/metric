@@ -597,14 +597,14 @@ func TestBDConnect(t *testing.T) {
 		logger: slog.New(),
 	}
 
-	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+	PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
 		return &pgx.Conn{}, nil
 	}
 
 	db := s.BDConnect()
 	assert.NotNil(t, db)
 
-	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+	PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
 		return nil, errors.New("some error")
 	}
 
@@ -632,7 +632,7 @@ func TestUpStorageWithDB(t *testing.T) {
 	}
 
 	assert.Nil(t, s.upStorage(nil))
-	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+	PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
 		return &pgx.Conn{}, nil
 	}
 

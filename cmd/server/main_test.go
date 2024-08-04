@@ -2,7 +2,10 @@ package main
 
 import (
 	"bytes"
+	"context"
 	"errors"
+	"github.com/AnatolySnegovskiy/metric/internal/services/server"
+	"github.com/jackc/pgx/v5"
 	"log"
 	"os"
 	"testing"
@@ -16,7 +19,10 @@ import (
 
 func Test_Main(t *testing.T) {
 	resetVars()
-	os.Args = []string{"cmd", "-a=127.21.10.1:8150"}
+	server.PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+		return nil, nil
+	}
+	os.Args = []string{"cmd", "-a=:8150"}
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(nil))
 	s.AddMetric("counter", metrics.NewCounter(nil))
@@ -25,9 +31,9 @@ func Test_Main(t *testing.T) {
 	go func() {
 		defer close(quit)
 		go main()
-		time.Sleep(1 * time.Second)
 		assert.True(t, true)
 	}()
+	time.Sleep(3 * time.Second)
 }
 
 func TestHandleNoError(t *testing.T) {

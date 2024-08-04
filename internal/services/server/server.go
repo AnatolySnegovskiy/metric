@@ -21,7 +21,7 @@ import (
 	"github.com/jackc/tern/v2/migrate"
 )
 
-var pgxConnect = pgx.Connect
+var PgxConnect = pgx.Connect
 
 // Config defines the configuration interface for the server.
 type Config interface {
@@ -158,7 +158,7 @@ func (s *Server) saveMetricsToFile(filePath string) {
 
 // BDConnect establishes a connection to the database.
 func (s *Server) BDConnect() *pgx.Conn {
-	db, err := pgxConnect(context.Background(), s.conf.GetDataBaseDSN())
+	db, err := PgxConnect(context.Background(), s.conf.GetDataBaseDSN())
 
 	if err != nil {
 		s.logger.Error(err)
