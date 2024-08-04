@@ -23,7 +23,7 @@ func Test_Main(t *testing.T) {
 	server.PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
 		return nil, nil
 	}
-	os.Args = []string{"cmd", "-a=:8150"}
+	os.Args = []string{"cmd", "-a=:8113", "-grpc=:3200"}
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(nil))
 	s.AddMetric("counter", metrics.NewCounter(nil))
@@ -35,33 +35,7 @@ func Test_Main(t *testing.T) {
 	go func() {
 		defer close(quit)
 		go main()
-		time.Sleep(3 * time.Second)
-		_ = w.Close()
-		var buf bytes.Buffer
-		_, _ = io.Copy(&buf, r)
-		expectedOutput := "ыServer started\n"
-		assert.Contains(t, buf.String(), expectedOutput, "Unexpected output. Expected: %s, got: %s", expectedOutput, buf.String())
-	}()
-}
-
-func Test_Main_Grpc(t *testing.T) {
-	resetVars()
-	server.PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
-		return nil, nil
-	}
-	os.Args = []string{"cmd", "-a=:8113", "-grpc=:8151"}
-	s := storages.NewMemStorage()
-	s.AddMetric("gauge", metrics.NewGauge(nil))
-	s.AddMetric("counter", metrics.NewCounter(nil))
-	r, w, _ := os.Pipe()
-	os.Stdout = w
-	os.Args = []string{"cmd", "-grpc=:8150"}
-	quit := make(chan struct{})
-
-	go func() {
-		defer close(quit)
-		go main()
-		time.Sleep(3 * time.Second)
+		time.Sleep(1 * time.Second)
 		_ = w.Close()
 		var buf bytes.Buffer
 		_, _ = io.Copy(&buf, r)
