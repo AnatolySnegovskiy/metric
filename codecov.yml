@@ -2,4 +2,4 @@ ignore:
   - "./cmd/staticlint/.*"
   - "./internal/mocks/.*"
   - "./internal/services/grpc/.*"
-  - "./internal/services/dtp/.*"
+  - "./internal/services/dto/.*"
