@@ -11,6 +11,7 @@ import (
 
 type Config struct {
 	ServerAddress   string `json:"address"`
+	grpcAddress     string
 	StoreInterval   int    `json:"store_interval"`
 	FileStoragePath string `json:"store_file"`
 	Restore         bool   `json:"restore"`
@@ -25,6 +26,7 @@ func NewConfig() (*Config, error) {
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	c := &Config{
 		ServerAddress:   "localhost:8080",
+		grpcAddress:     "localhost:3200",
 		StoreInterval:   300,
 		FileStoragePath: "/tmp/metrics-db.json",
 		Restore:         true,

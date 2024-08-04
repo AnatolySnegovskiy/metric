@@ -56,6 +56,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 			metricDtoCollection = append(metricDtoCollection, metricDto)
 		}
 	}
+
 	body, _ := easyjson.Marshal(metricDtoCollection)
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)

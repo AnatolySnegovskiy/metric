@@ -41,7 +41,7 @@ func main() {
 
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
-	listen, err := net.Listen("tcp", ":3200")
+	listen, err := net.Listen("tcp", conf.grpcAddress)
 	if err != nil {
 		handleError(err)
 	}
@@ -68,7 +68,7 @@ func main() {
 		defer wg.Done()
 		grpcServer := grpc.NewServer()
 		pb.RegisterMetricServiceServer(grpcServer, serv.UpGrpc())
-		logger.Info("gRPC server started on :3200")
+		logger.Info("gRPC server started on " + conf.grpcAddress)
 		if err := grpcServer.Serve(listen); err != nil {
 			handleError(err)
 		}

@@ -51,7 +51,7 @@ func main() {
 	c, err := NewConfig()
 	handleError(err)
 
-	conn, err := grpc.NewClient(":3200", grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := grpc.NewClient(c.grpcSendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	handleError(err)
 	defer func(conn *grpc.ClientConn) {
 		handleError(conn.Close())

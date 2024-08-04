@@ -8,6 +8,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
+	"github.com/AnatolySnegovskiy/metric/internal/services/grpc"
 	"io"
 	"net/http"
 	"os"
@@ -173,11 +174,14 @@ func TestAgent(t *testing.T) {
 			httpClient := mocks.NewMockHTTPClient(ctrl)
 			resp := http.Response{StatusCode: tc.statusCode, Body: http.NoBody}
 			httpClient.EXPECT().Do(gomock.Any()).Return(&resp, tc.doReturnError).AnyTimes()
+			grpcClient := mocks.NewMockMetricServiceClient(ctrl)
+			grpcClient.EXPECT().UpdateMany(gomock.Any(), gomock.Any()).Return(&grpc.MetricResponseMany{}, nil).AnyTimes()
 
 			a := Agent{
 				storage:        tc.mockStorage(),
 				sendAddr:       "testAddr",
 				client:         httpClient,
+				grpcClient:     grpcClient,
 				pollInterval:   1,
 				reportInterval: 3,
 				maxRetries:     2,
@@ -208,10 +212,13 @@ func TestAgentReportTickerEmpty(t *testing.T) {
 		httpClient := mocks.NewMockHTTPClient(ctrl)
 		resp := &http.Response{}
 		httpClient.EXPECT().Do(gomock.Any()).Return(resp, nil).AnyTimes()
+		grpcClient := mocks.NewMockMetricServiceClient(ctrl)
+		grpcClient.EXPECT().UpdateMany(gomock.Any(), gomock.Any()).Return(&grpc.MetricResponseMany{}, nil).AnyTimes()
 		a := &Agent{
 			storage:        storages.NewMemStorage(),
 			sendAddr:       "testAddr",
 			client:         httpClient,
+			grpcClient:     grpcClient,
 			pollInterval:   1,
 			reportInterval: 1,
 			shaKey:         "testKey",
@@ -235,10 +242,13 @@ func TestAgentErrorCrypto(t *testing.T) {
 		httpClient := mocks.NewMockHTTPClient(ctrl)
 		resp := &http.Response{}
 		httpClient.EXPECT().Do(gomock.Any()).Return(resp, nil).AnyTimes()
+		grpcClient := mocks.NewMockMetricServiceClient(ctrl)
+		grpcClient.EXPECT().UpdateMany(gomock.Any(), gomock.Any()).Return(&grpc.MetricResponseMany{}, nil).AnyTimes()
 		a := Agent{
 			storage:        mockStorage,
 			sendAddr:       "testAddr",
 			client:         httpClient,
+			grpcClient:     grpcClient,
 			pollInterval:   1,
 			reportInterval: 3,
 			maxRetries:     2,
@@ -345,4 +355,36 @@ func generateRSAKeys() (string, string) {
 	privateKeyPath, _ := filepath.Abs(privateKeyFile.Name())
 	publicKeyPath, _ := filepath.Abs(publicKeyFile.Name())
 	return privateKeyPath, publicKeyPath
+}
+
+func TestAgentErrorGrpc(t *testing.T) {
+	mockStorage := storages.NewMemStorage()
+	mockStorage.AddMetric("gauge", metrics.NewGauge(nil))
+	mockStorage.AddMetric("counter", metrics.NewCounter(nil))
+	mockStorage.AddMetric("nil", nil)
+	t.Run("Error sending grpc metrics", func(t *testing.T) {
+		ctrl := gomock.NewController(t)
+		defer ctrl.Finish()
+		httpClient := mocks.NewMockHTTPClient(ctrl)
+		resp := &http.Response{}
+		httpClient.EXPECT().Do(gomock.Any()).Return(resp, nil).AnyTimes()
+		grpcClient := mocks.NewMockMetricServiceClient(ctrl)
+		grpcClient.EXPECT().UpdateMany(gomock.Any(), gomock.Any()).Return(&grpc.MetricResponseMany{}, errors.New("some error")).AnyTimes()
+		a := Agent{
+			storage:        mockStorage,
+			sendAddr:       "testAddr",
+			client:         httpClient,
+			grpcClient:     grpcClient,
+			pollInterval:   1,
+			reportInterval: 3,
+			maxRetries:     2,
+			shaKey:         "testKey",
+			cryptoKey:      "",
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+		defer cancel()
+		err := a.sendMetricsPeriodically(ctx)
+
+		assert.Error(t, err)
+	})
 }

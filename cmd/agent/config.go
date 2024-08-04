@@ -16,12 +16,14 @@ type Config struct {
 	PollInterval   int `json:"poll_interval"`
 	maxRetries     int
 	CryptoKey      string `json:"crypto_key"`
+	grpcSendAddr   string
 }
 
 func NewConfig() (*Config, error) {
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	c := &Config{
 		FlagSendAddr:   "localhost:8080",
+		grpcSendAddr:   "localhost:3200",
 		ReportInterval: 10,
 		PollInterval:   2,
 		maxRetries:     5,
