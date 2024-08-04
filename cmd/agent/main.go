@@ -54,9 +54,7 @@ func main() {
 	if c.grpcSendAddr != "" {
 		conn, err := grpc.NewClient(c.grpcSendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		handleError(err)
-		defer func(conn *grpc.ClientConn) {
-			handleError(conn.Close())
-		}(conn)
+		defer conn.Close()
 		grpcClient = pb.NewMetricServiceClient(conn)
 	}
 
