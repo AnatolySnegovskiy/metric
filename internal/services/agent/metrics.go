@@ -86,10 +86,11 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 		req.Header.Set("HashSHA256", fmt.Sprintf("%x", hash.Sum(nil)))
 	}
 
-	_, err := a.grpcClient.UpdateMany(ctx, &pb.MetricRequestMany{Requests: metricsGrpcCollection})
-
-	if err != nil {
-		return err
+	if a.grpcClient != nil {
+		_, err := a.grpcClient.UpdateMany(ctx, &pb.MetricRequestMany{Requests: metricsGrpcCollection})
+		if err != nil {
+			return err
+		}
 	}
 
 	resp, err := a.client.Do(req)
