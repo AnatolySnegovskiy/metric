@@ -41,10 +41,34 @@ func TestGrpcServer_Update(t *testing.T) {
 			wantErr: false,
 		},
 		{
+			name: "successful update counter metric",
+			req: &pb.MetricRequest{
+				Id:    "metric2",
+				Type:  "counter",
+				Delta: 123,
+			},
+			want: &pb.MetricResponse{
+				Id:    "metric2",
+				Type:  "counter",
+				Delta: 123,
+			},
+			wantErr: false,
+		},
+		{
 			name: "failed update with empty value and delta",
 			req: &pb.MetricRequest{
 				Id:   "metric1",
 				Type: "gauge",
+			},
+			want:    &pb.MetricResponse{},
+			wantErr: true,
+		},
+		{
+			name: "failed update with empty type",
+			req: &pb.MetricRequest{
+				Id:    "metric1",
+				Delta: 123,
+				Type:  "err",
 			},
 			want:    &pb.MetricResponse{},
 			wantErr: true,
@@ -93,6 +117,11 @@ func TestGrpcServer_UpdateMany(t *testing.T) {
 						Type:  "gauge",
 						Value: 67.89,
 					},
+					{
+						Id:    "metric3",
+						Type:  "counter",
+						Delta: 10,
+					},
 				},
 			},
 			want: &pb.MetricResponseMany{
@@ -107,9 +136,33 @@ func TestGrpcServer_UpdateMany(t *testing.T) {
 						Type:  "gauge",
 						Value: 67.89,
 					},
+					{
+						Id:    "metric3",
+						Type:  "counter",
+						Delta: 10,
+					},
 				},
 			},
 			wantErr: false,
+		},
+		{
+			name: "failed update with empty value and delta",
+			req: &pb.MetricRequestMany{
+				Requests: []*pb.MetricRequest{
+					{
+						Id:    "metric1",
+						Type:  "ga2uge",
+						Value: 67.89,
+					},
+					{
+						Id:    "metric2",
+						Type:  "count1er",
+						Delta: 10,
+					},
+				},
+			},
+			want:    &pb.MetricResponseMany{},
+			wantErr: true,
 		},
 	}
 
