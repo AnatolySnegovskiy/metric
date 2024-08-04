@@ -41,7 +41,7 @@ func Test_Main_Grpc(t *testing.T) {
 	server.PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
 		return nil, nil
 	}
-	os.Args = []string{"cmd", "-a=:8150", "-grpc=:8151"}
+	os.Args = []string{"cmd", "-a=:8113", "-grpc=:8151"}
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(nil))
 	s.AddMetric("counter", metrics.NewCounter(nil))
