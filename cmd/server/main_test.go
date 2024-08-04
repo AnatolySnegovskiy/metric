@@ -13,6 +13,7 @@ import (
 	"log"
 	"os"
 	"testing"
+	"time"
 )
 
 func Test_Main(t *testing.T) {
@@ -29,8 +30,10 @@ func Test_Main(t *testing.T) {
 	go func() {
 		defer close(quit)
 		go main()
+		time.Sleep(2 * time.Second)
 		assert.True(t, true)
 	}()
+	time.Sleep(3 * time.Second)
 }
 
 func TestHandleNoError(t *testing.T) {
