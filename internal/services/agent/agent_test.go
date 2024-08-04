@@ -181,7 +181,7 @@ func TestAgent(t *testing.T) {
 				storage:        tc.mockStorage(),
 				sendAddr:       "testAddr",
 				client:         httpClient,
-				grpcClient:     grpcClient,
+				grpcClient:     nil,
 				pollInterval:   1,
 				reportInterval: 3,
 				maxRetries:     2,

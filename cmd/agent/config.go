@@ -23,7 +23,7 @@ func NewConfig() (*Config, error) {
 	flag.CommandLine = flag.NewFlagSet(os.Args[0], flag.ContinueOnError)
 	c := &Config{
 		FlagSendAddr:   "localhost:8080",
-		grpcSendAddr:   "localhost:3200",
+		grpcSendAddr:   "",
 		ReportInterval: 10,
 		PollInterval:   2,
 		maxRetries:     5,
