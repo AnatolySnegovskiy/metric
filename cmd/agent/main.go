@@ -50,7 +50,7 @@ func main() {
 	fmt.Println("Agent started")
 	c, err := NewConfig()
 	handleError(err)
-	grpcClient := pb.NewMetricServiceClient(nil)
+	var grpcClient pb.MetricServiceClient = nil
 	if c.grpcSendAddr != "" {
 		conn, err := grpc.NewClient(c.grpcSendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		handleError(err)
@@ -58,8 +58,6 @@ func main() {
 			handleError(conn.Close())
 		}(conn)
 		grpcClient = pb.NewMetricServiceClient(conn)
-	} else {
-		grpcClient = nil
 	}
 
 	handleError(
