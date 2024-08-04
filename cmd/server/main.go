@@ -5,7 +5,6 @@ import (
 	"fmt"
 	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc"
 	"google.golang.org/grpc"
-	"log"
 	"net"
 	"os"
 	"os/signal"
@@ -70,11 +69,9 @@ func main() {
 		grpcServer := grpc.NewServer()
 		pb.RegisterMetricServiceServer(grpcServer, serv.UpGrpc())
 		logger.Info("gRPC server started on " + conf.grpcAddress)
-		if err := grpcServer.Serve(listen); err != nil {
-			handleError(err)
-		}
+		handleError(grpcServer.Serve(listen))
 	}()
-	log.Println("server started on " + conf.GetServerAddress())
+	logger.Info("server started on " + conf.GetServerAddress())
 	wg.Wait()
 }
 
