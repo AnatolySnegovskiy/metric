@@ -612,6 +612,17 @@ func TestBDConnect(t *testing.T) {
 	assert.Nil(t, db)
 }
 
+func TestBDGrpc(t *testing.T) {
+	conf := getMockConf(t)
+	s := &Server{
+		conf:   conf,
+		logger: slog.New(),
+	}
+
+	grpc := s.UpGrpc()
+	assert.NotNil(t, grpc)
+}
+
 func TestUpStorageWithDB(t *testing.T) {
 	conf := getMockConf(t)
 	conf.EXPECT().GetDataBaseDSN().Return("postgres://user:password@localhost/dbname").AnyTimes()
