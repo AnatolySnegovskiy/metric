@@ -174,8 +174,6 @@ func TestAgent(t *testing.T) {
 			httpClient := mocks.NewMockHTTPClient(ctrl)
 			resp := http.Response{StatusCode: tc.statusCode, Body: http.NoBody}
 			httpClient.EXPECT().Do(gomock.Any()).Return(&resp, tc.doReturnError).AnyTimes()
-			grpcClient := mocks.NewMockMetricServiceClient(ctrl)
-			grpcClient.EXPECT().UpdateMany(gomock.Any(), gomock.Any()).Return(&grpc.MetricResponseMany{}, nil).AnyTimes()
 
 			a := Agent{
 				storage:        tc.mockStorage(),

@@ -6,6 +6,7 @@ import (
 	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc"
 	"github.com/AnatolySnegovskiy/metric/internal/services/interfase"
 	"github.com/gookit/gsr"
+	"log"
 	"strconv"
 )
 
@@ -106,22 +107,26 @@ func (s *GrpcServer) Get(ctx context.Context, req *pb.MetricRequest) (*pb.Metric
 	metricName := req.Id
 
 	storage, err := s.storage.GetMetricType(metricType)
+
 	if err != nil {
 		return &pb.MetricResponse{}, err
+	}
+
+	if storage == nil {
+		return &pb.MetricResponse{}, errors.New("storage error")
 	}
 
 	list, err := storage.GetList(ctx)
 	if err != nil {
 		return &pb.MetricResponse{}, err
 	}
-
 	metric, ok := list[metricName]
 
 	if !ok {
 		return &pb.MetricResponse{}, errors.New("metric not found")
 	}
 
-	metricResponse := pb.MetricResponse{
+	metricResponse := &pb.MetricResponse{
 		Id:   metricName,
 		Type: metricType,
 	}
@@ -131,15 +136,20 @@ func (s *GrpcServer) Get(ctx context.Context, req *pb.MetricRequest) (*pb.Metric
 	} else {
 		metricResponse.Delta = int64(metric)
 	}
-
-	return &metricResponse, nil
+	log.Println(metricResponse)
+	return metricResponse, nil
 }
 
 func (s *GrpcServer) GetAll(ctx context.Context, req *pb.MetricRequest) (*pb.MetricResponseMany, error) {
 	metricType := req.Type
 	storage, err := s.storage.GetMetricType(metricType)
+
 	if err != nil {
 		return &pb.MetricResponseMany{}, err
+	}
+
+	if storage == nil {
+		return &pb.MetricResponseMany{}, errors.New("storage error")
 	}
 
 	list, err := storage.GetList(ctx)
