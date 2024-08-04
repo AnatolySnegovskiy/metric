@@ -30,7 +30,6 @@ func Test_Main(t *testing.T) {
 	go func() {
 		defer close(quit)
 		go main()
-		
 	}()
 	time.Sleep(3 * time.Second)
 	<-quit
