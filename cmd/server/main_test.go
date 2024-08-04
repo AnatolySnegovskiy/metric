@@ -6,6 +6,7 @@ import (
 	"errors"
 	"github.com/AnatolySnegovskiy/metric/internal/services/server"
 	"github.com/jackc/pgx/v5"
+	"io"
 	"log"
 	"os"
 	"testing"
@@ -26,14 +27,21 @@ func Test_Main(t *testing.T) {
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(nil))
 	s.AddMetric("counter", metrics.NewCounter(nil))
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	os.Args = []string{"cmd", "-grpc=:8150"}
 	quit := make(chan struct{})
 
 	go func() {
 		defer close(quit)
 		go main()
-		assert.True(t, true)
+		time.Sleep(3 * time.Second)
+		_ = w.Close()
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, r)
+		expectedOutput := "ыServer started\n"
+		assert.Contains(t, buf.String(), expectedOutput, "Unexpected output. Expected: %s, got: %s", expectedOutput, buf.String())
 	}()
-	time.Sleep(3 * time.Second)
 }
 
 func Test_Main_Grpc(t *testing.T) {
@@ -45,14 +53,21 @@ func Test_Main_Grpc(t *testing.T) {
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(nil))
 	s.AddMetric("counter", metrics.NewCounter(nil))
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+	os.Args = []string{"cmd", "-grpc=:8150"}
 	quit := make(chan struct{})
 
 	go func() {
 		defer close(quit)
 		go main()
-		assert.True(t, true)
+		time.Sleep(3 * time.Second)
+		_ = w.Close()
+		var buf bytes.Buffer
+		_, _ = io.Copy(&buf, r)
+		expectedOutput := "ыServer started\n"
+		assert.Contains(t, buf.String(), expectedOutput, "Unexpected output. Expected: %s, got: %s", expectedOutput, buf.String())
 	}()
-	time.Sleep(3 * time.Second)
 }
 
 func TestHandleNoError(t *testing.T) {
