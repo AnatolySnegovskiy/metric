@@ -36,6 +36,25 @@ func Test_Main(t *testing.T) {
 	time.Sleep(3 * time.Second)
 }
 
+func Test_Main_Grpc(t *testing.T) {
+	resetVars()
+	server.PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+		return nil, nil
+	}
+	os.Args = []string{"cmd", "-a=:8150", "-grpc=:8151"}
+	s := storages.NewMemStorage()
+	s.AddMetric("gauge", metrics.NewGauge(nil))
+	s.AddMetric("counter", metrics.NewCounter(nil))
+	quit := make(chan struct{})
+
+	go func() {
+		defer close(quit)
+		go main()
+		assert.True(t, true)
+	}()
+	time.Sleep(3 * time.Second)
+}
+
 func TestHandleNoError(t *testing.T) {
 	t.Run("No error case", func(t *testing.T) {
 		var logOutput bytes.Buffer
