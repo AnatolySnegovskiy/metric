@@ -21,7 +21,7 @@ func Test_Main(t *testing.T) {
 	server.PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
 		return nil, nil
 	}
-	os.Args = []string{"cmd", "-a=:8150"}
+	os.Args = []string{"cmd", "-a=:8150", "-grpc=:3200"}
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(nil))
 	s.AddMetric("counter", metrics.NewCounter(nil))
@@ -30,31 +30,13 @@ func Test_Main(t *testing.T) {
 	go func() {
 		defer close(quit)
 		go main()
+		
 	}()
 	time.Sleep(3 * time.Second)
 	<-quit
 	assert.True(t, true)
 }
 
-func Test_Main_Grpc(t *testing.T) {
-	resetVars()
-	server.PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
-		return nil, nil
-	}
-	os.Args = []string{"cmd", "-a=:8151", "-grpc=:3200"}
-	s := storages.NewMemStorage()
-	s.AddMetric("gauge", metrics.NewGauge(nil))
-	s.AddMetric("counter", metrics.NewCounter(nil))
-	quit := make(chan struct{})
-
-	go func() {
-		defer close(quit)
-		go main()
-	}()
-	time.Sleep(3 * time.Second)
-	<-quit
-	assert.True(t, true)
-}
 func TestHandleNoError(t *testing.T) {
 	t.Run("No error case", func(t *testing.T) {
 		var logOutput bytes.Buffer
