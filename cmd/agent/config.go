@@ -78,6 +78,7 @@ func (c *Config) parseFlags() error {
 	flag.IntVar(&c.PollInterval, "p", c.PollInterval, "pollInterval description")
 	flag.IntVar(&c.maxRetries, "i", c.maxRetries, "maxRetries description")
 	flag.StringVar(&c.shaKey, "k", c.shaKey, "key description")
+	flag.StringVar(&c.grpcSendAddr, "grpc", c.grpcSendAddr, "grpcSendAddr description")
 	flag.Parse()
 
 	if flag.NArg() > 0 {

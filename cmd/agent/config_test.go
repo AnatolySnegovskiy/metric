@@ -94,7 +94,7 @@ func TestNewConfig(t *testing.T) {
 		_ = os.Setenv("RATE_LIMIT", "10")
 		_ = os.Setenv("CRYPTO_KEY", "1234")
 
-		os.Args = []string{"cmd", "-a=127.21.10.1:8080", "-r=100", "-p=500", "-k=key", "-i=25", "-crypto-key=123111"}
+		os.Args = []string{"cmd", "-a=127.21.10.1:8080", "-r=100", "-p=500", "-k=key", "-i=25", "-crypto-key=123111", "-grpc=127.21.10.1:8080"}
 		config, err := NewConfig()
 		assert.NoError(t, err)
 		assert.Equal(t, "127.21.10.1:8080", config.FlagSendAddr, "expected default address")
@@ -103,6 +103,7 @@ func TestNewConfig(t *testing.T) {
 		assert.Equal(t, "key", config.shaKey, "expected default poll interval")
 		assert.Equal(t, 25, config.maxRetries, "expected default poll interval")
 		assert.Equal(t, "123111", config.CryptoKey, "expected default poll interval")
+		assert.Equal(t, "127.21.10.1:8080", config.grpcSendAddr, "expected default poll interval")
 	})
 
 	t.Run("CMD_ERROR_FLAG", func(t *testing.T) {

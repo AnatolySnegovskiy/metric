@@ -142,6 +142,7 @@ func (c *Config) parseCmdFlags(configFile *string) error {
 	flag.StringVar(&c.shaKey, "k", c.shaKey, "shaKey")
 	flag.StringVar(&c.CryptoKey, "crypto-key", c.CryptoKey, "path to the private key file")
 	flag.StringVar(&trustedSubnetStr, "t", "", "trusted subnet")
+	flag.StringVar(&c.grpcAddress, "grpc", c.grpcAddress, "grpcSendAddr description")
 	flag.Parse()
 
 	if err := c.parseConfigFile(*configFile); err != nil {

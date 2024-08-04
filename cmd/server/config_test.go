@@ -224,6 +224,14 @@ func TestNewConfig(t *testing.T) {
 		assert.Error(t, err)
 	})
 
+	t.Run("CMD_GRPC", func(t *testing.T) {
+		resetVars()
+		os.Args = []string{"cmd", "-grpc=127.0.0.1:8080"}
+		config, err := NewConfig()
+		assert.NoError(t, err)
+		assert.Equal(t, "127.0.0.1:8080", config.grpcAddress, "expected restore to be false")
+	})
+
 	t.Run("CMD_CONFIG_FILE", func(t *testing.T) {
 		_ = os.WriteFile(
 			"config.json",

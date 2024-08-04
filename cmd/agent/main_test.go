@@ -24,7 +24,7 @@ func Test_Main(t *testing.T) {
 	s.AddMetric("counter", metrics.NewCounter(nil))
 	r, w, _ := os.Pipe()
 	os.Stdout = w
-
+	os.Args = []string{"cmd", "-grpc=:8150"}
 	quit := make(chan struct{})
 
 	go func() {
