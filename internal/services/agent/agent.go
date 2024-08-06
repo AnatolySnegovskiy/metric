@@ -13,7 +13,7 @@ type HTTPClient interface {
 
 type Agent struct {
 	client         HTTPClient
-	grpcClient     grpc.MetricServiceClient
+	grpcClient     grpc.MetricServiceV1Client
 	storage        interfase.Storage
 	pollInterval   int
 	reportInterval int
@@ -24,7 +24,7 @@ type Agent struct {
 }
 
 type Options struct {
-	Grpc           grpc.MetricServiceClient
+	Grpc           grpc.MetricServiceV1Client
 	Client         HTTPClient
 	Storage        interfase.Storage
 	PollInterval   int

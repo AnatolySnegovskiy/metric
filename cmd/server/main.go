@@ -70,7 +70,7 @@ func main() {
 		listen, err := net.Listen("tcp", conf.grpcAddress)
 		handleError(err)
 		grpcServer := grpc.NewServer()
-		pb.RegisterMetricServiceServer(grpcServer, serv.UpGrpc())
+		pb.RegisterMetricServiceV1Server(grpcServer, serv.UpGrpc())
 		logger.Info("gRPC server started on " + conf.grpcAddress)
 		handleError(grpcServer.Serve(listen))
 	}()

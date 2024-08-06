@@ -18,235 +18,235 @@ import (
 	grpc0 "google.golang.org/grpc"
 )
 
-// MockMetricServiceClient is a mock of MetricServiceClient interface.
-type MockMetricServiceClient struct {
+// MockMetricServiceV1Client is a mock of MetricServiceV1Client interface.
+type MockMetricServiceV1Client struct {
 	ctrl     *gomock.Controller
-	recorder *MockMetricServiceClientMockRecorder
+	recorder *MockMetricServiceV1ClientMockRecorder
 }
 
-// MockMetricServiceClientMockRecorder is the mock recorder for MockMetricServiceClient.
-type MockMetricServiceClientMockRecorder struct {
-	mock *MockMetricServiceClient
+// MockMetricServiceV1ClientMockRecorder is the mock recorder for MockMetricServiceV1Client.
+type MockMetricServiceV1ClientMockRecorder struct {
+	mock *MockMetricServiceV1Client
 }
 
-// NewMockMetricServiceClient creates a new mock instance.
-func NewMockMetricServiceClient(ctrl *gomock.Controller) *MockMetricServiceClient {
-	mock := &MockMetricServiceClient{ctrl: ctrl}
-	mock.recorder = &MockMetricServiceClientMockRecorder{mock}
+// NewMockMetricServiceV1Client creates a new mock instance.
+func NewMockMetricServiceV1Client(ctrl *gomock.Controller) *MockMetricServiceV1Client {
+	mock := &MockMetricServiceV1Client{ctrl: ctrl}
+	mock.recorder = &MockMetricServiceV1ClientMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockMetricServiceClient) EXPECT() *MockMetricServiceClientMockRecorder {
+func (m *MockMetricServiceV1Client) EXPECT() *MockMetricServiceV1ClientMockRecorder {
 	return m.recorder
 }
 
-// Get mocks base method.
-func (m *MockMetricServiceClient) Get(ctx context.Context, in *grpc.MetricRequest, opts ...grpc0.CallOption) (*grpc.MetricResponse, error) {
+// GetAllMetricV1 mocks base method.
+func (m *MockMetricServiceV1Client) GetAllMetricV1(ctx context.Context, in *grpc.MetricV1Request, opts ...grpc0.CallOption) (*grpc.MetricV1ResponseMany, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "Get", varargs...)
-	ret0, _ := ret[0].(*grpc.MetricResponse)
+	ret := m.ctrl.Call(m, "GetAllMetricV1", varargs...)
+	ret0, _ := ret[0].(*grpc.MetricV1ResponseMany)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockMetricServiceClientMockRecorder) Get(ctx, in any, opts ...any) *gomock.Call {
+// GetAllMetricV1 indicates an expected call of GetAllMetricV1.
+func (mr *MockMetricServiceV1ClientMockRecorder) GetAllMetricV1(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockMetricServiceClient)(nil).Get), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMetricV1", reflect.TypeOf((*MockMetricServiceV1Client)(nil).GetAllMetricV1), varargs...)
 }
 
-// GetAll mocks base method.
-func (m *MockMetricServiceClient) GetAll(ctx context.Context, in *grpc.MetricRequest, opts ...grpc0.CallOption) (*grpc.MetricResponseMany, error) {
+// GetMetricV1 mocks base method.
+func (m *MockMetricServiceV1Client) GetMetricV1(ctx context.Context, in *grpc.MetricV1Request, opts ...grpc0.CallOption) (*grpc.MetricV1Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "GetAll", varargs...)
-	ret0, _ := ret[0].(*grpc.MetricResponseMany)
+	ret := m.ctrl.Call(m, "GetMetricV1", varargs...)
+	ret0, _ := ret[0].(*grpc.MetricV1Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetAll indicates an expected call of GetAll.
-func (mr *MockMetricServiceClientMockRecorder) GetAll(ctx, in any, opts ...any) *gomock.Call {
+// GetMetricV1 indicates an expected call of GetMetricV1.
+func (mr *MockMetricServiceV1ClientMockRecorder) GetMetricV1(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockMetricServiceClient)(nil).GetAll), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricV1", reflect.TypeOf((*MockMetricServiceV1Client)(nil).GetMetricV1), varargs...)
 }
 
-// Update mocks base method.
-func (m *MockMetricServiceClient) Update(ctx context.Context, in *grpc.MetricRequest, opts ...grpc0.CallOption) (*grpc.MetricResponse, error) {
+// UpdateManyMetricV1 mocks base method.
+func (m *MockMetricServiceV1Client) UpdateManyMetricV1(ctx context.Context, in *grpc.MetricV1RequestMany, opts ...grpc0.CallOption) (*grpc.MetricV1ResponseMany, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "Update", varargs...)
-	ret0, _ := ret[0].(*grpc.MetricResponse)
+	ret := m.ctrl.Call(m, "UpdateManyMetricV1", varargs...)
+	ret0, _ := ret[0].(*grpc.MetricV1ResponseMany)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Update indicates an expected call of Update.
-func (mr *MockMetricServiceClientMockRecorder) Update(ctx, in any, opts ...any) *gomock.Call {
+// UpdateManyMetricV1 indicates an expected call of UpdateManyMetricV1.
+func (mr *MockMetricServiceV1ClientMockRecorder) UpdateManyMetricV1(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockMetricServiceClient)(nil).Update), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateManyMetricV1", reflect.TypeOf((*MockMetricServiceV1Client)(nil).UpdateManyMetricV1), varargs...)
 }
 
-// UpdateMany mocks base method.
-func (m *MockMetricServiceClient) UpdateMany(ctx context.Context, in *grpc.MetricRequestMany, opts ...grpc0.CallOption) (*grpc.MetricResponseMany, error) {
+// UpdateMetricV1 mocks base method.
+func (m *MockMetricServiceV1Client) UpdateMetricV1(ctx context.Context, in *grpc.MetricV1Request, opts ...grpc0.CallOption) (*grpc.MetricV1Response, error) {
 	m.ctrl.T.Helper()
 	varargs := []any{ctx, in}
 	for _, a := range opts {
 		varargs = append(varargs, a)
 	}
-	ret := m.ctrl.Call(m, "UpdateMany", varargs...)
-	ret0, _ := ret[0].(*grpc.MetricResponseMany)
+	ret := m.ctrl.Call(m, "UpdateMetricV1", varargs...)
+	ret0, _ := ret[0].(*grpc.MetricV1Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UpdateMany indicates an expected call of UpdateMany.
-func (mr *MockMetricServiceClientMockRecorder) UpdateMany(ctx, in any, opts ...any) *gomock.Call {
+// UpdateMetricV1 indicates an expected call of UpdateMetricV1.
+func (mr *MockMetricServiceV1ClientMockRecorder) UpdateMetricV1(ctx, in any, opts ...any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	varargs := append([]any{ctx, in}, opts...)
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMany", reflect.TypeOf((*MockMetricServiceClient)(nil).UpdateMany), varargs...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMetricV1", reflect.TypeOf((*MockMetricServiceV1Client)(nil).UpdateMetricV1), varargs...)
 }
 
-// MockMetricServiceServer is a mock of MetricServiceServer interface.
-type MockMetricServiceServer struct {
+// MockMetricServiceV1Server is a mock of MetricServiceV1Server interface.
+type MockMetricServiceV1Server struct {
 	ctrl     *gomock.Controller
-	recorder *MockMetricServiceServerMockRecorder
+	recorder *MockMetricServiceV1ServerMockRecorder
 }
 
-// MockMetricServiceServerMockRecorder is the mock recorder for MockMetricServiceServer.
-type MockMetricServiceServerMockRecorder struct {
-	mock *MockMetricServiceServer
+// MockMetricServiceV1ServerMockRecorder is the mock recorder for MockMetricServiceV1Server.
+type MockMetricServiceV1ServerMockRecorder struct {
+	mock *MockMetricServiceV1Server
 }
 
-// NewMockMetricServiceServer creates a new mock instance.
-func NewMockMetricServiceServer(ctrl *gomock.Controller) *MockMetricServiceServer {
-	mock := &MockMetricServiceServer{ctrl: ctrl}
-	mock.recorder = &MockMetricServiceServerMockRecorder{mock}
+// NewMockMetricServiceV1Server creates a new mock instance.
+func NewMockMetricServiceV1Server(ctrl *gomock.Controller) *MockMetricServiceV1Server {
+	mock := &MockMetricServiceV1Server{ctrl: ctrl}
+	mock.recorder = &MockMetricServiceV1ServerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockMetricServiceServer) EXPECT() *MockMetricServiceServerMockRecorder {
+func (m *MockMetricServiceV1Server) EXPECT() *MockMetricServiceV1ServerMockRecorder {
 	return m.recorder
 }
 
-// Get mocks base method.
-func (m *MockMetricServiceServer) Get(arg0 context.Context, arg1 *grpc.MetricRequest) (*grpc.MetricResponse, error) {
+// GetAllMetricV1 mocks base method.
+func (m *MockMetricServiceV1Server) GetAllMetricV1(arg0 context.Context, arg1 *grpc.MetricV1Request) (*grpc.MetricV1ResponseMany, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Get", arg0, arg1)
-	ret0, _ := ret[0].(*grpc.MetricResponse)
+	ret := m.ctrl.Call(m, "GetAllMetricV1", arg0, arg1)
+	ret0, _ := ret[0].(*grpc.MetricV1ResponseMany)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Get indicates an expected call of Get.
-func (mr *MockMetricServiceServerMockRecorder) Get(arg0, arg1 any) *gomock.Call {
+// GetAllMetricV1 indicates an expected call of GetAllMetricV1.
+func (mr *MockMetricServiceV1ServerMockRecorder) GetAllMetricV1(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Get", reflect.TypeOf((*MockMetricServiceServer)(nil).Get), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAllMetricV1", reflect.TypeOf((*MockMetricServiceV1Server)(nil).GetAllMetricV1), arg0, arg1)
 }
 
-// GetAll mocks base method.
-func (m *MockMetricServiceServer) GetAll(arg0 context.Context, arg1 *grpc.MetricRequest) (*grpc.MetricResponseMany, error) {
+// GetMetricV1 mocks base method.
+func (m *MockMetricServiceV1Server) GetMetricV1(arg0 context.Context, arg1 *grpc.MetricV1Request) (*grpc.MetricV1Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "GetAll", arg0, arg1)
-	ret0, _ := ret[0].(*grpc.MetricResponseMany)
+	ret := m.ctrl.Call(m, "GetMetricV1", arg0, arg1)
+	ret0, _ := ret[0].(*grpc.MetricV1Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// GetAll indicates an expected call of GetAll.
-func (mr *MockMetricServiceServerMockRecorder) GetAll(arg0, arg1 any) *gomock.Call {
+// GetMetricV1 indicates an expected call of GetMetricV1.
+func (mr *MockMetricServiceV1ServerMockRecorder) GetMetricV1(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetAll", reflect.TypeOf((*MockMetricServiceServer)(nil).GetAll), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetMetricV1", reflect.TypeOf((*MockMetricServiceV1Server)(nil).GetMetricV1), arg0, arg1)
 }
 
-// Update mocks base method.
-func (m *MockMetricServiceServer) Update(arg0 context.Context, arg1 *grpc.MetricRequest) (*grpc.MetricResponse, error) {
+// UpdateManyMetricV1 mocks base method.
+func (m *MockMetricServiceV1Server) UpdateManyMetricV1(arg0 context.Context, arg1 *grpc.MetricV1RequestMany) (*grpc.MetricV1ResponseMany, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "Update", arg0, arg1)
-	ret0, _ := ret[0].(*grpc.MetricResponse)
+	ret := m.ctrl.Call(m, "UpdateManyMetricV1", arg0, arg1)
+	ret0, _ := ret[0].(*grpc.MetricV1ResponseMany)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// Update indicates an expected call of Update.
-func (mr *MockMetricServiceServerMockRecorder) Update(arg0, arg1 any) *gomock.Call {
+// UpdateManyMetricV1 indicates an expected call of UpdateManyMetricV1.
+func (mr *MockMetricServiceV1ServerMockRecorder) UpdateManyMetricV1(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "Update", reflect.TypeOf((*MockMetricServiceServer)(nil).Update), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateManyMetricV1", reflect.TypeOf((*MockMetricServiceV1Server)(nil).UpdateManyMetricV1), arg0, arg1)
 }
 
-// UpdateMany mocks base method.
-func (m *MockMetricServiceServer) UpdateMany(arg0 context.Context, arg1 *grpc.MetricRequestMany) (*grpc.MetricResponseMany, error) {
+// UpdateMetricV1 mocks base method.
+func (m *MockMetricServiceV1Server) UpdateMetricV1(arg0 context.Context, arg1 *grpc.MetricV1Request) (*grpc.MetricV1Response, error) {
 	m.ctrl.T.Helper()
-	ret := m.ctrl.Call(m, "UpdateMany", arg0, arg1)
-	ret0, _ := ret[0].(*grpc.MetricResponseMany)
+	ret := m.ctrl.Call(m, "UpdateMetricV1", arg0, arg1)
+	ret0, _ := ret[0].(*grpc.MetricV1Response)
 	ret1, _ := ret[1].(error)
 	return ret0, ret1
 }
 
-// UpdateMany indicates an expected call of UpdateMany.
-func (mr *MockMetricServiceServerMockRecorder) UpdateMany(arg0, arg1 any) *gomock.Call {
+// UpdateMetricV1 indicates an expected call of UpdateMetricV1.
+func (mr *MockMetricServiceV1ServerMockRecorder) UpdateMetricV1(arg0, arg1 any) *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMany", reflect.TypeOf((*MockMetricServiceServer)(nil).UpdateMany), arg0, arg1)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "UpdateMetricV1", reflect.TypeOf((*MockMetricServiceV1Server)(nil).UpdateMetricV1), arg0, arg1)
 }
 
-// mustEmbedUnimplementedMetricServiceServer mocks base method.
-func (m *MockMetricServiceServer) mustEmbedUnimplementedMetricServiceServer() {
+// mustEmbedUnimplementedMetricServiceV1Server mocks base method.
+func (m *MockMetricServiceV1Server) mustEmbedUnimplementedMetricServiceV1Server() {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "mustEmbedUnimplementedMetricServiceServer")
+	m.ctrl.Call(m, "mustEmbedUnimplementedMetricServiceV1Server")
 }
 
-// mustEmbedUnimplementedMetricServiceServer indicates an expected call of mustEmbedUnimplementedMetricServiceServer.
-func (mr *MockMetricServiceServerMockRecorder) mustEmbedUnimplementedMetricServiceServer() *gomock.Call {
+// mustEmbedUnimplementedMetricServiceV1Server indicates an expected call of mustEmbedUnimplementedMetricServiceV1Server.
+func (mr *MockMetricServiceV1ServerMockRecorder) mustEmbedUnimplementedMetricServiceV1Server() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "mustEmbedUnimplementedMetricServiceServer", reflect.TypeOf((*MockMetricServiceServer)(nil).mustEmbedUnimplementedMetricServiceServer))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "mustEmbedUnimplementedMetricServiceV1Server", reflect.TypeOf((*MockMetricServiceV1Server)(nil).mustEmbedUnimplementedMetricServiceV1Server))
 }
 
-// MockUnsafeMetricServiceServer is a mock of UnsafeMetricServiceServer interface.
-type MockUnsafeMetricServiceServer struct {
+// MockUnsafeMetricServiceV1Server is a mock of UnsafeMetricServiceV1Server interface.
+type MockUnsafeMetricServiceV1Server struct {
 	ctrl     *gomock.Controller
-	recorder *MockUnsafeMetricServiceServerMockRecorder
+	recorder *MockUnsafeMetricServiceV1ServerMockRecorder
 }
 
-// MockUnsafeMetricServiceServerMockRecorder is the mock recorder for MockUnsafeMetricServiceServer.
-type MockUnsafeMetricServiceServerMockRecorder struct {
-	mock *MockUnsafeMetricServiceServer
+// MockUnsafeMetricServiceV1ServerMockRecorder is the mock recorder for MockUnsafeMetricServiceV1Server.
+type MockUnsafeMetricServiceV1ServerMockRecorder struct {
+	mock *MockUnsafeMetricServiceV1Server
 }
 
-// NewMockUnsafeMetricServiceServer creates a new mock instance.
-func NewMockUnsafeMetricServiceServer(ctrl *gomock.Controller) *MockUnsafeMetricServiceServer {
-	mock := &MockUnsafeMetricServiceServer{ctrl: ctrl}
-	mock.recorder = &MockUnsafeMetricServiceServerMockRecorder{mock}
+// NewMockUnsafeMetricServiceV1Server creates a new mock instance.
+func NewMockUnsafeMetricServiceV1Server(ctrl *gomock.Controller) *MockUnsafeMetricServiceV1Server {
+	mock := &MockUnsafeMetricServiceV1Server{ctrl: ctrl}
+	mock.recorder = &MockUnsafeMetricServiceV1ServerMockRecorder{mock}
 	return mock
 }
 
 // EXPECT returns an object that allows the caller to indicate expected use.
-func (m *MockUnsafeMetricServiceServer) EXPECT() *MockUnsafeMetricServiceServerMockRecorder {
+func (m *MockUnsafeMetricServiceV1Server) EXPECT() *MockUnsafeMetricServiceV1ServerMockRecorder {
 	return m.recorder
 }
 
-// mustEmbedUnimplementedMetricServiceServer mocks base method.
-func (m *MockUnsafeMetricServiceServer) mustEmbedUnimplementedMetricServiceServer() {
+// mustEmbedUnimplementedMetricServiceV1Server mocks base method.
+func (m *MockUnsafeMetricServiceV1Server) mustEmbedUnimplementedMetricServiceV1Server() {
 	m.ctrl.T.Helper()
-	m.ctrl.Call(m, "mustEmbedUnimplementedMetricServiceServer")
+	m.ctrl.Call(m, "mustEmbedUnimplementedMetricServiceV1Server")
 }
 
-// mustEmbedUnimplementedMetricServiceServer indicates an expected call of mustEmbedUnimplementedMetricServiceServer.
-func (mr *MockUnsafeMetricServiceServerMockRecorder) mustEmbedUnimplementedMetricServiceServer() *gomock.Call {
+// mustEmbedUnimplementedMetricServiceV1Server indicates an expected call of mustEmbedUnimplementedMetricServiceV1Server.
+func (mr *MockUnsafeMetricServiceV1ServerMockRecorder) mustEmbedUnimplementedMetricServiceV1Server() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
-	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "mustEmbedUnimplementedMetricServiceServer", reflect.TypeOf((*MockUnsafeMetricServiceServer)(nil).mustEmbedUnimplementedMetricServiceServer))
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "mustEmbedUnimplementedMetricServiceV1Server", reflect.TypeOf((*MockUnsafeMetricServiceV1Server)(nil).mustEmbedUnimplementedMetricServiceV1Server))
 }

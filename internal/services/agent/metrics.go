@@ -22,7 +22,7 @@ import (
 
 func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	metricDtoCollection := dto.MetricsCollection{}
-	var metricsGrpcCollection []*pb.MetricRequest
+	var metricsGrpcCollection []*pb.MetricV1Request
 
 	for storageType, storage := range a.storage.GetList() {
 		if storage == nil {
@@ -37,7 +37,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 				ID:    metricName,
 				MType: storageType,
 			}
-			metricsGrpc := &pb.MetricRequest{
+			metricsGrpc := &pb.MetricV1Request{
 				Id:   metricName,
 				Type: storageType,
 			}
@@ -46,11 +46,15 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 				iv := int64(metric)
 				newIv := iv
 				metricDto.Delta = &newIv
-				metricsGrpc.Delta = iv
+				metricsGrpc.RequestValue = &pb.MetricV1Request_Delta{
+					Delta: iv,
+				}
 			} else {
 				newMetric := metric
 				metricDto.Value = &newMetric
-				metricsGrpc.Value = float32(metric)
+				metricsGrpc.RequestValue = &pb.MetricV1Request_Value{
+					Value: float32(metric),
+				}
 			}
 			metricsGrpcCollection = append(metricsGrpcCollection, metricsGrpc)
 			metricDtoCollection = append(metricDtoCollection, metricDto)
@@ -87,7 +91,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	}
 
 	if a.grpcClient != nil {
-		_, err := a.grpcClient.UpdateMany(ctx, &pb.MetricRequestMany{Requests: metricsGrpcCollection})
+		_, err := a.grpcClient.UpdateManyMetricV1(ctx, &pb.MetricV1RequestMany{Requests: metricsGrpcCollection})
 		if err != nil {
 			return err
 		}
