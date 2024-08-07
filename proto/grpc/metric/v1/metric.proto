@@ -1,0 +1,62 @@
+syntax = "proto3";
+
+package grpc.metric.v1;
+
+import "buf/validate/validate.proto";
+
+option go_package = "MetricV1Service/proto/grpc/metric/v1";
+
+service MetricV1Service {
+  rpc UpdateMetricV1(UpdateMetricV1Request) returns (UpdateMetricV1Response);
+  rpc UpdateManyMetricV1(UpdateManyMetricV1Request) returns (UpdateManyMetricV1Response);
+  rpc GetMetricV1(GetMetricV1Request) returns (GetMetricV1Response);
+  rpc GetAllMetricV1(GetAllMetricV1Request) returns (GetAllMetricV1Response);
+}
+
+message UpdateMetricV1Request {
+  string id = 1 [(buf.validate.field).string.min_len = 1];;
+  string type = 2;
+  oneof request_value  {
+    int64 delta = 3;
+    float value = 4;
+  }
+}
+
+message UpdateMetricV1Response {
+  string id = 1;
+  string type = 2;
+  int64 delta = 3;
+  float value = 4;
+}
+
+message UpdateManyMetricV1Request {
+  repeated UpdateMetricV1Request requests = 1;
+}
+
+message UpdateManyMetricV1Response
+{
+  repeated UpdateMetricV1Response responses = 1;
+}
+
+message GetMetricV1Request {
+  string id = 1;
+  string type = 2;
+}
+
+message GetMetricV1Response
+{
+  string id = 1;
+  string type = 2;
+  int64 delta = 3;
+  float value = 4;
+}
+
+message GetAllMetricV1Request
+{
+  string id = 1;
+  string type = 2;
+}
+
+message GetAllMetricV1Response {
+  repeated UpdateMetricV1Response responses = 1;
+}

@@ -11,6 +11,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc/metric/v1"
 	"io"
 	"net/http"
 	"os"
@@ -21,6 +22,7 @@ import (
 
 func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	metricDtoCollection := dto.MetricsCollection{}
+	var metricsGrpcCollection []*pb.UpdateMetricV1Request
 
 	for storageType, storage := range a.storage.GetList() {
 		if storage == nil {
@@ -35,19 +37,30 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 				ID:    metricName,
 				MType: storageType,
 			}
+			metricsGrpc := &pb.UpdateMetricV1Request{
+				Id:   metricName,
+				Type: storageType,
+			}
 
 			if storageType == "counter" {
 				iv := int64(metric)
 				newIv := iv
 				metricDto.Delta = &newIv
+				metricsGrpc.RequestValue = &pb.UpdateMetricV1Request_Delta{
+					Delta: iv,
+				}
 			} else {
 				newMetric := metric
 				metricDto.Value = &newMetric
+				metricsGrpc.RequestValue = &pb.UpdateMetricV1Request_Value{
+					Value: float32(metric),
+				}
 			}
-
+			metricsGrpcCollection = append(metricsGrpcCollection, metricsGrpc)
 			metricDtoCollection = append(metricDtoCollection, metricDto)
 		}
 	}
+
 	body, _ := easyjson.Marshal(metricDtoCollection)
 	var buf bytes.Buffer
 	gw := gzip.NewWriter(&buf)
@@ -69,11 +82,19 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	req, _ := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewBuffer(body))
 	req.Header.Set("Content-Encoding", "gzip")
 	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("X-Real-IP", "127.0.0.1")
 
 	if a.shaKey != "" {
 		hash := hmac.New(sha256.New, []byte(a.shaKey))
 		hash.Write(buf.Bytes())
 		req.Header.Set("HashSHA256", fmt.Sprintf("%x", hash.Sum(nil)))
+	}
+
+	if a.grpcClient != nil {
+		_, err := a.grpcClient.UpdateManyMetricV1(ctx, &pb.UpdateManyMetricV1Request{Requests: metricsGrpcCollection})
+		if err != nil {
+			return err
+		}
 	}
 
 	resp, err := a.client.Do(req)

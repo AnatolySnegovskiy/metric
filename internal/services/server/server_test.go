@@ -16,6 +16,7 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -498,6 +499,7 @@ func TestErrorWriteMassiveHandlerBDFail(t *testing.T) {
 func TestHashMiddleware(t *testing.T) {
 	conf := getMockConf(t)
 	conf.EXPECT().GetShaKey().Return("secret").AnyTimes()
+	conf.EXPECT().GetTrustedSubnet().Return(nil).AnyTimes()
 	stg := storages.NewMemStorage()
 	stg.AddMetric("gauge", metrics.NewGauge(nil))
 	stg.AddMetric("counter", metrics.NewCounter(nil))
@@ -508,7 +510,7 @@ func TestHashMiddleware(t *testing.T) {
 		conf:    conf,
 	}
 	r := chi.NewRouter()
-	r.Use(s.hashCheckMiddleware, s.hashResponseMiddleware, s.JSONContentTypeMiddleware)
+	r.Use(s.TrustedSubnetMiddleware, s.hashCheckMiddleware, s.hashResponseMiddleware, s.JSONContentTypeMiddleware)
 	r.Post("/update", s.writePostMetricHandler)
 
 	body := []byte(`{"id":"test","type":"counter","delta":10}`)
@@ -537,6 +539,33 @@ func TestHashMiddleware(t *testing.T) {
 	r.Post("/update", s.writePostMetricHandler)
 	headers = map[string]string{"Content-Type": "application/json"}
 	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+}
+
+func TestTrustedSubnetMiddleware(t *testing.T) {
+	_, trustedSubnet, _ := net.ParseCIDR("127.0.0.1/32")
+	conf := getMockConf(t)
+	conf.EXPECT().GetTrustedSubnet().Return(trustedSubnet).AnyTimes()
+	stg := storages.NewMemStorage()
+	stg.AddMetric("gauge", metrics.NewGauge(nil))
+	stg.AddMetric("counter", metrics.NewCounter(nil))
+
+	s := &Server{
+		storage: stg,
+		logger:  slog.New(),
+		conf:    conf,
+	}
+	r := chi.NewRouter()
+	r.Use(s.TrustedSubnetMiddleware, s.JSONContentTypeMiddleware)
+	r.Post("/update", s.writePostMetricHandler)
+
+	body := []byte(`{"id":"test","type":"counter","delta":10}`)
+	hash := hmac.New(sha256.New, []byte("secret"))
+	hash.Write(body)
+	headers := map[string]string{"Content-Type": "application/json", "X-Real-IP": "127.0.0.1"}
+	testHandler(t, r, http.MethodPost, "/update", http.StatusOK, "skip", body, headers)
+
+	headers = map[string]string{"Content-Type": "application/json", "X-Real-IP": "255.123.0.1"}
+	testHandler(t, r, http.MethodPost, "/update", http.StatusForbidden, "skip", body, headers)
 }
 
 func getMockConf(t *testing.T) *mocks.MockConfig {
@@ -569,19 +598,30 @@ func TestBDConnect(t *testing.T) {
 		logger: slog.New(),
 	}
 
-	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+	PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
 		return &pgx.Conn{}, nil
 	}
 
 	db := s.BDConnect()
 	assert.NotNil(t, db)
 
-	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+	PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
 		return nil, errors.New("some error")
 	}
 
 	db = s.BDConnect()
 	assert.Nil(t, db)
+}
+
+func TestBDGrpc(t *testing.T) {
+	conf := getMockConf(t)
+	s := &Server{
+		conf:   conf,
+		logger: slog.New(),
+	}
+
+	grpc := s.UpGrpc()
+	assert.NotNil(t, grpc)
 }
 
 func TestUpStorageWithDB(t *testing.T) {
@@ -593,7 +633,7 @@ func TestUpStorageWithDB(t *testing.T) {
 	}
 
 	assert.Nil(t, s.upStorage(nil))
-	pgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+	PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
 		return &pgx.Conn{}, nil
 	}
 

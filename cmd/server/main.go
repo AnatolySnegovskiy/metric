@@ -3,8 +3,12 @@ package main
 import (
 	"context"
 	"fmt"
+	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc/metric/v1"
+	"google.golang.org/grpc"
+	"net"
 	"os"
 	"os/signal"
+	"sync"
 	"syscall"
 
 	"github.com/AnatolySnegovskiy/metric/internal/services/server"
@@ -38,15 +42,40 @@ func main() {
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, os.Interrupt, syscall.SIGTERM, syscall.SIGINT, syscall.SIGQUIT)
 
+	var wg sync.WaitGroup
+	wg.Add(2)
+
 	go func() {
+		defer wg.Done()
 		<-quit
 		serv.ShotDown()
 		logger.Info("server stopped")
+		logger.Info("gRPC server stopped")
 		os.Exit(0)
 	}()
 
+	go func() {
+		defer wg.Done()
+		logger.Info("server started on " + conf.GetServerAddress())
+		handleError(serv.Run())
+	}()
+
+	go func() {
+		defer wg.Done()
+
+		if conf.grpcAddress == "" {
+			return
+		}
+
+		listen, err := net.Listen("tcp", conf.grpcAddress)
+		handleError(err)
+		grpcServer := grpc.NewServer()
+		pb.RegisterMetricV1ServiceServer(grpcServer, serv.UpGrpc())
+		logger.Info("gRPC server started on " + conf.grpcAddress)
+		handleError(grpcServer.Serve(listen))
+	}()
 	logger.Info("server started on " + conf.GetServerAddress())
-	handleError(serv.Run())
+	wg.Wait()
 }
 
 func setDefaultValue(value, defaultValue string) string {

@@ -1,22 +1,27 @@
 package main
 
 import (
+	"bou.ke/monkey"
 	"bytes"
+	"context"
 	"errors"
+	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
+	"github.com/AnatolySnegovskiy/metric/internal/services/server"
+	"github.com/AnatolySnegovskiy/metric/internal/storages"
+	"github.com/jackc/pgx/v5"
+	"github.com/stretchr/testify/assert"
 	"log"
 	"os"
 	"testing"
 	"time"
-
-	"bou.ke/monkey"
-	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
-	"github.com/AnatolySnegovskiy/metric/internal/storages"
-	"github.com/stretchr/testify/assert"
 )
 
 func Test_Main(t *testing.T) {
 	resetVars()
-	os.Args = []string{"cmd", "-a=127.21.10.1:8150"}
+	server.PgxConnect = func(ctx context.Context, connString string) (*pgx.Conn, error) {
+		return nil, nil
+	}
+	os.Args = []string{"cmd", "-a=:8150", "-grpc=:3200"}
 	s := storages.NewMemStorage()
 	s.AddMetric("gauge", metrics.NewGauge(nil))
 	s.AddMetric("counter", metrics.NewCounter(nil))
@@ -25,9 +30,10 @@ func Test_Main(t *testing.T) {
 	go func() {
 		defer close(quit)
 		go main()
-		time.Sleep(1 * time.Second)
-		assert.True(t, true)
 	}()
+	time.Sleep(3 * time.Second)
+	<-quit
+	assert.True(t, true)
 }
 
 func TestHandleNoError(t *testing.T) {
