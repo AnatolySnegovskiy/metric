@@ -3,7 +3,7 @@ package server
 import (
 	"context"
 	"errors"
-	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc"
+	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc/metric/v1"
 	"github.com/AnatolySnegovskiy/metric/internal/services/interfase"
 	"github.com/gookit/gsr"
 	"log"
@@ -11,7 +11,7 @@ import (
 )
 
 type GrpcServer struct {
-	pb.UnimplementedMetricServiceV1Server
+	pb.UnimplementedMetricV1ServiceServer
 	storage interfase.Storage
 	logger  gsr.GenLogger
 	conf    Config
@@ -25,12 +25,12 @@ func NewGrpcServer(storage interfase.Storage, logger gsr.GenLogger, conf Config)
 	}
 }
 
-func (s *GrpcServer) UpdateMetricV1(ctx context.Context, req *pb.MetricV1Request) (*pb.MetricV1Response, error) {
+func (s *GrpcServer) UpdateMetricV1(ctx context.Context, req *pb.UpdateMetricV1Request) (*pb.UpdateMetricV1Response, error) {
 	storage := s.storage
 	metric, err := storage.GetMetricType(req.Type)
 
 	if err != nil {
-		return &pb.MetricV1Response{}, err
+		return &pb.UpdateMetricV1Response{}, err
 	}
 
 	var value string
@@ -41,12 +41,12 @@ func (s *GrpcServer) UpdateMetricV1(ctx context.Context, req *pb.MetricV1Request
 	}
 
 	if value == "" {
-		return &pb.MetricV1Response{}, errors.New("failed to process Value and Delta is empty")
+		return &pb.UpdateMetricV1Response{}, errors.New("failed to process Value and Delta is empty")
 	}
 
 	_ = metric.Process(ctx, req.Id, value)
 
-	return &pb.MetricV1Response{
+	return &pb.UpdateMetricV1Response{
 		Id:    req.Id,
 		Type:  req.Type,
 		Delta: req.GetDelta(),
@@ -54,7 +54,7 @@ func (s *GrpcServer) UpdateMetricV1(ctx context.Context, req *pb.MetricV1Request
 	}, nil
 }
 
-func (s *GrpcServer) UpdateManyMetricV1(ctx context.Context, req *pb.MetricV1RequestMany) (*pb.MetricV1ResponseMany, error) {
+func (s *GrpcServer) UpdateManyMetricV1(ctx context.Context, req *pb.UpdateManyMetricV1Request) (*pb.UpdateManyMetricV1Response, error) {
 	list := make(map[string]map[string]float64)
 
 	for _, metricDTO := range req.Requests {
@@ -70,23 +70,23 @@ func (s *GrpcServer) UpdateManyMetricV1(ctx context.Context, req *pb.MetricV1Req
 	}
 
 	storage := s.storage
-	var metrics []*pb.MetricV1Response
+	var metrics []*pb.UpdateMetricV1Response
 
 	for metricType, metric := range list {
 		metricEntity, err := storage.GetMetricType(metricType)
 
 		if err != nil {
-			return &pb.MetricV1ResponseMany{}, err
+			return &pb.UpdateManyMetricV1Response{}, err
 		}
 
 		err = metricEntity.ProcessMassive(ctx, metric)
 
 		if err != nil {
-			return &pb.MetricV1ResponseMany{}, err
+			return &pb.UpdateManyMetricV1Response{}, err
 		}
 
 		for metricName, value := range metric {
-			metricResponse := &pb.MetricV1Response{
+			metricResponse := &pb.UpdateMetricV1Response{
 				Id:   metricName,
 				Type: metricType,
 			}
@@ -99,34 +99,34 @@ func (s *GrpcServer) UpdateManyMetricV1(ctx context.Context, req *pb.MetricV1Req
 		}
 	}
 
-	return &pb.MetricV1ResponseMany{Responses: metrics}, nil
+	return &pb.UpdateManyMetricV1Response{Responses: metrics}, nil
 }
 
-func (s *GrpcServer) GetMetricV1(ctx context.Context, req *pb.MetricV1Request) (*pb.MetricV1Response, error) {
+func (s *GrpcServer) GetMetricV1(ctx context.Context, req *pb.GetMetricV1Request) (*pb.GetMetricV1Response, error) {
 	metricType := req.Type
 	metricName := req.Id
 
 	storage, err := s.storage.GetMetricType(metricType)
 
 	if err != nil {
-		return &pb.MetricV1Response{}, err
+		return &pb.GetMetricV1Response{}, err
 	}
 
 	if storage == nil {
-		return &pb.MetricV1Response{}, errors.New("storage error")
+		return &pb.GetMetricV1Response{}, errors.New("storage error")
 	}
 
 	list, err := storage.GetList(ctx)
 	if err != nil {
-		return &pb.MetricV1Response{}, err
+		return &pb.GetMetricV1Response{}, err
 	}
 	metric, ok := list[metricName]
 
 	if !ok {
-		return &pb.MetricV1Response{}, errors.New("metric not found")
+		return &pb.GetMetricV1Response{}, errors.New("metric not found")
 	}
 
-	metricResponse := &pb.MetricV1Response{
+	metricResponse := &pb.GetMetricV1Response{
 		Id:   metricName,
 		Type: metricType,
 	}
@@ -140,27 +140,27 @@ func (s *GrpcServer) GetMetricV1(ctx context.Context, req *pb.MetricV1Request) (
 	return metricResponse, nil
 }
 
-func (s *GrpcServer) GetAllMetricV1(ctx context.Context, req *pb.MetricV1Request) (*pb.MetricV1ResponseMany, error) {
+func (s *GrpcServer) GetAllMetricV1(ctx context.Context, req *pb.GetAllMetricV1Request) (*pb.GetAllMetricV1Response, error) {
 	metricType := req.Type
 	storage, err := s.storage.GetMetricType(metricType)
 
 	if err != nil {
-		return &pb.MetricV1ResponseMany{}, err
+		return &pb.GetAllMetricV1Response{}, err
 	}
 
 	if storage == nil {
-		return &pb.MetricV1ResponseMany{}, errors.New("storage error")
+		return &pb.GetAllMetricV1Response{}, errors.New("storage error")
 	}
 
 	list, err := storage.GetList(ctx)
 	if err != nil {
-		return &pb.MetricV1ResponseMany{}, err
+		return &pb.GetAllMetricV1Response{}, err
 	}
 
-	metrics := make([]*pb.MetricV1Response, 0, len(list))
+	metrics := make([]*pb.UpdateMetricV1Response, 0, len(list))
 
 	for metricName, metric := range list {
-		metricResponse := &pb.MetricV1Response{
+		metricResponse := &pb.UpdateMetricV1Response{
 			Id:   metricName,
 			Type: metricType,
 		}
@@ -172,5 +172,5 @@ func (s *GrpcServer) GetAllMetricV1(ctx context.Context, req *pb.MetricV1Request
 		metrics = append(metrics, metricResponse)
 	}
 
-	return &pb.MetricV1ResponseMany{Responses: metrics}, nil
+	return &pb.GetAllMetricV1Response{Responses: metrics}, nil
 }

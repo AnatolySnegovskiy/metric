@@ -11,7 +11,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
-	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc"
+	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc/metric/v1"
 	"io"
 	"net/http"
 	"os"
@@ -22,7 +22,7 @@ import (
 
 func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	metricDtoCollection := dto.MetricsCollection{}
-	var metricsGrpcCollection []*pb.MetricV1Request
+	var metricsGrpcCollection []*pb.UpdateMetricV1Request
 
 	for storageType, storage := range a.storage.GetList() {
 		if storage == nil {
@@ -37,7 +37,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 				ID:    metricName,
 				MType: storageType,
 			}
-			metricsGrpc := &pb.MetricV1Request{
+			metricsGrpc := &pb.UpdateMetricV1Request{
 				Id:   metricName,
 				Type: storageType,
 			}
@@ -46,13 +46,13 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 				iv := int64(metric)
 				newIv := iv
 				metricDto.Delta = &newIv
-				metricsGrpc.RequestValue = &pb.MetricV1Request_Delta{
+				metricsGrpc.RequestValue = &pb.UpdateMetricV1Request_Delta{
 					Delta: iv,
 				}
 			} else {
 				newMetric := metric
 				metricDto.Value = &newMetric
-				metricsGrpc.RequestValue = &pb.MetricV1Request_Value{
+				metricsGrpc.RequestValue = &pb.UpdateMetricV1Request_Value{
 					Value: float32(metric),
 				}
 			}
@@ -91,7 +91,7 @@ func (a *Agent) sendMetricsPeriodically(ctx context.Context) error {
 	}
 
 	if a.grpcClient != nil {
-		_, err := a.grpcClient.UpdateManyMetricV1(ctx, &pb.MetricV1RequestMany{Requests: metricsGrpcCollection})
+		_, err := a.grpcClient.UpdateManyMetricV1(ctx, &pb.UpdateManyMetricV1Request{Requests: metricsGrpcCollection})
 		if err != nil {
 			return err
 		}

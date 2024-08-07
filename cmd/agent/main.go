@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc"
+	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc/metric/v1"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"log"
@@ -50,12 +50,12 @@ func main() {
 	fmt.Println("Agent started")
 	c, err := NewConfig()
 	handleError(err)
-	var grpcClient pb.MetricServiceV1Client = nil
+	var grpcClient pb.MetricV1ServiceClient = nil
 	if c.grpcSendAddr != "" {
 		conn, err := grpc.NewClient(c.grpcSendAddr, grpc.WithTransportCredentials(insecure.NewCredentials()))
 		handleError(err)
 		defer conn.Close()
-		grpcClient = pb.NewMetricServiceV1Client(conn)
+		grpcClient = pb.NewMetricV1ServiceClient(conn)
 	}
 
 	handleError(

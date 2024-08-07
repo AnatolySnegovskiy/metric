@@ -3,7 +3,7 @@ package main
 import (
 	"context"
 	"fmt"
-	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc"
+	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc/metric/v1"
 	"google.golang.org/grpc"
 	"net"
 	"os"
@@ -70,7 +70,7 @@ func main() {
 		listen, err := net.Listen("tcp", conf.grpcAddress)
 		handleError(err)
 		grpcServer := grpc.NewServer()
-		pb.RegisterMetricServiceV1Server(grpcServer, serv.UpGrpc())
+		pb.RegisterMetricV1ServiceServer(grpcServer, serv.UpGrpc())
 		logger.Info("gRPC server started on " + conf.grpcAddress)
 		handleError(grpcServer.Serve(listen))
 	}()

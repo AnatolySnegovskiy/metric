@@ -8,7 +8,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"errors"
-	"github.com/AnatolySnegovskiy/metric/internal/services/grpc"
+	grpc "github.com/AnatolySnegovskiy/metric/internal/services/grpc/metric/v1"
 	"io"
 	"net/http"
 	"os"
@@ -210,8 +210,8 @@ func TestAgentReportTickerEmpty(t *testing.T) {
 		httpClient := mocks.NewMockHTTPClient(ctrl)
 		resp := &http.Response{}
 		httpClient.EXPECT().Do(gomock.Any()).Return(resp, nil).AnyTimes()
-		grpcClient := mocks.NewMockMetricServiceV1Client(ctrl)
-		grpcClient.EXPECT().UpdateManyMetricV1(gomock.Any(), gomock.Any()).Return(&grpc.MetricV1ResponseMany{}, nil).AnyTimes()
+		grpcClient := mocks.NewMockMetricV1ServiceClient(ctrl)
+		grpcClient.EXPECT().UpdateManyMetricV1(gomock.Any(), gomock.Any()).Return(&grpc.UpdateManyMetricV1Response{}, nil).AnyTimes()
 		a := &Agent{
 			storage:        storages.NewMemStorage(),
 			sendAddr:       "testAddr",
@@ -240,8 +240,8 @@ func TestAgentErrorCrypto(t *testing.T) {
 		httpClient := mocks.NewMockHTTPClient(ctrl)
 		resp := &http.Response{}
 		httpClient.EXPECT().Do(gomock.Any()).Return(resp, nil).AnyTimes()
-		grpcClient := mocks.NewMockMetricServiceV1Client(ctrl)
-		grpcClient.EXPECT().UpdateManyMetricV1(gomock.Any(), gomock.Any()).Return(&grpc.MetricV1ResponseMany{}, nil).AnyTimes()
+		grpcClient := mocks.NewMockMetricV1ServiceClient(ctrl)
+		grpcClient.EXPECT().UpdateManyMetricV1(gomock.Any(), gomock.Any()).Return(&grpc.UpdateManyMetricV1Response{}, nil).AnyTimes()
 		a := Agent{
 			storage:        mockStorage,
 			sendAddr:       "testAddr",
@@ -366,8 +366,8 @@ func TestAgentErrorGrpc(t *testing.T) {
 		httpClient := mocks.NewMockHTTPClient(ctrl)
 		resp := &http.Response{}
 		httpClient.EXPECT().Do(gomock.Any()).Return(resp, nil).AnyTimes()
-		grpcClient := mocks.NewMockMetricServiceV1Client(ctrl)
-		grpcClient.EXPECT().UpdateManyMetricV1(gomock.Any(), gomock.Any()).Return(&grpc.MetricV1ResponseMany{}, errors.New("some error")).AnyTimes()
+		grpcClient := mocks.NewMockMetricV1ServiceClient(ctrl)
+		grpcClient.EXPECT().UpdateManyMetricV1(gomock.Any(), gomock.Any()).Return(&grpc.UpdateManyMetricV1Response{}, errors.New("some error")).AnyTimes()
 		a := Agent{
 			storage:        mockStorage,
 			sendAddr:       "testAddr",

@@ -3,12 +3,11 @@ package server
 import (
 	"context"
 	"github.com/AnatolySnegovskiy/metric/internal/entity/metrics"
+	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc/metric/v1"
 	"github.com/AnatolySnegovskiy/metric/internal/storages"
 	"github.com/gookit/slog"
-	"testing"
-
-	pb "github.com/AnatolySnegovskiy/metric/internal/services/grpc"
 	"github.com/stretchr/testify/assert"
+	"testing"
 )
 
 func TestGrpcServer_Update(t *testing.T) {
@@ -22,20 +21,20 @@ func TestGrpcServer_Update(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		req     *pb.MetricV1Request
-		want    *pb.MetricV1Response
+		req     *pb.UpdateMetricV1Request
+		want    *pb.UpdateMetricV1Response
 		wantErr bool
 	}{
 		{
 			name: "successful update gauge metric",
-			req: &pb.MetricV1Request{
+			req: &pb.UpdateMetricV1Request{
 				Id:   "metric1",
 				Type: "gauge",
-				RequestValue: &pb.MetricV1Request_Value{
+				RequestValue: &pb.UpdateMetricV1Request_Value{
 					Value: 123.45,
 				},
 			},
-			want: &pb.MetricV1Response{
+			want: &pb.UpdateMetricV1Response{
 				Id:    "metric1",
 				Type:  "gauge",
 				Value: 123.45,
@@ -44,14 +43,14 @@ func TestGrpcServer_Update(t *testing.T) {
 		},
 		{
 			name: "successful update counter metric",
-			req: &pb.MetricV1Request{
+			req: &pb.UpdateMetricV1Request{
 				Id:   "metric2",
 				Type: "counter",
-				RequestValue: &pb.MetricV1Request_Delta{
+				RequestValue: &pb.UpdateMetricV1Request_Delta{
 					Delta: 123,
 				},
 			},
-			want: &pb.MetricV1Response{
+			want: &pb.UpdateMetricV1Response{
 				Id:    "metric2",
 				Type:  "counter",
 				Delta: 123,
@@ -60,23 +59,23 @@ func TestGrpcServer_Update(t *testing.T) {
 		},
 		{
 			name: "failed update with empty value and delta",
-			req: &pb.MetricV1Request{
+			req: &pb.UpdateMetricV1Request{
 				Id:   "metric1",
 				Type: "gauge",
 			},
-			want:    &pb.MetricV1Response{},
+			want:    &pb.UpdateMetricV1Response{},
 			wantErr: true,
 		},
 		{
 			name: "failed update with empty type",
-			req: &pb.MetricV1Request{
+			req: &pb.UpdateMetricV1Request{
 				Id: "metric1",
-				RequestValue: &pb.MetricV1Request_Delta{
+				RequestValue: &pb.UpdateMetricV1Request_Delta{
 					Delta: 123,
 				},
 				Type: "err",
 			},
-			want:    &pb.MetricV1Response{},
+			want:    &pb.UpdateMetricV1Response{},
 			wantErr: true,
 		},
 	}
@@ -104,39 +103,39 @@ func TestGrpcServer_UpdateMany(t *testing.T) {
 
 	tests := []struct {
 		name    string
-		req     *pb.MetricV1RequestMany
-		want    *pb.MetricV1ResponseMany
+		req     *pb.UpdateManyMetricV1Request
+		want    *pb.UpdateManyMetricV1Response
 		wantErr bool
 	}{
 		{
 			name: "successful update many gauge metrics",
-			req: &pb.MetricV1RequestMany{
-				Requests: []*pb.MetricV1Request{
+			req: &pb.UpdateManyMetricV1Request{
+				Requests: []*pb.UpdateMetricV1Request{
 					{
 						Id:   "metric1",
 						Type: "gauge",
-						RequestValue: &pb.MetricV1Request_Value{
+						RequestValue: &pb.UpdateMetricV1Request_Value{
 							Value: 123.45,
 						},
 					},
 					{
 						Id:   "metric2",
 						Type: "gauge",
-						RequestValue: &pb.MetricV1Request_Value{
+						RequestValue: &pb.UpdateMetricV1Request_Value{
 							Value: 67.89,
 						},
 					},
 					{
 						Id:   "metric3",
 						Type: "counter",
-						RequestValue: &pb.MetricV1Request_Delta{
+						RequestValue: &pb.UpdateMetricV1Request_Delta{
 							Delta: 10,
 						},
 					},
 				},
 			},
-			want: &pb.MetricV1ResponseMany{
-				Responses: []*pb.MetricV1Response{
+			want: &pb.UpdateManyMetricV1Response{
+				Responses: []*pb.UpdateMetricV1Response{
 					{
 						Id:    "metric1",
 						Type:  "gauge",
@@ -158,25 +157,25 @@ func TestGrpcServer_UpdateMany(t *testing.T) {
 		},
 		{
 			name: "failed update with empty value and delta",
-			req: &pb.MetricV1RequestMany{
-				Requests: []*pb.MetricV1Request{
+			req: &pb.UpdateManyMetricV1Request{
+				Requests: []*pb.UpdateMetricV1Request{
 					{
 						Id:   "metric1",
 						Type: "ga2uge",
-						RequestValue: &pb.MetricV1Request_Value{
+						RequestValue: &pb.UpdateMetricV1Request_Value{
 							Value: 67.89,
 						},
 					},
 					{
 						Id:   "metric2",
 						Type: "count1er",
-						RequestValue: &pb.MetricV1Request_Delta{
+						RequestValue: &pb.UpdateMetricV1Request_Delta{
 							Delta: 10,
 						},
 					},
 				},
 			},
-			want:    &pb.MetricV1ResponseMany{},
+			want:    &pb.UpdateManyMetricV1Response{},
 			wantErr: true,
 		},
 	}
@@ -207,7 +206,7 @@ func TestGrpcServer_GetAll(t *testing.T) {
 
 	server := NewGrpcServer(stg, logger, conf)
 
-	req := &pb.MetricV1Request{Type: "gauge"}
+	req := &pb.GetAllMetricV1Request{Type: "gauge"}
 	resp, err := server.GetAllMetricV1(ctx, req)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(resp.Responses))
@@ -215,7 +214,7 @@ func TestGrpcServer_GetAll(t *testing.T) {
 	assert.Equal(t, "gauge", resp.Responses[0].Type)
 	assert.Equal(t, float32(42.0), resp.Responses[0].Value)
 
-	req = &pb.MetricV1Request{Type: "counter"}
+	req = &pb.GetAllMetricV1Request{Type: "counter"}
 	resp, err = server.GetAllMetricV1(ctx, req)
 	assert.NoError(t, err)
 	assert.Equal(t, 1, len(resp.Responses))
@@ -244,7 +243,7 @@ func TestGrpcServer_Get(t *testing.T) {
 
 	server := NewGrpcServer(stg, logger, conf)
 
-	req := &pb.MetricV1Request{Type: "gauge", Id: "test_metric"}
+	req := &pb.GetMetricV1Request{Type: "gauge", Id: "test_metric"}
 	resp, err := server.GetMetricV1(ctx, req)
 	assert.NoError(t, err)
 
@@ -252,7 +251,7 @@ func TestGrpcServer_Get(t *testing.T) {
 	assert.Equal(t, "gauge", resp.Type)
 	assert.Equal(t, float32(42.0), resp.Value)
 
-	req = &pb.MetricV1Request{Type: "counter", Id: "test_metric_counter"}
+	req = &pb.GetMetricV1Request{Type: "counter", Id: "test_metric_counter"}
 	resp, err = server.GetMetricV1(ctx, req)
 	assert.NoError(t, err)
 	assert.Equal(t, "test_metric_counter", resp.Id)

@@ -1,7 +1,7 @@
 package agent
 
 import (
-	"github.com/AnatolySnegovskiy/metric/internal/services/grpc"
+	grpc "github.com/AnatolySnegovskiy/metric/internal/services/grpc/metric/v1"
 	"net/http"
 
 	"github.com/AnatolySnegovskiy/metric/internal/services/interfase"
@@ -13,7 +13,7 @@ type HTTPClient interface {
 
 type Agent struct {
 	client         HTTPClient
-	grpcClient     grpc.MetricServiceV1Client
+	grpcClient     grpc.MetricV1ServiceClient
 	storage        interfase.Storage
 	pollInterval   int
 	reportInterval int
@@ -24,7 +24,7 @@ type Agent struct {
 }
 
 type Options struct {
-	Grpc           grpc.MetricServiceV1Client
+	Grpc           grpc.MetricV1ServiceClient
 	Client         HTTPClient
 	Storage        interfase.Storage
 	PollInterval   int
